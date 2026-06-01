@@ -1,0 +1,33 @@
+{
+  "name": "enoevol-plugins",
+  "owner": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "metadata": {
+    "description": "Enoevol's plugin marketplace — Matthew Cohen's personal skills for writing, design portfolio work, editorial research, and AI generative pipelines.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "personal-voice",
+      "source": "./personal-voice",
+      "description": "Matthew Cohen's personal brand voice for any first-person writing — captions, posts, bios, newsletters, proposals, and cold outreach."
+    },
+    {
+      "name": "portfolio-story-builder",
+      "source": "./portfolio-story-builder",
+      "description": "Audit and organize a folder of design/creative work, then turn it into ranked, documented portfolio stories and a slide deck."
+    },
+    {
+      "name": "vanish-brand-discovery",
+      "source": "./vanish-brand-discovery",
+      "description": "Editorial discovery research for Vanish magazine — brand profiles and feature Q&A at the convergence of fashion and outdoor design."
+    },
+    {
+      "name": "weavy-pipeline-director",
+      "source": "./weavy-pipeline-director",
+      "description": "Expert guidance for Weavy / Figma Weave workflows — model selection, node architecture, and scalable AI image/video pipelines."
+    }
+  ]
+}

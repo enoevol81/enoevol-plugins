@@ -1,0 +1,13 @@
+{
+  "name": "personal-voice",
+  "version": "0.1.0",
+  "description": "Matthew Cohen's personal brand voice — a systems-minded creative director's tone for any first-person writing he'd publish or send under his own name.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": ["writing", "brand-voice", "copywriting", "creative-direction"]
+}

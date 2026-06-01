@@ -1,0 +1,13 @@
+{
+  "name": "portfolio-story-builder",
+  "version": "0.1.0",
+  "description": "Audit and organize a folder of design/creative work, then optionally turn it into ranked, documented portfolio stories and a slide deck.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": ["portfolio", "design", "case-study", "creative", "deck"]
+}

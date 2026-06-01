@@ -1,0 +1,13 @@
+{
+  "name": "weavy-pipeline-director",
+  "version": "0.1.0",
+  "description": "Expert guidance for Weavy / Figma Weave workflows — model selection, node architecture, and scalable AI image/video pipelines.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": ["weavy", "figma-weave", "ai-pipeline", "image-generation", "video-generation"]
+}
