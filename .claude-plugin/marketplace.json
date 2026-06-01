@@ -1,0 +1,13 @@
+{
+  "name": "enoevol-plugins",
+  "owner": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "metadata": {
+    "description": "Enoevol's plugin marketplace: design, workflow and creative-production plugins for Claude Code.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+  ]
+}
