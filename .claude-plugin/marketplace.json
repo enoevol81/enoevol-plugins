@@ -28,6 +28,5 @@
       "name": "weavy-pipeline-director",
       "source": "./weavy-pipeline-director",
       "description": "Expert guidance for Weavy / Figma Weave workflows — model selection, node architecture, and scalable AI image/video pipelines."
-    }
-  ]
-}
+    },
+    {
