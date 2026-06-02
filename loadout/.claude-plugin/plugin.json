@@ -1,0 +1,13 @@
+{
+  "name": "loadout",
+  "version": "0.1.0",
+  "description": "Audit and optimize your active Claude Code loadout — inventory of installed vs enabled plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": ["loadout", "audit", "optimize", "claude-code", "plugins", "mcp", "skills"]
+}

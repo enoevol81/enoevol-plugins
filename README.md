@@ -6,6 +6,7 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 
 | Plugin | What it does |
 | --- | --- |
+| **loadout** | Audit and optimize your active Claude Code loadout — inventory of plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal. |
 
 ## Using the marketplace
 
@@ -22,8 +23,7 @@ Swap in any plugin name from the table above.
 
 ```
 enoevol-plugins/
-└── .claude-plugin/
-    └── marketplace.json        # lists all plugins
-```
-
-Each plugin is self-contained. To add a new skill, create a new top-level plugin directory with its own `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md`, then add an entry to `.claude-plugin/marketplace.json`.
+├── .claude-plugin/
+│   └── marketplace.json        # lists all plugins
+└── loadout/
+    ├── .claude-pl
