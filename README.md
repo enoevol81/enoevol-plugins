@@ -26,4 +26,9 @@ enoevol-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json        # lists all plugins
 └── loadout/
-    ├── .claude-pl
+    ├── .claude-plugin/plugin.json
+    ├── scripts/collect-inventory.py
+    └── skills/{audit,optimize}/SKILL.md
+```
+
+Each plugin is self-contained. To add a new skill, create a new top-level plugin directory with its own `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md`, then add an entry to `.claude-plugin/marketplace.json`.

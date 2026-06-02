@@ -10,3 +10,9 @@
   },
   "plugins": [
     {
+      "name": "loadout",
+      "source": "./loadout",
+      "description": "Audit and optimize your active Claude Code loadout — inventory of plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal."
+    }
+  ]
+}
