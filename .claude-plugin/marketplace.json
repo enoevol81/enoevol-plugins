@@ -33,6 +33,11 @@
       "name": "loadout",
       "source": "./loadout",
       "description": "Audit and optimize your active Claude Code loadout — inventory of plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal."
+    },
+    {
+      "name": "hands-free",
+      "source": "./hands-free",
+      "description": "Turn a plain-language desired end result into a meticulously crafted /goal command that launches a Lead-orchestrated, parallelized multi-agent workflow."
     }
   ]
 }
