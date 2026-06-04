@@ -3,11 +3,12 @@
   "description": "Turn a plain-language desired end result into a meticulously crafted /goal command that launches a Lead-orchestrated, parallelized multi-agent workflow.",
   "version": "0.1.0",
   "author": {
-    "name": "enoevol",
+    "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"
   },
   "homepage": "https://github.com/enoevol81/enoevol-plugins",
   "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
   "keywords": [
     "orchestration",
     "agents",
