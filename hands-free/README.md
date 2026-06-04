@@ -23,7 +23,7 @@ marketplace.
 /plugin marketplace add enoevol81/enoevol-plugins
 
 # 2. Install the plugin
-/plugin install hands-free@enoevol
+/plugin install hands-free@enoevol-plugins
 ```
 
 Or, for local development without installing:
@@ -42,11 +42,13 @@ The skill activates on outcome-shaped requests ("I want to end up with…",
 "just make X happen", "set it and forget it") and replies with a ready-to-run
 `/goal` block plus a short summary of any assumptions it made.
 
-You can also invoke it explicitly:
+You can also invoke it explicitly as a slash command:
 
 ```
-/hands-free:hands-free <your desired end result>
+/hands-free <your desired end result>
 ```
+
+The fully-namespaced skill form `/hands-free:hands-free <...>` also works.
 
 ## Contents
 
@@ -54,6 +56,8 @@ You can also invoke it explicitly:
 hands-free/
 ├── .claude-plugin/
 │   └── plugin.json
+├── commands/
+│   └── hands-free.md             # /hands-free slash command → delegates to skill
 └── skills/
     └── hands-free/
         ├── SKILL.md                  # operating instructions + workflow

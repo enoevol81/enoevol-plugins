@@ -11,6 +11,7 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 | **vanish-brand-discovery** | Editorial discovery research for Vanish magazine — brand profiles and feature Q&A at the convergence of fashion and outdoor design. |
 | **weavy-pipeline-director** | Expert guidance for Weavy / Figma Weave — model selection, node architecture, and scalable AI image/video pipelines. |
 | **loadout** | Audit and optimize your active Claude Code loadout — inventory of plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal. |
+| **hands-free** | Turn a plain-language desired end result into a meticulously crafted `/goal` command that launches a Lead-orchestrated, parallelized multi-agent workflow. |
 
 ## Using the marketplace
 
@@ -41,10 +42,14 @@ enoevol-plugins/
 ├── weavy-pipeline-director/
 │   ├── .claude-plugin/plugin.json
 │   └── skills/weavy-pipeline-director/{SKILL.md, references/}
-└── loadout/
+├── loadout/
+│   ├── .claude-plugin/plugin.json
+│   ├── scripts/collect-inventory.py
+│   └── skills/{audit,optimize}/SKILL.md
+└── hands-free/
     ├── .claude-plugin/plugin.json
-    ├── scripts/collect-inventory.py
-    └── skills/{audit,optimize}/SKILL.md
+    ├── commands/hands-free.md
+    └── skills/hands-free/{SKILL.md, references/, examples/}
 ```
 
 Each plugin is self-contained. To add a new skill, create a new top-level plugin directory with its own `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md`, then add an entry to `.claude-plugin/marketplace.json`.
