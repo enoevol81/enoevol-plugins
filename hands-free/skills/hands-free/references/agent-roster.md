@@ -45,10 +45,29 @@ agent in a `/goal` subtask with `[@<skill>]`.
 - "write the post / draft the email / campaign copy" → `@content`
 - "summarize / coordinate / book / triage" → `@assistant`
 
-## Model routing note
+## Model tier routing (efficiency)
 
-The orchestrator (or Mission Control auto-dispatch) selects model tiers per
-subtask: complex/diagnostic/architectural work → Opus; routine formatting/
-summarizing → Haiku; otherwise the agent's default. You do not need to specify
-models in the `/goal` — the Lead handles routing — but flag a subtask as
-`(complex)` or `(routine)` in its description if the tier is non-obvious.
+Pick the **cheapest model tier that can do the job** for each subtask, so simple
+work runs on basic models and only hard work pays for a frontier model. Tag every
+subtask with one tier token right after its `[@skill]`:
+
+| tier        | model class        | use for |
+|-------------|--------------------|---------|
+| `(basic)`   | Haiku-class        | mechanical/deterministic work: formatting, summarizing, extraction, link/render checks, file moves, simple drafts, status rollups |
+| `(standard)`| Sonnet-class       | typical build/write/research work with some judgment but no deep reasoning |
+| `(deep)`    | Opus-class         | genuinely complex/architectural/diagnostic/ambiguous work, or high-stakes review |
+
+Rules:
+
+1. **Default down.** When unsure between two tiers, choose the lower one. Reserve
+   `(deep)` for work that would visibly fail on a smaller model — don't reach for
+   it by reflex.
+2. **Tag every subtask.** Use the grammar
+   `- [@skill] (tier) <subtask> → produces <artifact> | done when <check>`.
+   The Lead reads the tier and dispatches the matching model class; if a tier is
+   omitted it falls back to the agent's default.
+3. **Reviewers can be cheap too.** A formatting/consistency review is `(basic)`;
+   a correctness or brand-voice sign-off that needs real judgment is `(deep)`.
+4. **Tier ≠ ownership.** The `[@skill]` says *who* does it; the `(tier)` says
+   *how much model* to spend. They are independent — a `@coder` doing a trivial
+   config edit is still `(basic)`.
