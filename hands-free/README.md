@@ -13,6 +13,18 @@ Core design rule: **linear spine, parallel ribs** — milestones run in dependen
 order, only genuinely-independent subtasks run in parallel, and every
 outward-facing action sits behind an explicit approval gate.
 
+Each emitted goal also ships with:
+
+- **Cost-aware model routing** — every subtask is tagged with a model tier
+  (`basic`/`standard`/`deep`), defaulting to the cheapest model that can do the
+  job so simple work doesn't pay frontier-model prices.
+- **Hands-free execution mode** — interactive CLI/desktop runs use elevated
+  (auto-accept) permissions and run to completion, halting only on a high-level
+  issue or a HUMAN APPROVAL gate (gates always bind).
+- **Headless run instructions** — a ready-to-paste `claude -p …` snippet for
+  running the same goal unattended (cron/CI/background), emitted alongside the
+  block.
+
 ## Install
 
 Distributed via the [enoevol-plugins](https://github.com/enoevol81/enoevol-plugins)
@@ -83,3 +95,11 @@ hands-free/
   each sub-agent with only the slice it needs — its subtask, the named upstream
   artifact(s), and binding constraints — not the main-window conversation. This
   keeps token consumption (and cost) down across the whole run.
+- **Model tiers, defaulted down.** Subtasks carry a `(basic|standard|deep)` tier;
+  the Lead dispatches the matching model class. See
+  `skills/hands-free/references/agent-roster.md` → "Model tier routing".
+- **Elevated, autonomous runs.** The `EXECUTION MODE` block tells interactive
+  CLI/desktop runs to auto-accept permissions and only stop for high-level issues
+  or approval gates. For unattended runs, the emitted "Run it headless" section
+  maps this onto `claude -p` flags (`--permission-mode acceptEdits` or, in a
+  trusted dir, `--dangerously-skip-permissions`).
