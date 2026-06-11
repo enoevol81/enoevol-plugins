@@ -1,0 +1,8 @@
+# Plugin manifests, skills, and commands must use LF line endings.
+# Claude Code's frontmatter parser matches the `---` delimiter exactly;
+# a trailing CR (CRLF) breaks frontmatter parsing and the skill/command
+# fails to load. Pin these to LF regardless of platform or core.autocrlf.
+*.md           text eol=lf
+*.json         text eol=lf
+**/SKILL.md    text eol=lf
+**/commands/*  text eol=lf
