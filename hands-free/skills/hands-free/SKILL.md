@@ -55,11 +55,14 @@ design there.
    rule: never post/ship without approval.
 6. **The `/goal` is self-contained.** A fresh orchestrator with no prior context
    must be able to execute it from the block alone.
-7. **Budget: ≤ 4000 characters.** The emitted `/goal [...]` block must stay under
-   4000 characters — Claude's hard limit for a goal. Be terse: every word earns
-   its place. Cut filler, collapse redundant phrasing, and prefer the fewest
-   milestones/subtasks that still reach the outcome. If the block runs long,
-   compress before emitting — never truncate mid-structure.
+7. **Budget-first: build lean, target ≤ 3500 (4000 hard ceiling).** Do not write
+   up to Claude's 4000-character goal limit and trim back — that lands at the
+   edge every time. Build to a per-section budget so the block is lean the first
+   time, leaving ~500 characters of headroom. Spend the fixed boilerplate
+   (canonical EXECUTION MODE + LEAD, copied verbatim) first, then fit the variable
+   content — mostly milestones/subtasks — into what remains. Count at the end to
+   confirm, not to rescue. See `references/goal-spec.md` → "Budget: write lean by
+   construction".
 8. **Lean context, low tokens.** Sub-agents start fresh. The Lead hands each one
    only the slice it needs — its subtask, the named input artifact(s), and the
    constraints that bind it — never the main-window conversation or unrelated
@@ -110,11 +113,21 @@ Build the orchestration plan:
   CLI/desktop runs, halt only on a high-level issue or approval gate.
 
 ### Phase 4 — Emit the `/goal` + headless instructions
-Render one fenced `/goal [...]` block following the exact structure in
-`references/goal-spec.md`, including the `EXECUTION MODE` block and a `(tier)` tag
-on every subtask. Before emitting, **count the characters in the block and confirm
-it is under 4000**; if it is over, compress (tighten wording, drop empty sections,
-merge or cut non-essential subtasks) until it fits — do not truncate mid-structure.
+Build the block to budget, then render it. Work in this order so it is lean by
+construction rather than trimmed after the fact:
+1. **Lay the fixed boilerplate first.** Drop in the canonical `EXECUTION MODE` and
+   `LEAD` paragraphs from `references/goal-spec.md` verbatim (~1000 chars with
+   scaffolding). Do not re-author them.
+2. **Budget the remaining ~2500** across OUTCOME, SUCCESS CRITERIA, CONSTRAINTS,
+   ASSUMPTIONS, MILESTONES, DELIVERABLES, ESCALATION — see the budget table in
+   `references/goal-spec.md`. Milestones/subtasks are the main lever.
+3. **Fill each section to its allowance**, using the terse subtask grammar
+   (`[@skill] (tier) subtask → artifact | done when check`) and the fewest
+   milestones that reach the outcome. If the skeleton already projects past
+   ~3500, cut scope *before* writing — don't write fat and shave.
+4. **Count to confirm.** The block must be ≤ 3500 (4000 hard ceiling). If a
+   finished draft is over, cut/merge non-essential subtasks first — never truncate
+   mid-structure, and leave the canonical boilerplate intact.
 
 After the block:
 1. Add a 2–3 line plain-language summary and list any assumptions you made so the
@@ -143,8 +156,9 @@ line for this skill.
 - Never invent capabilities or agents not in the roster; if the outcome needs a
   skill that does not exist, say so and propose the closest fit.
 - Keep the `/goal` block self-contained and copy-paste runnable.
-- Keep the `/goal` block **under 4000 characters** — Claude's goal limit. Verify
-  the count before emitting and compress if needed.
+- Keep the `/goal` block **≤ 3500 characters (4000 hard ceiling)** — build to
+  budget so it is lean by construction; verify the count to confirm, not to
+  rescue. Use the canonical EXECUTION MODE and LEAD blocks verbatim.
 - Instruct the Lead to dispatch each sub-agent with only the minimal context it
   needs; never pass the whole main-window conversation downstream.
 - Surface assumptions; never bury a guess inside the goal as if it were a fact.
