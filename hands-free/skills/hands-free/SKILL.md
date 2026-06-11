@@ -65,6 +65,18 @@ design there.
    constraints that bind it — never the main-window conversation or unrelated
    milestone output. Keep both the `/goal` and every downstream dispatch as
    token-light as the outcome allows.
+9. **Cheapest viable model per subtask.** Tag each subtask with a model tier
+   (`basic`/`standard`/`deep`) and default *down* — simple, mechanical work
+   (formatting, summarizing, extraction, link checks, trivial edits) runs on a
+   basic model; reserve `deep` for genuinely complex or high-stakes work. See
+   `references/agent-roster.md` → "Model tier routing".
+10. **Run autonomously, halt only on high-level issues.** The emitted `/goal`
+    assumes interactive CLI/desktop runs operate with elevated (auto-accept)
+    permissions and execute to completion without pausing for routine
+    confirmations — stopping only for a high-level issue (destructive/irreversible
+    action, outward-facing publish, security/data-loss risk, over-budget spend, or
+    a step still failing after one retry) or an explicit HUMAN APPROVAL gate. This
+    autonomy never overrides an approval gate.
 
 ## Workflow
 
@@ -88,19 +100,30 @@ the wrong outcome.
 Build the orchestration plan:
 - Break the outcome into an **ordered list of milestones** (the linear spine).
 - For each milestone, list the **parallelizable subtasks** and assign each to a
-  **skilled sub-agent** from `references/agent-roster.md`.
+  **skilled sub-agent** from `references/agent-roster.md`, plus a **model tier**
+  (`basic`/`standard`/`deep`) — default to the cheapest tier that can do the job.
 - Mark **dependencies** between milestones and the **gates** (review/approval)
   between them.
 - Define **success criteria** for the goal and a **definition of done** per
   milestone.
+- Set the **EXECUTION MODE** contract: elevated permissions on interactive
+  CLI/desktop runs, halt only on a high-level issue or approval gate.
 
-### Phase 4 — Emit the `/goal`
+### Phase 4 — Emit the `/goal` + headless instructions
 Render one fenced `/goal [...]` block following the exact structure in
-`references/goal-spec.md`. Before emitting, **count the characters in the block
-and confirm it is under 4000**; if it is over, compress (tighten wording, drop
-empty sections, merge or cut non-essential subtasks) until it fits — do not
-truncate mid-structure. After the block, add a 2–3 line plain-language summary
-and list any assumptions you made so the user can correct course before launch.
+`references/goal-spec.md`, including the `EXECUTION MODE` block and a `(tier)` tag
+on every subtask. Before emitting, **count the characters in the block and confirm
+it is under 4000**; if it is over, compress (tighten wording, drop empty sections,
+merge or cut non-essential subtasks) until it fits — do not truncate mid-structure.
+
+After the block:
+1. Add a 2–3 line plain-language summary and list any assumptions you made so the
+   user can correct course before launch.
+2. Append a **"Run it headless"** section (a fenced shell snippet + one caution
+   line) showing how to run the goal non-interactively — per the
+   "Headless-run addendum" in `references/goal-spec.md`. This lives *outside* the
+   `/goal` block and does not count against the 4000-character budget.
+
 Do **not** start executing the work yourself — emitting the command is the finish
 line for this skill.
 
