@@ -55,6 +55,16 @@ design there.
    rule: never post/ship without approval.
 6. **The `/goal` is self-contained.** A fresh orchestrator with no prior context
    must be able to execute it from the block alone.
+7. **Budget: ≤ 4000 characters.** The emitted `/goal [...]` block must stay under
+   4000 characters — Claude's hard limit for a goal. Be terse: every word earns
+   its place. Cut filler, collapse redundant phrasing, and prefer the fewest
+   milestones/subtasks that still reach the outcome. If the block runs long,
+   compress before emitting — never truncate mid-structure.
+8. **Lean context, low tokens.** Sub-agents start fresh. The Lead hands each one
+   only the slice it needs — its subtask, the named input artifact(s), and the
+   constraints that bind it — never the main-window conversation or unrelated
+   milestone output. Keep both the `/goal` and every downstream dispatch as
+   token-light as the outcome allows.
 
 ## Workflow
 
@@ -86,10 +96,13 @@ Build the orchestration plan:
 
 ### Phase 4 — Emit the `/goal`
 Render one fenced `/goal [...]` block following the exact structure in
-`references/goal-spec.md`. After the block, add a 2–3 line plain-language
-summary and list any assumptions you made so the user can correct course before
-launch. Do **not** start executing the work yourself — emitting the command is
-the finish line for this skill.
+`references/goal-spec.md`. Before emitting, **count the characters in the block
+and confirm it is under 4000**; if it is over, compress (tighten wording, drop
+empty sections, merge or cut non-essential subtasks) until it fits — do not
+truncate mid-structure. After the block, add a 2–3 line plain-language summary
+and list any assumptions you made so the user can correct course before launch.
+Do **not** start executing the work yourself — emitting the command is the finish
+line for this skill.
 
 ## Reference material
 
@@ -107,4 +120,8 @@ the finish line for this skill.
 - Never invent capabilities or agents not in the roster; if the outcome needs a
   skill that does not exist, say so and propose the closest fit.
 - Keep the `/goal` block self-contained and copy-paste runnable.
+- Keep the `/goal` block **under 4000 characters** — Claude's goal limit. Verify
+  the count before emitting and compress if needed.
+- Instruct the Lead to dispatch each sub-agent with only the minimal context it
+  needs; never pass the whole main-window conversation downstream.
 - Surface assumptions; never bury a guess inside the goal as if it were a fact.

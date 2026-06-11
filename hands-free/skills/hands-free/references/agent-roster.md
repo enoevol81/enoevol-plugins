@@ -29,6 +29,11 @@ agent in a `/goal` subtask with `[@<skill>]`.
    the work it reviews.
 4. **Cap concurrency to the real fan-out.** Don't manufacture parallel subtasks
    to look busy; only split work that is genuinely independent.
+5. **Minimal context per agent.** Each sub-agent is deployed fresh and gets only
+   what its subtask needs — the subtask itself, the named input artifact(s) from
+   upstream milestones, and the constraints that bind it. Do **not** forward the
+   main-window conversation or unrelated milestone output. Less context = fewer
+   tokens, faster runs, and tighter, on-task results.
 
 ## Mapping outcomes to roles (heuristics)
 
