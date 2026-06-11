@@ -62,57 +62,48 @@ stopping only on a high-level issue or the go-live gate.
     - Hold at staging for human go-live approval (no auto-publish).
     - Competitor set selected by the researcher.
 
-  EXECUTION MODE:
-    - On interactive CLI/desktop runs, use elevated (auto-accept) permissions and
-      run to completion without pausing for routine confirmations.
-    - Halt only for a high-level issue (destructive/irreversible action, security
-      or data-loss risk, over-budget spend, a step failing after one retry) or a
-      HUMAN APPROVAL gate.
-    - Approval gates still bind. Prefer the cheapest model tier per subtask.
+  EXECUTION MODE: On interactive CLI/desktop runs, use elevated (auto-accept)
+    permissions and run to completion; halt only for a high-level issue
+    (destructive/irreversible action, outward publish/send/deploy, security or
+    data-loss risk, over-budget spend, or a step failing after one retry) or a
+    HUMAN APPROVAL gate. Gates always bind. Prefer the cheapest viable tier.
 
   ORCHESTRATION:
-    LEAD: Execute milestones in dependency order. Dispatch each milestone's
-          parallel subtasks at once on each subtask's tagged tier, giving each
-          sub-agent only its subtask plus the named upstream artifact(s) — not this
-          whole goal's history. Run autonomously per EXECUTION MODE. Integrate
-          results, verify "done when" before advancing, and honor every gate. Never
-          cross a HUMAN APPROVAL gate without sign-off. Retry a failed subtask once
-          with feedback, then escalate. Declare complete only when all SUCCESS
-          CRITERIA are met.
+    LEAD: Run milestones in dependency order. Per milestone, dispatch all parallel
+      subtasks at once on each subtask's tier, giving each sub-agent only its
+      subtask + named input artifact(s) + binding constraints (never this whole
+      goal). Verify "done when" before advancing; honor every gate; never cross a
+      HUMAN APPROVAL gate without sign-off. Retry a failed subtask once, then
+      escalate. Declare complete only when all SUCCESS CRITERIA are met.
 
     MILESTONE 1 — Research  [depends on: none]
-      goal: Competitive + positioning brief for the feature.
       done when: brief lists 3+ competitors and a recommended value-prop angle.
       parallel subtasks:
-        - [@researcher] (standard) Analyze 3+ competitor launch pages → produces
-          competitor teardown | done when each has strengths/gaps noted w/ sources.
-        - [@researcher] (deep) Define Sneaker Panel Pro positioning vs. market →
-          produces positioning brief | done when recommended angle is stated.
+        - [@researcher] (standard) Teardown 3+ competitor launch pages → competitor
+          teardown | done when each has strengths/gaps + sources.
+        - [@researcher] (deep) Position Sneaker Panel Pro vs. market → positioning
+          brief | done when recommended angle is stated.
       gate: none
 
     MILESTONE 2 — Copy  [depends on: Milestone 1]
-      goal: On-brand landing page copy.
-      done when: full page copy drafted to the page outline.
+      done when: full page copy drafted to the outline.
       parallel subtasks:
         - [@content] (standard) Draft hero, value props, CTA from the positioning
-          brief → produces page copy | done when all sections present and on-voice.
+          brief → page copy | done when all sections present and on-voice.
       gate: review by @reviewer (brand voice + pillars) — (deep)
 
     MILESTONE 3 — Build  [depends on: Milestone 2]
-      goal: Implemented landing page.
       done when: page builds and renders with approved copy.
       parallel subtasks:
-        - [@coder] (standard) Build the landing page with approved copy → produces
-          page in the repo | done when it builds and renders locally.
-        - [@tester] (basic) Add render/link checks → produces checks | done passing.
+        - [@coder] (standard) Build the page with approved copy → page in repo |
+          done when it builds and renders locally.
+        - [@tester] (basic) Add render/link checks → checks | done when passing.
       gate: review by @reviewer (functionality) — (standard)
 
     MILESTONE 4 — Stage & verify  [depends on: Milestone 3]
-      goal: Page staged and verified, ready for go-live.
       done when: staged URL verified against SUCCESS CRITERIA.
       parallel subtasks:
-        - [@devops] (basic) Deploy to staging → produces staged URL | done when
-          reachable.
+        - [@devops] (basic) Deploy to staging → staged URL | done when reachable.
       gate: HUMAN APPROVAL before go-live.
 
   DELIVERABLES:
@@ -149,7 +140,8 @@ run before go-live). `acceptEdits` is the safer middle ground. The Lead routes
 per-subtask model tiers itself; pass `--model <id>` only to pin one tier for the
 whole run.
 
-*(Budget check: the `/goal` block above is ~3.6k characters — under the
-4000-character goal limit; the "Run it headless" section sits outside the block
-and doesn't count. Always count before emitting; if you're over, compress per
-`references/goal-spec.md` rather than truncating.)*
+*(Budget check: the `/goal` block above is ~3.5k characters — under the ≤3500
+target, with headroom below the 4000 hard ceiling. It was built to budget:
+canonical EXECUTION MODE + LEAD dropped in verbatim first, then the variable
+sections (milestones are the main lever) filled to fit — not written long and
+trimmed. The "Run it headless" section sits outside the block and doesn't count.)*

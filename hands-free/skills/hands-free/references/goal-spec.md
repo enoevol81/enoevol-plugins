@@ -4,9 +4,12 @@ The `/goal` block is the contract handed to the **Lead orchestration agent**. It
 must be self-contained: a fresh orchestrator with no prior conversation context
 executes it verbatim. Render it as a single fenced code block.
 
-**Hard size limit: the entire `/goal [...]` block must be under 4000 characters**
-— Claude's limit for a goal. Write tersely from the start and verify the count
-before emitting; see "Budget & compression" below.
+**Size budget: aim for ≤ 3500 characters; 4000 is the hard ceiling.** 4000 is
+Claude's limit for a goal, but do **not** write up to it and trim back. Build the
+block lean from the start against a per-section budget, keeping ~500 characters of
+headroom. Most of the block is fixed boilerplate (EXECUTION MODE + LEAD) you copy
+verbatim; the variable content is milestones/subtasks. See "Budget: write lean by
+construction" below.
 
 ## Anatomy
 
@@ -25,19 +28,19 @@ before emitting; see "Budget & compression" below.
   ASSUMPTIONS:
     - <every default you chose on the user's behalf>
 
-  EXECUTION MODE:
-    - When run from an interactive CLI/desktop session, operate with elevated
-      (auto-accept) permissions and run to completion without pausing for routine
-      confirmations.
-    - Only halt for a HIGH-LEVEL issue: a destructive/irreversible action, an
-      outward-facing publish/send/deploy, a security or data-loss risk, a spend
-      over budget, or the same step failing after one retry.
-    - HUMAN APPROVAL gates still bind — elevated permissions remove routine
-      tool-permission friction, never an explicit approval gate.
-    - Prefer the cheapest model tier per subtask (see tier tags below).
+  EXECUTION MODE: On interactive CLI/desktop runs, use elevated (auto-accept)
+    permissions and run to completion; halt only for a high-level issue
+    (destructive/irreversible action, outward publish/send/deploy, security or
+    data-loss risk, over-budget spend, or a step failing after one retry) or a
+    HUMAN APPROVAL gate. Gates always bind. Prefer the cheapest viable tier.
 
   ORCHESTRATION:
-    LEAD: <the orchestrator's standing instructions — see "Lead mandate" below>
+    LEAD: Run milestones in dependency order. Per milestone, dispatch all parallel
+      subtasks at once on each subtask's tier, giving each sub-agent only its
+      subtask + named input artifact(s) + binding constraints (never this whole
+      goal). Verify "done when" before advancing; honor every gate; never cross a
+      HUMAN APPROVAL gate without sign-off. Retry a failed subtask once, then
+      escalate. Declare complete only when all SUCCESS CRITERIA are met.
 
     MILESTONE 1 — <name>  [depends on: none]
       goal: <what this milestone produces>
@@ -77,13 +80,14 @@ before emitting; see "Budget & compression" below.
 - **ASSUMPTIONS** — list every default chosen for the user. Empty only if the
   user specified everything.
 - **MILESTONES** — the **linear spine**. Ordered, each with an explicit
-  `depends on`. A milestone may only start once its dependencies are `done`.
-- **EXECUTION MODE** — the autonomy + efficiency contract. State that interactive
-  CLI/desktop runs use elevated (auto-accept) permissions and run to completion,
-  halting only for a high-level issue or a HUMAN APPROVAL gate, and that subtasks
-  prefer the cheapest viable model tier. Keep it to the bullets shown in the
-  anatomy; tighten or drop the two least-relevant bullets first under budget
-  pressure, but never drop the "approval gates still bind" line.
+  `depends on`. A milestone may only start once its dependencies are `done`. The
+  `goal:` line is optional — drop it when the milestone name plus `done when`
+  already convey the intent (a cheap, lossless way to stay lean).
+- **EXECUTION MODE** — the autonomy + efficiency contract. This is **fixed
+  boilerplate (~385 chars): copy the canonical paragraph from the anatomy above
+  verbatim.** Do not re-author or expand it — it already covers elevated perms,
+  halt-only-on-high-level-issue, binding gates, and cheapest-tier routing. Only
+  the rare goal needs an extra clause; never balloon it into per-bullet prose.
 - **parallel subtasks** — the **ribs**. Independent units *within* one milestone
   that the Lead dispatches concurrently to skilled sub-agents. Each line:
   `[@skill] (tier) <imperative subtask> → produces <artifact> | done when <check>`.
@@ -96,25 +100,13 @@ before emitting; see "Budget & compression" below.
 
 ## Lead mandate (standing instructions for the orchestrator)
 
-Embed these as the `LEAD:` value:
-
-> Execute milestones strictly in dependency order. For each milestone, dispatch
-> all parallel subtasks at once to the named skilled sub-agents on the model tier
-> tagged in each subtask, then collect and integrate their artifacts. Dispatch
-> each sub-agent with only the context it needs — its subtask, the named input
-> artifact(s), and the binding constraints — not this conversation or unrelated
-> milestone output, to keep token use low. Run autonomously under EXECUTION MODE:
-> with elevated permissions, do not pause for routine confirmations — only stop
-> for a high-level issue or a HUMAN APPROVAL gate. Verify the milestone's "done
-> when" before advancing. Honor every gate — never cross a HUMAN APPROVAL gate
-> without explicit sign-off. On subtask failure, retry once with feedback, then
-> escalate. Maintain a running status of milestone/subtask state. Declare the goal
-> complete only when all SUCCESS CRITERIA are met; then surface the DELIVERABLES.
-
-Keep the mandate terse — when space is tight, the LEAD value may be shortened to
-its essentials (dependency order, fan out per milestone, minimal per-agent
-context, honor gates, retry-once-then-escalate, verify before complete) as long
-as the intent survives.
+The `LEAD:` value is **fixed boilerplate (~474 chars): copy the canonical
+paragraph from the anatomy above verbatim.** It already encodes every essential —
+dependency order, fan out per milestone on the tagged tier, minimal per-agent
+context, verify "done when", honor gates (never cross HUMAN APPROVAL without
+sign-off), retry-once-then-escalate, and declare complete only on all SUCCESS
+CRITERIA. Do not re-author it per goal; re-typing from memory is how it bloats.
+Only add a clause if a specific goal genuinely needs one.
 
 ## Headless-run addendum (emitted *after* the block)
 
@@ -141,22 +133,58 @@ the gate). Use `--permission-mode acceptEdits` for a safer middle ground, and ad
 `--model <id>` only to pin a single tier for the whole run (otherwise the Lead
 routes per-subtask tiers itself).
 
-## Budget & compression (≤ 4000 characters)
+## Budget: write lean by construction (target ≤ 3500, ceiling 4000)
 
-The whole block — from `/goal [` to the closing `]` — must be under 4000
-characters. Write lean from the start, then verify the count before emitting. If
-it runs over, compress in this order until it fits:
+Do not write to the 4000 ceiling and trim back — that consistently lands at the
+edge. Build the block to a **per-section budget** so it is lean the first time,
+and treat the character count as a *confirmation* at the end, not a rescue step.
 
-1. **Tighten wording.** Strip filler ("in order to" → "to"), drop articles where
-   meaning survives, and use the terse subtask grammar
-   `[@skill] subtask → artifact | done when check`.
-2. **Drop empty sections.** Omit ASSUMPTIONS if the user specified everything;
-   omit CONSTRAINTS if there are none. Don't emit empty headers.
-3. **Shorten the LEAD mandate** to its essentials (see Lead mandate note above).
-4. **Cut or merge non-essential subtasks/milestones.** Keep only the spine and
-   ribs that genuinely move toward the outcome; never manufacture work.
-5. **Never truncate mid-structure.** A goal that stops mid-milestone is worse
-   than a leaner, complete one. Compress, don't clip.
+**Step 1 — Spend the fixed boilerplate first (~1000 chars, non-negotiable).**
+Drop in the two canonical blocks verbatim and the scaffolding:
+
+| Part | Budget |
+| --- | --- |
+| Scaffolding (`/goal [`, headers, `]`) | ~150 |
+| EXECUTION MODE (canonical, verbatim) | ~385 |
+| LEAD (canonical, verbatim) | ~474 |
+
+**Step 2 — Budget the variable content against the remaining ~2500.** Sketch the
+skeleton, then fill each section to its allowance:
+
+| Section | Budget |
+| --- | --- |
+| OUTCOME | ~150 |
+| SUCCESS CRITERIA (2–6 bullets) | ~350 |
+| CONSTRAINTS | ~250 |
+| ASSUMPTIONS | ~250 |
+| MILESTONES + subtasks (the main lever) | ~1300 |
+| DELIVERABLES | ~120 |
+| ESCALATION | ~120 |
+
+These are guides, not quotas — borrow across rows freely, but if the whole draft
+projects past ~3500, cut scope *before* you write it, don't write fat and shave.
+The milestones/subtasks block is where almost all variation lives; spend the most
+discipline there:
+
+- Use the terse subtask grammar verbatim: `[@skill] (tier) subtask → artifact |
+  done when check`. One line per subtask; no prose paragraphs.
+- Keep the fewest milestones that reach the outcome. If two milestones could be
+  one, make them one.
+- Omit empty sections entirely — no ASSUMPTIONS header if you assumed nothing, no
+  CONSTRAINTS header if there are none. Never emit an empty header.
+
+**If a finished draft still projects over 4000** (rare, when boilerplate is
+already minimal), compress in this order — never truncate mid-structure:
+
+1. Cut or merge non-essential subtasks/milestones (keep only spine + ribs that
+   move toward the outcome; never manufacture work).
+2. Tighten variable wording — strip filler ("in order to" → "to"), drop articles
+   where meaning survives.
+3. Trim CONSTRAINTS/ASSUMPTIONS to the load-bearing ones.
+
+Leave the canonical EXECUTION MODE and LEAD blocks intact — they are already
+minimal, so cut variable content first. A goal that stops mid-milestone is worse
+than a leaner, complete one: compress, don't clip.
 
 This budget also serves token frugality — a tight goal is cheaper for the Lead
 and every sub-agent to carry.
@@ -172,9 +200,10 @@ and every sub-agent to carry.
       gates still bind).
 - [ ] No parallel subtask depends on a sibling in the same milestone.
 - [ ] Every outward-facing action sits behind an explicit gate.
-- [ ] A "Run it headless" addendum follows the block (outside the 4000 budget).
+- [ ] EXECUTION MODE and LEAD are the canonical blocks, copied verbatim (not
+      re-authored).
+- [ ] A "Run it headless" addendum follows the block (outside the budget).
 - [ ] Assumptions are listed, not buried.
 - [ ] The block reads correctly with zero external context.
-- [ ] The LEAD mandate tells the orchestrator to give each sub-agent only the
-      context it needs (no full-conversation hand-off).
-- [ ] **The whole block is under 4000 characters** — counted, not estimated.
+- [ ] **The whole block is ≤ 3500 characters (4000 hard ceiling)** — counted, not
+      estimated, with headroom left rather than written to the edge.
