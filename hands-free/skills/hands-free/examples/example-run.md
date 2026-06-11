@@ -30,10 +30,14 @@ module; competitor set chosen by the researcher; staging in the existing repo).
 
 ## Phase 3 — Decompose & design
 
-- M1 Research (parallel: competitors, feature positioning) → gate: none
-- M2 Copy (depends on M1) → gate: review by @reviewer (brand voice)
-- M3 Build (depends on M2) → gate: review by @reviewer (functionality)
-- M4 Stage & verify (depends on M3) → gate: HUMAN APPROVAL before go-live
+- M1 Research (parallel: competitors `standard`, positioning `deep`) → gate: none
+- M2 Copy `standard` (depends on M1) → gate: review by @reviewer (brand voice)
+- M3 Build `standard` + tests `basic` (depends on M2) → gate: review (functionality)
+- M4 Stage & verify `basic` (depends on M3) → gate: HUMAN APPROVAL before go-live
+
+Tiers default down: link checks and staging are `basic`, the judgment-heavy
+positioning call is `deep`. The whole run is hands-free under elevated permissions,
+stopping only on a high-level issue or the go-live gate.
 
 ## Phase 4 — Emit the `/goal`
 
@@ -58,22 +62,31 @@ module; competitor set chosen by the researcher; staging in the existing repo).
     - Hold at staging for human go-live approval (no auto-publish).
     - Competitor set selected by the researcher.
 
+  EXECUTION MODE:
+    - On interactive CLI/desktop runs, use elevated (auto-accept) permissions and
+      run to completion without pausing for routine confirmations.
+    - Halt only for a high-level issue (destructive/irreversible action, security
+      or data-loss risk, over-budget spend, a step failing after one retry) or a
+      HUMAN APPROVAL gate.
+    - Approval gates still bind. Prefer the cheapest model tier per subtask.
+
   ORCHESTRATION:
     LEAD: Execute milestones in dependency order. Dispatch each milestone's
-          parallel subtasks at once, giving each sub-agent only its subtask plus
-          the named upstream artifact(s) — not this whole goal's history.
-          Integrate results, verify "done when" before advancing, and honor every
-          gate. Never cross a HUMAN APPROVAL gate without sign-off. Retry a failed
-          subtask once with feedback, then escalate. Declare complete only when
-          all SUCCESS CRITERIA are met.
+          parallel subtasks at once on each subtask's tagged tier, giving each
+          sub-agent only its subtask plus the named upstream artifact(s) — not this
+          whole goal's history. Run autonomously per EXECUTION MODE. Integrate
+          results, verify "done when" before advancing, and honor every gate. Never
+          cross a HUMAN APPROVAL gate without sign-off. Retry a failed subtask once
+          with feedback, then escalate. Declare complete only when all SUCCESS
+          CRITERIA are met.
 
     MILESTONE 1 — Research  [depends on: none]
       goal: Competitive + positioning brief for the feature.
       done when: brief lists 3+ competitors and a recommended value-prop angle.
       parallel subtasks:
-        - [@researcher] Analyze 3+ competitor launch pages → produces competitor
-          teardown | done when each has strengths/gaps noted with sources.
-        - [@researcher] Define Sneaker Panel Pro positioning vs. market →
+        - [@researcher] (standard) Analyze 3+ competitor launch pages → produces
+          competitor teardown | done when each has strengths/gaps noted w/ sources.
+        - [@researcher] (deep) Define Sneaker Panel Pro positioning vs. market →
           produces positioning brief | done when recommended angle is stated.
       gate: none
 
@@ -81,24 +94,25 @@ module; competitor set chosen by the researcher; staging in the existing repo).
       goal: On-brand landing page copy.
       done when: full page copy drafted to the page outline.
       parallel subtasks:
-        - [@content] Draft hero, value props, CTA from the positioning brief →
-          produces page copy | done when all sections present and on-voice.
-      gate: review by @reviewer (brand voice + pillars)
+        - [@content] (standard) Draft hero, value props, CTA from the positioning
+          brief → produces page copy | done when all sections present and on-voice.
+      gate: review by @reviewer (brand voice + pillars) — (deep)
 
     MILESTONE 3 — Build  [depends on: Milestone 2]
       goal: Implemented landing page.
       done when: page builds and renders with approved copy.
       parallel subtasks:
-        - [@coder] Build the landing page with approved copy → produces page in
-          the repo | done when it builds and renders locally.
-        - [@tester] Add render/link checks → produces checks | done when passing.
-      gate: review by @reviewer (functionality)
+        - [@coder] (standard) Build the landing page with approved copy → produces
+          page in the repo | done when it builds and renders locally.
+        - [@tester] (basic) Add render/link checks → produces checks | done passing.
+      gate: review by @reviewer (functionality) — (standard)
 
     MILESTONE 4 — Stage & verify  [depends on: Milestone 3]
       goal: Page staged and verified, ready for go-live.
       done when: staged URL verified against SUCCESS CRITERIA.
       parallel subtasks:
-        - [@devops] Deploy to staging → produces staged URL | done when reachable.
+        - [@devops] (basic) Deploy to staging → produces staged URL | done when
+          reachable.
       gate: HUMAN APPROVAL before go-live.
 
   DELIVERABLES:
@@ -112,9 +126,30 @@ module; competitor set chosen by the researcher; staging in the existing repo).
 
 **Summary for the user:** This goal researches competitors, writes on-brand copy
 (reviewed for voice), builds and tests the page, stages it, and stops for your
-go-live approval. Assumptions: page only, hold-for-approval, 2-week window —
-tell me to adjust any of these before launching.
+go-live approval. It runs hands-free under elevated permissions and only stops on
+a high-level issue or the go-live gate; simple steps (link checks, staging) run on
+basic models to save cost. Assumptions: page only, hold-for-approval, 2-week
+window — tell me to adjust any of these before launching.
 
-*(Budget check: the block above is ~3.3k characters — under the 4000-character
-goal limit. Always count before emitting; if you're over, compress per
+### Run it headless
+
+```bash
+# Save the /goal block above to goal.txt, then run unattended:
+claude -p "$(cat goal.txt)" \
+  --permission-mode acceptEdits \   # auto-accept edits; HUMAN APPROVAL still pauses
+  --output-format stream-json --verbose
+
+# Fully unattended (trusted/sandboxed dir only — skips ALL prompts):
+claude -p "$(cat goal.txt)" --dangerously-skip-permissions
+```
+
+`--dangerously-skip-permissions` bypasses every permission prompt — use it only in
+a repo/dir you trust, and wire the HUMAN APPROVAL gate in yourself (e.g. stop the
+run before go-live). `acceptEdits` is the safer middle ground. The Lead routes
+per-subtask model tiers itself; pass `--model <id>` only to pin one tier for the
+whole run.
+
+*(Budget check: the `/goal` block above is ~3.6k characters — under the
+4000-character goal limit; the "Run it headless" section sits outside the block
+and doesn't count. Always count before emitting; if you're over, compress per
 `references/goal-spec.md` rather than truncating.)*
