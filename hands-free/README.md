@@ -76,3 +76,10 @@ hands-free/
   if a fixed `/goal` schema exists there, keep `references/goal-spec.md` in sync.
 - The agent roster mirrors Mission Control's roles (`researcher`, `coder`,
   `tester`, `reviewer`, `devops`, `content`, `assistant`).
+- **Goals are capped at 4000 characters** — Claude's limit for a goal. The skill
+  writes lean, counts the block before emitting, and compresses (never truncates)
+  if it runs over. See `references/goal-spec.md` → "Budget & compression".
+- **Lean context downstream.** The emitted goal instructs the Lead to dispatch
+  each sub-agent with only the slice it needs — its subtask, the named upstream
+  artifact(s), and binding constraints — not the main-window conversation. This
+  keeps token consumption (and cost) down across the whole run.

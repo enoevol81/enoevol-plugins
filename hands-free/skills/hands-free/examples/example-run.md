@@ -60,10 +60,12 @@ module; competitor set chosen by the researcher; staging in the existing repo).
 
   ORCHESTRATION:
     LEAD: Execute milestones in dependency order. Dispatch each milestone's
-          parallel subtasks at once, integrate results, verify "done when" before
-          advancing, and honor every gate. Never cross a HUMAN APPROVAL gate
-          without sign-off. Retry a failed subtask once with feedback, then
-          escalate. Declare complete only when all SUCCESS CRITERIA are met.
+          parallel subtasks at once, giving each sub-agent only its subtask plus
+          the named upstream artifact(s) — not this whole goal's history.
+          Integrate results, verify "done when" before advancing, and honor every
+          gate. Never cross a HUMAN APPROVAL gate without sign-off. Retry a failed
+          subtask once with feedback, then escalate. Declare complete only when
+          all SUCCESS CRITERIA are met.
 
     MILESTONE 1 — Research  [depends on: none]
       goal: Competitive + positioning brief for the feature.
@@ -112,3 +114,7 @@ module; competitor set chosen by the researcher; staging in the existing repo).
 (reviewed for voice), builds and tests the page, stages it, and stops for your
 go-live approval. Assumptions: page only, hold-for-approval, 2-week window —
 tell me to adjust any of these before launching.
+
+*(Budget check: the block above is ~3.3k characters — under the 4000-character
+goal limit. Always count before emitting; if you're over, compress per
+`references/goal-spec.md` rather than truncating.)*

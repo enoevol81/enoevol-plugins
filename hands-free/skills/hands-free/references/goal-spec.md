@@ -4,6 +4,10 @@ The `/goal` block is the contract handed to the **Lead orchestration agent**. It
 must be self-contained: a fresh orchestrator with no prior conversation context
 executes it verbatim. Render it as a single fenced code block.
 
+**Hard size limit: the entire `/goal [...]` block must be under 4000 characters**
+— Claude's limit for a goal. Write tersely from the start and verify the count
+before emitting; see "Budget & compression" below.
+
 ## Anatomy
 
 ```
@@ -77,11 +81,39 @@ Embed these as the `LEAD:` value:
 
 > Execute milestones strictly in dependency order. For each milestone, dispatch
 > all parallel subtasks at once to the named skilled sub-agents, then collect and
-> integrate their artifacts. Verify the milestone's "done when" before advancing.
-> Honor every gate — never cross a HUMAN APPROVAL gate without explicit sign-off.
-> On subtask failure, retry once with feedback, then escalate. Maintain a running
-> status of milestone/subtask state. Declare the goal complete only when all
-> SUCCESS CRITERIA are met; then surface the DELIVERABLES.
+> integrate their artifacts. Dispatch each sub-agent with only the context it
+> needs — its subtask, the named input artifact(s), and the binding constraints —
+> not this conversation or unrelated milestone output, to keep token use low.
+> Verify the milestone's "done when" before advancing. Honor every gate — never
+> cross a HUMAN APPROVAL gate without explicit sign-off. On subtask failure, retry
+> once with feedback, then escalate. Maintain a running status of milestone/
+> subtask state. Declare the goal complete only when all SUCCESS CRITERIA are met;
+> then surface the DELIVERABLES.
+
+Keep the mandate terse — when space is tight, the LEAD value may be shortened to
+its essentials (dependency order, fan out per milestone, minimal per-agent
+context, honor gates, retry-once-then-escalate, verify before complete) as long
+as the intent survives.
+
+## Budget & compression (≤ 4000 characters)
+
+The whole block — from `/goal [` to the closing `]` — must be under 4000
+characters. Write lean from the start, then verify the count before emitting. If
+it runs over, compress in this order until it fits:
+
+1. **Tighten wording.** Strip filler ("in order to" → "to"), drop articles where
+   meaning survives, and use the terse subtask grammar
+   `[@skill] subtask → artifact | done when check`.
+2. **Drop empty sections.** Omit ASSUMPTIONS if the user specified everything;
+   omit CONSTRAINTS if there are none. Don't emit empty headers.
+3. **Shorten the LEAD mandate** to its essentials (see Lead mandate note above).
+4. **Cut or merge non-essential subtasks/milestones.** Keep only the spine and
+   ribs that genuinely move toward the outcome; never manufacture work.
+5. **Never truncate mid-structure.** A goal that stops mid-milestone is worse
+   than a leaner, complete one. Compress, don't clip.
+
+This budget also serves token frugality — a tight goal is cheaper for the Lead
+and every sub-agent to carry.
 
 ## Quality bar before you emit
 
@@ -92,3 +124,6 @@ Embed these as the `LEAD:` value:
 - [ ] Every outward-facing action sits behind an explicit gate.
 - [ ] Assumptions are listed, not buried.
 - [ ] The block reads correctly with zero external context.
+- [ ] The LEAD mandate tells the orchestrator to give each sub-agent only the
+      context it needs (no full-conversation hand-off).
+- [ ] **The whole block is under 4000 characters** — counted, not estimated.
