@@ -70,6 +70,9 @@ hands-free/
 │   └── plugin.json
 ├── commands/
 │   └── hands-free.md             # /hands-free slash command → delegates to skill
+├── hooks/
+│   ├── hooks.json                # registers the Stop hook below
+│   └── enforce-goal-budget.sh    # Stop hook: blocks if an emitted /goal is over budget
 └── skills/
     └── hands-free/
         ├── SKILL.md                  # operating instructions + workflow
@@ -77,6 +80,8 @@ hands-free/
         │   ├── goal-spec.md          # canonical /goal [...] structure
         │   ├── agent-roster.md       # skilled sub-agents + parallelization rules
         │   └── exploration.md        # context-refinement question checklist
+        ├── scripts/
+        │   └── check-goal-budget.sh  # size gate — isolates + counts the /goal block
         └── examples/
             └── example-run.md        # full worked request → /goal
 ```
@@ -95,6 +100,15 @@ hands-free/
   rather than writing long and trimming back. It counts the block to confirm, and
   compresses (never truncates) only in the rare case it still runs over. See
   `references/goal-spec.md` → "Budget: write lean by construction".
+- **The budget is enforced, not just requested.** Two mechanical guardrails back
+  the prose rules so a block can't silently land at 6–12k characters:
+  `skills/hands-free/scripts/check-goal-budget.sh` isolates the `/goal [ … ]`
+  block and fails above the 4000 ceiling, and a bundled **Stop hook**
+  (`hooks/enforce-goal-budget.sh`) runs it automatically — if the final turn
+  emits an over-ceiling `/goal` block, the hook blocks the stop and tells the
+  model to compress and re-emit. The hook is a strict no-op on any turn that
+  doesn't emit a `/goal` block, and fails open (allows the stop) if its
+  dependencies are missing.
 - **Lean context downstream.** The emitted goal instructs the Lead to dispatch
   each sub-agent with only the slice it needs — its subtask, the named upstream
   artifact(s), and binding constraints — not the main-window conversation. This
