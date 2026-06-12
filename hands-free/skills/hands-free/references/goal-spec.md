@@ -138,6 +138,9 @@ routes per-subtask tiers itself).
 Do not write to the 4000 ceiling and trim back — that consistently lands at the
 edge. Build the block to a **per-section budget** so it is lean the first time,
 and treat the character count as a *confirmation* at the end, not a rescue step.
+That confirmation is mechanical, not by eye: run `scripts/check-goal-budget.sh`
+on the finished block (exit 0 = within ceiling). It is a blocking gate — a block
+that has not passed it must not be emitted.
 
 **Step 1 — Spend the fixed boilerplate first (~1000 chars, non-negotiable).**
 Drop in the two canonical blocks verbatim and the scaffolding:
@@ -205,5 +208,6 @@ and every sub-agent to carry.
 - [ ] A "Run it headless" addendum follows the block (outside the budget).
 - [ ] Assumptions are listed, not buried.
 - [ ] The block reads correctly with zero external context.
-- [ ] **The whole block is ≤ 3500 characters (4000 hard ceiling)** — counted, not
-      estimated, with headroom left rather than written to the edge.
+- [ ] **The whole block is ≤ 3500 characters (4000 hard ceiling)** — verified by
+      running `scripts/check-goal-budget.sh` (exit 0), not estimated by eye. This
+      gate is blocking: do not emit a block that has not passed it.

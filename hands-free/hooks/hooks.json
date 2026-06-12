@@ -1,10 +1,4 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(xxd)",
-      "Bash(sed -n '1,12p' hands-free/commands/hands-free.md)"
-    ]
-  },
   "hooks": {
     "Stop": [
       {
@@ -12,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}\"/hands-free/hooks/enforce-goal-budget.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/enforce-goal-budget.sh",
             "timeout": 30,
             "statusMessage": "Checking /goal budget..."
           }

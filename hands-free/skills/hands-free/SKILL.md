@@ -125,9 +125,19 @@ construction rather than trimmed after the fact:
    (`[@skill] (tier) subtask → artifact | done when check`) and the fewest
    milestones that reach the outcome. If the skeleton already projects past
    ~3500, cut scope *before* writing — don't write fat and shave.
-4. **Count to confirm.** The block must be ≤ 3500 (4000 hard ceiling). If a
-   finished draft is over, cut/merge non-essential subtasks first — never truncate
-   mid-structure, and leave the canonical boilerplate intact.
+4. **Run the budget gate — this is mandatory and blocking, not advisory.** Write
+   the finished block to a file and run the bundled validator:
+
+   ```bash
+   scripts/check-goal-budget.sh goal.txt   # exit 0 = OK, exit 1 = over ceiling
+   ```
+
+   It isolates the `/goal [ … ]` block and counts its characters. **Do not present
+   a block that has not passed this check.** If it exits non-zero (> 4000), compress
+   — cut/merge non-essential subtasks first, never truncate mid-structure, and leave
+   the canonical EXECUTION MODE + LEAD blocks intact — then re-run until it passes.
+   A WARN (3500–4000) is acceptable but trim toward 3500 if quick. Eyeballing the
+   length is what produces 6–12k blocks; the script is the guardrail, so use it.
 
 After the block:
 1. Add a 2–3 line plain-language summary and list any assumptions you made so the
@@ -148,6 +158,8 @@ line for this skill.
   deploy, their specialties, and parallelization rules.
 - `references/exploration.md` — the context-refinement question checklist.
 - `examples/example-run.md` — a full worked example from request to `/goal`.
+- `scripts/check-goal-budget.sh` — the blocking size gate. Run it on the final
+  block before emitting; non-zero exit means compress and re-run.
 
 ## Hard rules
 
@@ -157,8 +169,9 @@ line for this skill.
   skill that does not exist, say so and propose the closest fit.
 - Keep the `/goal` block self-contained and copy-paste runnable.
 - Keep the `/goal` block **≤ 3500 characters (4000 hard ceiling)** — build to
-  budget so it is lean by construction; verify the count to confirm, not to
-  rescue. Use the canonical EXECUTION MODE and LEAD blocks verbatim.
+  budget so it is lean by construction. **Verify with `scripts/check-goal-budget.sh`
+  before emitting; never present a block that has not passed the gate.** Use the
+  canonical EXECUTION MODE and LEAD blocks verbatim.
 - Instruct the Lead to dispatch each sub-agent with only the minimal context it
   needs; never pass the whole main-window conversation downstream.
 - Surface assumptions; never bury a guess inside the goal as if it were a fact.
