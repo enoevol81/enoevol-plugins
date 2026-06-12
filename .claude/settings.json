@@ -4,5 +4,20 @@
       "Bash(xxd)",
       "Bash(sed -n '1,12p' hands-free/commands/hands-free.md)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/hands-free/hooks/enforce-goal-budget.sh",
+            "timeout": 30,
+            "statusMessage": "Checking /goal budget..."
+          }
+        ]
+      }
+    ]
   }
 }
