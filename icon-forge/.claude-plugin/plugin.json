@@ -1,0 +1,25 @@
+{
+  "name": "icon-forge",
+  "version": "0.1.0",
+  "description": "Point it at any project and it researches the platform, runs a parallel multi-agent pipeline, and generates a cohesive icon set — then installs the icons into your live environment (Blender, web app, VS Code extension, desktop) through a bundled MCP server.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": [
+    "icons",
+    "icon-set",
+    "icon-pack",
+    "design-system",
+    "favicon",
+    "logo",
+    "flux",
+    "fal",
+    "mcp",
+    "blender",
+    "generative"
+  ]
+}
