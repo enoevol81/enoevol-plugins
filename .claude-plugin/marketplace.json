@@ -43,6 +43,11 @@
       "name": "icon-forge",
       "source": "./icon-forge",
       "description": "Point it at any project and it researches the platform, runs a parallel multi-agent pipeline to design a cohesive icon set, then installs the icons into your live environment (Blender, web, VS Code, Electron) via a bundled MCP server."
+    },
+    {
+      "name": "swiss-design",
+      "source": "./swiss-design",
+      "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate."
     }
   ]
 }
