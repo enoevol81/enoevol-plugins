@@ -1,0 +1,91 @@
+# Swiss Design (Claude Code plugin)
+
+Apply **Swiss / International Typographic Style** design discipline to any visual work —
+posters, editorial spreads, slide layouts, UI screens, brand collateral, social graphics, or
+any composition where **type and space carry the message**.
+
+Swiss design is not a visual style — it's a **system for organizing information**. Every
+decision answers one question: *does this improve communication?* If not, it goes.
+
+The skill gives Claude:
+
+- A **6-step workflow** — build the grid first, set type as architecture, align everything,
+  establish hierarchy through contrast, balance asymmetrically, then cut.
+- The **nine tenets** — grid systems, alignment, hierarchy, typography first, asymmetrical
+  balance, contrast, white space, consistency, restraint.
+- A hard **evaluation-checklist gate** — nine boxes that must all pass before any design is
+  declared done.
+- A **critique mode** — walk the tenets in order, name the highest-leverage fix first, and
+  report which checklist boxes currently fail.
+- **Canonical visual references** — one exemplar per principle (the *beethoven* Tonhalle
+  poster, *die Zeitung*, the Helvetica study, adidas layout-levels, and more) to calibrate
+  the eye against real Swiss work.
+
+It triggers automatically on design-shaped requests — "lay this out," "make this cleaner,"
+"fix the hierarchy," "design a poster," "this feels cluttered," "critique my layout," or any
+modernist / flat / minimal / grid-based / Helvetica-adjacent direction — even when nobody
+says "Swiss."
+
+## Install
+
+Distributed via the [enoevol-plugins](https://github.com/enoevol81/enoevol-plugins)
+marketplace.
+
+```bash
+# 1. Add the marketplace
+/plugin marketplace add enoevol81/enoevol-plugins
+
+# 2. Install the plugin
+/plugin install swiss-design@enoevol-plugins
+```
+
+## Use
+
+Just ask for layout or design help, or hand Claude a composition to critique:
+
+> "Lay out this concert poster — headline, three supporting lines, a date."
+> "This slide feels cluttered. Make it cleaner."
+> "Critique my landing-page hero against Swiss principles."
+
+The skill builds the grid first, treats typography as architecture, and runs the
+nine-box checklist before calling anything finished.
+
+## What's in the box
+
+```
+swiss-design/
+├── .claude-plugin/plugin.json
+└── skills/swiss-design/
+    ├── SKILL.md                         # the operating system + the approval gate
+    ├── references/
+    │   └── principles-full.md           # long-form rationale behind each tenet
+    └── assets/references/               # canonical visual exemplars, one per principle
+        ├── INDEX.md                     # principle-by-principle map + attributions
+        ├── 00-overview-*.{jpeg,webp}    # grid-as-design / appropriation / geometric color
+        ├── 01-grid-layout-levels.webp
+        ├── 02-alignment-vision.jpeg
+        ├── 03-hierarchy-helvetica.jpeg
+        ├── 04-typography-beethoven.jpeg
+        ├── 05-asymmetry-die-zeitung.jpeg
+        ├── 06-contrast-grid-templates.jpeg
+        ├── 07-whitespace-velvet.jpeg
+        ├── 08-consistency-wireframes.webp
+        └── 09-restraint-swiss-white.jpeg
+```
+
+## Note on the references
+
+The images are **study references, not assets to reproduce** in deliverables — use them to
+calibrate the eye, then build original work. Attributions in `INDEX.md` are best-effort from
+the source material; treat the *principle* each image teaches as the reliable part, not the
+provenance.
+
+## Works with the Enoevol / Vanish system
+
+The skill is style-agnostic, but the tenets map cleanly onto the Enoevol/Vanish tokens (Inter
++ Geist Mono, flat with `border-radius: 0`, coral `#ff5b45` as the single accent) without
+overriding them. See the closing section of `SKILL.md`.
+
+## License
+
+MIT © Matthew Cohen

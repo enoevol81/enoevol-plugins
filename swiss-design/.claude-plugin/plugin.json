@@ -1,0 +1,25 @@
+{
+  "name": "swiss-design",
+  "version": "0.1.0",
+  "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction. A nine-tenet operating system with an approval-gate checklist and canonical visual references.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": [
+    "design",
+    "swiss-design",
+    "international-typographic-style",
+    "typography",
+    "grid",
+    "layout",
+    "hierarchy",
+    "minimalism",
+    "editorial",
+    "brand",
+    "design-critique"
+  ]
+}
