@@ -12,6 +12,8 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 | **weavy-pipeline-director** | Expert guidance for Weavy / Figma Weave — model selection, node architecture, and scalable AI image/video pipelines. |
 | **loadout** | Audit and optimize your active Claude Code loadout — inventory of plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal. |
 | **hands-free** | Turn a plain-language desired end result into a meticulously crafted `/goal` command that launches a Lead-orchestrated, parallelized multi-agent workflow. |
+| **icon-forge** | Research a project's platform, run a parallel multi-agent pipeline to design a cohesive icon set, then install the icons into your live environment (Blender, web, VS Code, Electron) via a bundled MCP server. |
+| **swiss-design** | Apply Swiss / International Typographic Style discipline to any visual work — grid construction, typographic hierarchy, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate. |
 
 ## Using the marketplace
 
@@ -46,10 +48,18 @@ enoevol-plugins/
 │   ├── .claude-plugin/plugin.json
 │   ├── scripts/collect-inventory.py
 │   └── skills/{audit,optimize}/SKILL.md
-└── hands-free/
+├── hands-free/
+│   ├── .claude-plugin/plugin.json
+│   ├── commands/hands-free.md
+│   └── skills/hands-free/{SKILL.md, references/, examples/}
+├── icon-forge/
+│   ├── .claude-plugin/plugin.json
+│   ├── .mcp.json
+│   ├── mcp/                          # bundled MCP server (Node, stdio)
+│   └── skills/icon-forge/{SKILL.md, agents/, references/, scripts/}
+└── swiss-design/
     ├── .claude-plugin/plugin.json
-    ├── commands/hands-free.md
-    └── skills/hands-free/{SKILL.md, references/, examples/}
+    └── skills/swiss-design/{SKILL.md, references/, assets/references/}
 ```
 
 Each plugin is self-contained. To add a new skill, create a new top-level plugin directory with its own `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md`, then add an entry to `.claude-plugin/marketplace.json`.
