@@ -38,6 +38,11 @@
       "name": "hands-free",
       "source": "./hands-free",
       "description": "Turn a plain-language desired end result into a meticulously crafted /goal command that launches a Lead-orchestrated, parallelized multi-agent workflow."
+    },
+    {
+      "name": "icon-forge",
+      "source": "./icon-forge",
+      "description": "Point it at any project and it researches the platform, runs a parallel multi-agent pipeline to design a cohesive icon set, then installs the icons into your live environment (Blender, web, VS Code, Electron) via a bundled MCP server."
     }
   ]
 }
