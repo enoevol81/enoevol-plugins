@@ -48,6 +48,11 @@
       "name": "swiss-design",
       "source": "./swiss-design",
       "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate."
+    },
+    {
+      "name": "design-signal-scout",
+      "source": "./design-signal-scout",
+      "description": "A design, technology, and cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, architecture, and AI-creative-tool signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities."
     }
   ]
 }

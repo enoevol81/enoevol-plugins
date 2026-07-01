@@ -14,6 +14,7 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 | **hands-free** | Turn a plain-language desired end result into a meticulously crafted `/goal` command that launches a Lead-orchestrated, parallelized multi-agent workflow. |
 | **icon-forge** | Research a project's platform, run a parallel multi-agent pipeline to design a cohesive icon set, then install the icons into your live environment (Blender, web, VS Code, Electron) via a bundled MCP server. |
 | **swiss-design** | Apply Swiss / International Typographic Style discipline to any visual work — grid construction, typographic hierarchy, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate. |
+| **design-signal-scout** | A design/tech/cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, and creative-AI signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities. |
 
 ## Using the marketplace
 
@@ -57,9 +58,16 @@ enoevol-plugins/
 │   ├── .mcp.json
 │   ├── mcp/                          # bundled MCP server (Node, stdio)
 │   └── skills/icon-forge/{SKILL.md, agents/, references/, scripts/}
-└── swiss-design/
+├── swiss-design/
+│   ├── .claude-plugin/plugin.json
+│   └── skills/swiss-design/{SKILL.md, references/, assets/references/}
+└── design-signal-scout/
     ├── .claude-plugin/plugin.json
-    └── skills/swiss-design/{SKILL.md, references/, assets/references/}
+    ├── references/operating-model.md          # shared by all 9 skills below
+    └── skills/{source-manager,signal-scout,visual-trend-analyzer,
+        technology-radar,pain-point-miner,trend-clusterer,
+        inspiration-curator,content-opportunity-generator,
+        weekly-creative-brief,signal-feedback-loop}/SKILL.md
 ```
 
 Each plugin is self-contained. To add a new skill, create a new top-level plugin directory with its own `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md`, then add an entry to `.claude-plugin/marketplace.json`.

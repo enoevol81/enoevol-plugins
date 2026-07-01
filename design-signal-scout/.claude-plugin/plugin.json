@@ -1,0 +1,13 @@
+{
+  "name": "design-signal-scout",
+  "version": "0.1.0",
+  "description": "A design, technology, and cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, architecture, and AI-creative-tool signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": ["design", "trend-research", "technology-radar", "signal-scouting", "content-strategy", "footwear", "industrial-design", "blender", "creative-ai"]
+}
