@@ -34,6 +34,37 @@ NAME_SIGNAL_PARTS = (
 )
 NAME_SIGNAL_PREFIXES = ("tmp-", "temp-", "debug-", "old-", "bak-")
 
+# --- Agent / AI-tooling artifacts (handled by the Phase 2.5 gate, not the
+# cut/quarantine matrix). Detection is a curated, defensible set -- the skill's
+# reference doc carries judgment for plugin-specific droppings this misses.
+AGENT_CANONICAL_NAMES = {
+    "claude.md", "agents.md", "agent.md", "gemini.md",
+    ".cursorrules", ".windsurfrules", ".clinerules", ".goosehints",
+    ".aider.conf.yml",
+}
+AGENT_CANONICAL_PATHS = {".github/copilot-instructions.md"}
+AGENT_CANONICAL_DIR_PREFIXES = (".cursor/rules/",)
+AGENT_DROPPING_NAMES = {".aider.chat.history.md", ".aider.input.history"}
+AGENT_DROPPING_NAME_PREFIXES = (".aider.tags.cache",)
+AGENT_CONFIG_DIR_PREFIXES = (".claude/",)  # note: NOT .claude-plugin/
+AGENT_DROPPING_DIRS = {".specstory"}
+
+
+def agent_category(rel, name):
+    """Classify a path as an agent artifact, or None. rel is cwd-relative."""
+    low = name.lower()
+    rl = rel.lower()
+    if (low in AGENT_CANONICAL_NAMES or rl in AGENT_CANONICAL_PATHS
+            or rl.startswith(AGENT_CANONICAL_DIR_PREFIXES)):
+        return "canonical"
+    if low in AGENT_DROPPING_NAMES or low.startswith(AGENT_DROPPING_NAME_PREFIXES):
+        return "tool-dropping"
+    if low == "settings.local.json" and rl.startswith(".claude/"):
+        return "tool-dropping"  # per-machine overrides, should not be committed
+    if rl.startswith(AGENT_CONFIG_DIR_PREFIXES):
+        return "agent-config"
+    return None
+
 
 def name_signals(name):
     low = name.lower()
@@ -114,7 +145,7 @@ def main():
     now = time.time()
     tracked, last_touch, commits, truncated = git_data(root, args.max_commits)
 
-    files, artifacts = [], []
+    files, artifacts, agent_dirs = [], [], []
     for dp, dns, fns in os.walk(root):
         pruned = []
         for d in list(dns):
@@ -123,6 +154,15 @@ def main():
             elif d in ARTIFACT_DIRS:
                 dns.remove(d)
                 pruned.append(d)
+            elif d in AGENT_DROPPING_DIRS:
+                dns.remove(d)
+                full = os.path.join(dp, d)
+                size, count = dir_stats(full)
+                rel = os.path.relpath(full, root).replace("\\", "/")
+                agent_dirs.append({
+                    "path": rel + "/", "bytes": size, "files": count,
+                    "category": "tool-dropping",
+                })
         for d in pruned:
             full = os.path.join(dp, d)
             size, count = dir_stats(full)
@@ -139,7 +179,7 @@ def main():
             except OSError:
                 continue
             gt = last_touch.get(rel)
-            files.append({
+            entry = {
                 "path": rel,
                 "bytes": st.st_size,
                 "mtime_days": round((now - st.st_mtime) / 86400, 1),
@@ -147,9 +187,27 @@ def main():
                     round((now - gt) / 86400, 1) if gt else None,
                 "tracked": (rel in tracked) if tracked is not None else None,
                 "signals": name_signals(fn),
-            })
+            }
+            cat = agent_category(rel, fn)
+            if cat:
+                entry["agent_artifact"] = cat
+            files.append(entry)
 
     files.sort(key=lambda f: f["path"])
+
+    agent_files = [f for f in files if f.get("agent_artifact")]
+    agent_artifacts = {
+        "canonical": [{"path": f["path"], "tracked": f["tracked"]}
+                      for f in agent_files if f["agent_artifact"] == "canonical"],
+        "config": [{"path": f["path"], "tracked": f["tracked"]}
+                   for f in agent_files if f["agent_artifact"] == "agent-config"],
+        "droppings": [{"path": f["path"], "tracked": f["tracked"]}
+                      for f in agent_files if f["agent_artifact"] == "tool-dropping"]
+                     + [{"path": d["path"], "tracked": None} for d in agent_dirs],
+        "note": ("route these through the Phase 2.5 gate (leave / untrack / "
+                 "gitignore / delete) -- NOT the cut/quarantine matrix"),
+    }
+
     report = {
         "root": root,
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
@@ -163,6 +221,7 @@ def main():
                     if truncated else None,
         },
         "artifact_dirs": artifacts,
+        "agent_artifacts": agent_artifacts,
         "files": files,
     }
     out = os.path.join(root, args.out) if not os.path.isabs(args.out) else args.out
@@ -176,6 +235,10 @@ def main():
     print("  artifact dirs     : %d (%.1f MB regenerable)"
           % (len(artifacts), art_bytes / 1e6))
     print("  name-signal files : %d" % len(flagged))
+    print("  agent artifacts   : %d canonical, %d config, %d droppings "
+          "(-> Phase 2.5 gate)"
+          % (len(agent_artifacts["canonical"]), len(agent_artifacts["config"]),
+             len(agent_artifacts["droppings"])))
     print("  git               : %s" % (
         "%d commits scanned%s" % (commits, " [TRUNCATED - see note in JSON]"
                                   if truncated else "")

@@ -15,7 +15,7 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 | **icon-forge** | Research a project's platform, run a parallel multi-agent pipeline to design a cohesive icon set, then install the icons into your live environment (Blender, web, VS Code, Electron) via a bundled MCP server. |
 | **swiss-design** | Apply Swiss / International Typographic Style discipline to any visual work — grid construction, typographic hierarchy, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate. |
 | **design-signal-scout** | A design/tech/cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, and creative-AI signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities. |
-| **cut-weight** | Reachability-first repo weight cutting — traces execution entry points to find the files actually needed to run, then cuts, quarantines, or escalates everything else with full rollback. |
+| **cut-weight** | Reachability-first repo cleanup — traces execution entry points to find what's actually needed to run, then an interactive review loop (findings file, multiple-choice decision gate, post-mortem) cuts, quarantines, untracks, or deletes the rest with full rollback. Includes a Claude/agent-artifact gate. |
 
 ## Using the marketplace
 
