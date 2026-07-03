@@ -15,6 +15,7 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 | **icon-forge** | Research a project's platform, run a parallel multi-agent pipeline to design a cohesive icon set, then install the icons into your live environment (Blender, web, VS Code, Electron) via a bundled MCP server. |
 | **swiss-design** | Apply Swiss / International Typographic Style discipline to any visual work — grid construction, typographic hierarchy, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate. |
 | **design-signal-scout** | A design/tech/cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, and creative-AI signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities. |
+| **cut-weight** | Reachability-first repo weight cutting — traces execution entry points to find the files actually needed to run, then cuts, quarantines, or escalates everything else with full rollback. |
 
 ## Using the marketplace
 
@@ -61,13 +62,16 @@ enoevol-plugins/
 ├── swiss-design/
 │   ├── .claude-plugin/plugin.json
 │   └── skills/swiss-design/{SKILL.md, references/, assets/references/}
-└── design-signal-scout/
+├── design-signal-scout/
+│   ├── .claude-plugin/plugin.json
+│   ├── references/operating-model.md          # shared by all 9 skills below
+│   └── skills/{source-manager,signal-scout,visual-trend-analyzer,
+│       technology-radar,pain-point-miner,trend-clusterer,
+│       inspiration-curator,content-opportunity-generator,
+│       weekly-creative-brief,signal-feedback-loop}/SKILL.md
+└── cut-weight/
     ├── .claude-plugin/plugin.json
-    ├── references/operating-model.md          # shared by all 9 skills below
-    └── skills/{source-manager,signal-scout,visual-trend-analyzer,
-        technology-radar,pain-point-miner,trend-clusterer,
-        inspiration-curator,content-opportunity-generator,
-        weekly-creative-brief,signal-feedback-loop}/SKILL.md
+    └── skills/cut-weight/{SKILL.md, references/, scripts/}
 ```
 
 Each plugin is self-contained. To add a new skill, create a new top-level plugin directory with its own `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md`, then add an entry to `.claude-plugin/marketplace.json`.

@@ -1,0 +1,21 @@
+{
+  "name": "cut-weight",
+  "version": "0.1.0",
+  "description": "Reachability-first repo weight cutting — traces execution entry points to find the files actually needed to run, then cuts, quarantines, or escalates everything else with full rollback.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": [
+    "cleanup",
+    "dead-code",
+    "repo-hygiene",
+    "quarantine",
+    "reachability",
+    "maintenance",
+    "refactoring"
+  ]
+}

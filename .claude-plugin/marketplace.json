@@ -53,6 +53,11 @@
       "name": "design-signal-scout",
       "source": "./design-signal-scout",
       "description": "A design, technology, and cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, architecture, and AI-creative-tool signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities."
+    },
+    {
+      "name": "cut-weight",
+      "source": "./cut-weight",
+      "description": "Reachability-first repo weight cutting — traces execution entry points to find the files actually needed to run, then cuts, quarantines, or escalates everything else with full rollback."
     }
   ]
 }
