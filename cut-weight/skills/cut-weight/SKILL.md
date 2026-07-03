@@ -37,17 +37,27 @@ So invert the question. Start from how the project **runs** and work outward:
    regenerable artifacts are deleted outright. Every action is reversible
    until the user decides otherwise.
 
+Delivery is a **review loop**, never a silent batch: a clear findings file, a
+multiple-choice decision gate on the judgment calls, a plan the user signs off,
+execution, a post-mortem, and a final confirmed teardown of the buffer. The
+stages and file shapes live in
+[references/review-loop.md](references/review-loop.md).
+
 ## Modes
 
 Confirm the mode from the user's phrasing before acting:
 
-- **audit** -- report only. Nothing moves, nothing is deleted. Use when the
-  user says "just tell me", "what can I delete", "don't touch anything yet".
-- **standard** (default) -- delete regenerable artifacts, quarantine dead
-  candidates, ask about ambiguous ones.
-- **aggressive** -- only when the user explicitly says to delete. Even then,
-  the checkpoint commit comes first and source files still transit through
-  quarantine in a single revertable commit.
+- **audit** -- stop after the findings file (Phase 4). Nothing moves, nothing
+  is deleted, no decision gate. Use when the user says "just tell me", "what can
+  I delete", "don't touch anything yet".
+- **standard** (default) -- the full review loop: findings file, multiple-choice
+  decision gate, decision report, execute, post-mortem, confirmed teardown.
+  Delete regenerable artifacts, quarantine dead candidates, let the user rule on
+  the ambiguous ones.
+- **aggressive** -- only when the user explicitly says to delete. Even then, the
+  checkpoint commit comes first, source files still transit quarantine in a
+  single revertable commit, and the decision gate still runs for anything
+  genuinely ambiguous.
 
 ## Workflow
 
@@ -93,10 +103,29 @@ that reached it. Be conservative: dynamic loading (glob imports, route
 auto-discovery, template engines) keeps the whole directory it points at.
 When genuinely unsure whether something is reachable, it is KEEP.
 
+### Phase 2.5 -- Agent-artifact gate
+
+AI tooling (Claude Code, Cursor, Aider, and installed/third-party plugins)
+leaves files the reachability trace never covers and the age heuristics
+mis-handle: canonical instruction files (`CLAUDE.md`, `AGENTS.md`, `.claude/`)
+and tool droppings (transcripts, caches, plugin state, agent scratch). These
+get their own disposition gate -- never the cut/quarantine matrix. Read
+[references/agent-artifacts.md](references/agent-artifacts.md) for the taxonomy
+and rules.
+
+inventory.py tags what it detects (the `agent_artifacts` summary in the JSON).
+Do not prompt here. Instead assign each item a **proposed** disposition from the
+four-way set -- **leave as-is / untrack** (`git rm --cached` + gitignore)
+**/ gitignore / delete** -- and route it into the consolidated decision gate in
+Phase 4 (canonical files -> "Agent artifacts", proposed leave-as-is; tool/plugin
+droppings -> the sanitize group). Canonical files are never touched without an
+explicit choice. Remove these from the Phase 3 candidate pool so they are not
+processed twice.
+
 ### Phase 3 -- Eliminate by evidence
 
-Everything not in the keep-set is a candidate. For each one, gather evidence
-and classify -- the signals and their precedence are in
+Everything not in the keep-set -- and not already handled by the agent-artifact
+gate -- is a candidate. For each one, gather evidence and classify -- the signals and their precedence are in
 [references/evidence-signals.md](references/evidence-signals.md). Summary
 matrix:
 
@@ -105,55 +134,61 @@ matrix:
 | KEEP | Reachable from an entry point; or config/data/secrets; or dynamic-load uncertainty | Untouched |
 | CUT | Recognizably regenerable (build output, caches, coverage, `__pycache__`, OS droppings) | Delete + add to .gitignore |
 | QUARANTINE | Unreachable AND unreferenced AND old on both clocks (mtime and git last-touch) | Move to quarantine with manifest |
-| ASK | Unreachable but recently touched; referenced by docs; looks like data; large; or otherwise ambiguous | Present with evidence, user decides |
+| ASK | Unreachable but recently touched; referenced by docs; looks like data; large; or otherwise ambiguous | Route to the Phase 4 decision gate |
 
-### Phase 4 -- Act
+ASK is not a verdict you resolve alone -- every ASK item becomes a numbered
+entry in the findings file's DECISIONS NEEDED list and is settled by the user in
+Phase 4.
+
+The rest of the workflow is a report-driven review loop: a clear findings file,
+a multiple-choice decision gate, a plan the user signs off, execution, a
+post-mortem, and a confirmed teardown. The stages and the exact file shapes are
+in [references/review-loop.md](references/review-loop.md) -- follow it exactly.
+Create the run folder `_quarantine/<date>/` now; the reports live there.
+
+### Phase 4 -- Findings + decision gate
+
+Write `_quarantine/<date>/findings.md` (Stage 1 shape): true north, keep-set,
+auto-decided CUT/QUARANTINE, agent artifacts, and the numbered **DECISIONS
+NEEDED** list. In **audit mode this is the final deliverable -- stop here.**
+
+Otherwise run the decision gate (Stage 2): walk DECISIONS NEEDED as
+**multiple-choice questions**, recommended option first, related items batched.
+Do not ask about matrix-decided items. Record every answer.
+
+### Phase 5 -- Decision report
+
+Write `_quarantine/<date>/decisions.md` (Stage 3 shape): each decision verbatim,
+then the resolved **Final action plan** (CUT / QUARANTINE / UNTRACK / GITIGNORE /
+DELETE), then a **Last call** for changes. Fold any final suggestions back into
+the plan -- and the file -- before touching anything.
+
+### Phase 6 -- Act
 
 Follow [references/quarantine-protocol.md](references/quarantine-protocol.md)
-exactly: cuts first, then all quarantine moves in one revertable commit with
-a manifest and restore instructions. In audit mode, skip this phase entirely.
+exactly: cuts first, then quarantine moves and untrack/gitignore/delete
+dispositions in one revertable commit with a manifest. Execute the plan the user
+approved in Phase 5, nothing more.
 
-### Phase 5 -- Verify
+### Phase 7 -- Verify
 
-Re-run whatever you ran in Phase 0 (start, tests, build) and compare against
-the baseline. Any regression: restore the implicated quarantined files,
-reclassify them KEEP, and note in the report what turned out to be
-load-bearing and why the trace missed it. Do not rationalize a new failure as
-pre-existing -- that is what the recorded baseline is for.
+Re-run whatever you ran in Phase 0 (start, tests, build) and compare against the
+baseline. Any regression: restore the implicated files, reclassify them KEEP,
+and record what turned out to be load-bearing and why the trace missed it. Do
+not rationalize a new failure as pre-existing -- that is what the recorded
+baseline is for.
 
-### Phase 6 -- Report
+### Phase 8 -- Post-mortem + teardown
 
-Honest accounting, using this shape (ASCII only -- no unicode symbols, they
-break Windows consoles):
+Write `_quarantine/<date>/postmortem.md` (Stage 5 shape): actions actually
+taken, verification (baseline vs after), anything reclassified KEEP, restore
+commands with real SHAs, and coverage. If a step was skipped, say so plainly;
+never claim "verified" for a check that did not run.
 
-```
-# Cut Weight Report - <project> - <date>
-
-## True north
-<entry points found, and the evidence for each>
-
-## Keep-set
-<N files kept; brief breakdown by directory>
-
-## Actions
-CUT (deleted, regenerable):        <list, with bytes freed>
-QUARANTINED (restorable):          <list> -> _quarantine/<date>/
-ASK (your call, with evidence):    <list + one-line evidence each>
-
-## Verification
-Baseline: <what ran, result>   After: <what ran, result>
-
-## Restore
-<exact command(s) to undo everything>
-
-## Coverage
-Analyzed N of M files. <Any bound hit, stated explicitly -- e.g. "git
-history scanned to 500 commits; 12 files older than that are marked
-age-unknown". Never let a cap pass silently.>
-```
-
-If a step was skipped (no tests exist, user declined git init), say so
-plainly. Never claim "verified" for anything that was not run.
+Then the teardown (Stage 6) -- the user's "delete everything": **ask explicitly**
+before removing the buffer. In a git repo the committed quarantine keeps files
+recoverable after deletion; in a non-git project deleting the buffer is
+irreversible, so warn and default to keeping it.
 
 ## Common mistakes
 
@@ -168,6 +203,11 @@ plainly. Never claim "verified" for anything that was not run.
   directory level and say so in the report.
 - **Treating data like code.** An unreferenced `.json`, `.csv`, `.sqlite`, or
   media file is ASK, never CUT -- code is in git, data often is not.
+- **Blind-quarantining Claude/agent files.** `CLAUDE.md`, `AGENTS.md`, and
+  `.claude/` config are not dead weight to trace or age out -- they are
+  workspace conventions with their own gate (leave / untrack / gitignore /
+  delete). A freshly written `CLAUDE.md` is not "recently touched, keep by
+  accident"; ask what the user wants done with it. See Phase 2.5.
 - **Skipping the baseline.** Without a pre-change checkpoint and a recorded
   test result, you cannot prove the cleanup broke nothing, and you cannot
   cheaply undo it.

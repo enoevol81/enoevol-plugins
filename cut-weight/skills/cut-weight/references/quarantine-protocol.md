@@ -72,11 +72,17 @@ double-check the manifest is complete before moving anything.
 
 ## Expiry
 
-Quarantine is a decision buffer, not a landfill. End the report with:
-"Review `_quarantine/<date>/` after ~30 days; if nothing broke and nothing
-was missed, delete it (or `git rm -r` it) in one commit." Deleting a
-quarantine folder that has sat quietly for a month is the one deletion this
-skill endorses without further analysis.
+Quarantine is a decision buffer, not a landfill. It clears one of two ways:
+
+- **Now, on confirmation** -- the post-mortem teardown (Stage 6 of
+  [review-loop.md](review-loop.md)). After the user has reviewed everything
+  through the decision gate, an explicit "delete everything" empties the buffer;
+  in a git repo the committed moves keep it recoverable.
+- **Later, by default** -- if the user does not tear down now, end the report
+  with: "Review `_quarantine/<date>/` after ~30 days; if nothing broke and
+  nothing was missed, delete it (or `git rm -r` it) in one commit." Deleting a
+  quarantine folder that has sat quietly for a month is the one deletion this
+  skill endorses without further analysis.
 
 ## Verification gate details
 

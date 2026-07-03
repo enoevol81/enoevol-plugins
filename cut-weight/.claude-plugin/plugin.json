@@ -1,6 +1,6 @@
 {
   "name": "cut-weight",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reachability-first repo weight cutting — traces execution entry points to find the files actually needed to run, then cuts, quarantines, or escalates everything else with full rollback.",
   "author": {
     "name": "Matthew Cohen",
@@ -16,6 +16,7 @@
     "quarantine",
     "reachability",
     "maintenance",
-    "refactoring"
+    "refactoring",
+    "agent-artifacts"
   ]
 }

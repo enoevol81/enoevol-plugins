@@ -63,6 +63,12 @@ Ask three questions of every project:
 - A reference file linked from nowhere is a candidate; a script mentioned in
   SKILL.md is keep-set even if no code imports it.
 
+This section is for a project that **is** a Claude plugin -- trace it like any
+other. Do not confuse it with agent artifacts (`CLAUDE.md`, `.claude/`, plugin
+droppings) left inside an *unrelated* app; those are not entry points and are
+handled by the Phase 2.5 gate -- see
+[agent-artifacts.md](agent-artifacts.md).
+
 ### Monorepos
 
 Run the whole process per package/app. A package nothing depends on and no
