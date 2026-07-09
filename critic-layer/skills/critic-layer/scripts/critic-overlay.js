@@ -157,10 +157,10 @@
   hud.appendChild(clearBtn);
   hud.appendChild(divider());
 
-  var countBadge = el('span', 'display:flex;align-items:center;justify-content:center;min-width:22px;padding:0 7px;font:11px ui-monospace,Menlo,monospace;color:#ff5b45;background:rgba(255,91,69,0.12);border-radius:999px;margin:2px 2px 2px 0;', '0');
+  var countBadge = el('span', 'display:flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;font:11px ui-monospace,Menlo,monospace;font-weight:700;color:#fff;background:#ff5b45;border-radius:999px;margin:2px 2px 2px 0;box-shadow:0 0 0 1px rgba(0,0,0,0.3);', '0');
   hud.appendChild(countBadge);
 
-  var hint = el('div', 'position:fixed;top:44px;right:12px;pointer-events:none;color:#8a8a8a;font:11px Inter,system-ui,sans-serif;background:rgba(15,15,15,0.94);padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);opacity:0;transition:opacity .15s;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;');
+  var hint = el('div', 'position:fixed;top:44px;right:12px;pointer-events:none;color:#eee;font:11px Inter,system-ui,sans-serif;background:rgba(15,15,15,0.94);padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);opacity:0;transition:opacity .15s;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:' + (Z + 5) + ';');
   hint.id = PREFIX + 'hint';
 
   stop(hud); // clicks on the HUD never fall through to the page
@@ -251,6 +251,25 @@
     state.notes.forEach(function (note, i) {
       pinLayer.appendChild(buildPin(note, i));
     });
+  }
+  // Scroll/resize fire on any nested scrollable/pannable ancestor (capture
+  // phase catches those even though 'scroll' doesn't bubble) — potentially
+  // many times a second while dragging a board. A full render() would tear
+  // down and rebuild every pin's DOM, including the one currently focused
+  // for text entry, firing blur -> auto-close-and-discard mid-keystroke.
+  // Reposition-only: move existing wraps, never touch their children/focus.
+  function reposition() {
+    for (var i = 0; i < pinLayer.children.length; i++) {
+      var wrap = pinLayer.children[i];
+      var note = null;
+      for (var j = 0; j < state.notes.length; j++) {
+        if (state.notes[j].id === wrap.dataset.noteId) { note = state.notes[j]; break; }
+      }
+      if (!note) continue;
+      var p = pinPos(note);
+      wrap.style.left = p.x + 'px';
+      wrap.style.top = p.y + 'px';
+    }
   }
 
   function buildPin(note, i) {
@@ -475,8 +494,8 @@
     destroy: function () {
       document.removeEventListener('mousemove', onMove, true);
       document.removeEventListener('click', onClick, true);
-      window.removeEventListener('scroll', render, true);
-      window.removeEventListener('resize', render, true);
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition, true);
       document.removeEventListener('keydown', onKeydown, true);
       [root, highlight, tip, pinLayer, hud, hint].forEach(function (n) { if (n && n.remove) n.remove(); });
       try { delete window.__CRITIC__; } catch (e) { window.__CRITIC__ = undefined; }
@@ -497,8 +516,8 @@
   document.addEventListener('mousemove', onMove, true);
   document.addEventListener('click', onClick, true);
   document.addEventListener('keydown', onKeydown, true);
-  window.addEventListener('scroll', render, true);
-  window.addEventListener('resize', render, true);
+  window.addEventListener('scroll', reposition, true);
+  window.addEventListener('resize', reposition, true);
   window.__CRITIC__ = api;
   render();
   return 'Critic Layer injected. Click elements to pin notes; read via JSON.stringify(window.__CRITIC__.export())';
