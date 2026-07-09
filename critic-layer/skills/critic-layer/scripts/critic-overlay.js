@@ -111,29 +111,58 @@
   root.id = PREFIX + 'root';
   var highlight = el('div', 'position:fixed;pointer-events:none;border:2px solid #ff5b45;background:rgba(255,91,69,0.08);display:none;z-index:' + (Z + 1) + ';box-sizing:border-box;');
   highlight.id = PREFIX + 'hl';
-  var tip = el('div', 'position:fixed;pointer-events:none;background:#111;color:#fff;font:11px/1.4 ui-monospace,Menlo,monospace;padding:2px 6px;display:none;z-index:' + (Z + 2) + ';white-space:nowrap;');
+  var tip = el('div', 'position:fixed;pointer-events:none;background:#111;color:#fff;font:11px/1.4 ui-monospace,Menlo,monospace;padding:3px 7px;border-radius:5px;display:none;z-index:' + (Z + 2) + ';white-space:nowrap;');
   tip.id = PREFIX + 'tip';
   var pinLayer = el('div', 'position:fixed;inset:0;pointer-events:none;z-index:' + (Z + 3) + ';');
   pinLayer.id = PREFIX + 'pins';
 
-  // ---- HUD ---------------------------------------------------------------
-  var hud = el('div', 'position:fixed;top:12px;right:12px;pointer-events:auto;z-index:' + (Z + 5) + ';background:#111;color:#fff;font:13px/1.4 Inter,system-ui,sans-serif;border:1px solid #333;min-width:180px;');
+  // ---- HUD -----------------------------------------------------------------
+  // Single-row rounded pill: brand mark, icon segments, count chip. Divider
+  // hairlines between segments read the row without needing a boxed header.
+  var ICONS = {
+    mark: '<svg width="11" height="11" viewBox="0 0 11 11"><path d="M8.5 0.5L2.5 10.5" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>',
+    pick: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    notes: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 3.5h12M2 8h12M2 12.5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    clear: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5l.6 8.5a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  var hud = el('div', 'position:fixed;top:12px;right:12px;pointer-events:auto;z-index:' + (Z + 5) + ';display:flex;align-items:stretch;gap:1px;background:rgba(15,15,15,0.94);backdrop-filter:blur(8px);color:#fff;font:12px/1.4 Inter,system-ui,sans-serif;border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,0.45);');
   hud.id = PREFIX + 'hud';
-  var hudHead = el('div', 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #333;');
-  hudHead.appendChild(el('span', 'font-weight:600;letter-spacing:0.02em;', 'CRITIC LAYER'));
-  var countBadge = el('span', 'font:11px ui-monospace,monospace;color:#ff5b45;', '0');
-  hudHead.appendChild(countBadge);
-  hud.appendChild(hudHead);
-  var pickBtn = el('button', hudBtnCss('#ff5b45', '#fff'), 'Picking: ON');
-  var listBtn = el('button', hudBtnCss('#1a1a1a', '#fff'), 'Notes');
-  var clearBtn = el('button', hudBtnCss('#1a1a1a', '#8a8a8a'), 'Clear all');
-  [pickBtn, listBtn, clearBtn].forEach(function (b) { hud.appendChild(b); });
-  var hint = el('div', 'padding:6px 10px;border-top:1px solid #333;color:#8a8a8a;font-size:11px;', 'Click any element to pin a note.');
-  hud.appendChild(hint);
 
-  function hudBtnCss(bg, fg) {
-    return 'display:block;width:100%;text-align:left;padding:8px 10px;background:' + bg + ';color:' + fg + ';border:0;border-top:1px solid #222;font:13px Inter,system-ui,sans-serif;cursor:pointer;';
+  var markChip = el('div', 'display:flex;align-items:center;justify-content:center;width:26px;color:#ff5b45;flex-shrink:0;');
+  markChip.innerHTML = ICONS.mark;
+  markChip.title = 'Critic Layer';
+  hud.appendChild(markChip);
+  hud.appendChild(divider());
+
+  function segBtnCss() {
+    return 'display:flex;align-items:center;gap:5px;padding:6px 12px;background:transparent;color:#fff;border:0;border-radius:999px;font:12px Inter,system-ui,sans-serif;white-space:nowrap;cursor:pointer;';
   }
+  function divider() { return el('div', 'width:1px;align-self:center;height:16px;background:rgba(255,255,255,0.1);'); }
+  function iconBtn(icon, label) {
+    var b = el('button', segBtnCss());
+    var i = el('span', 'display:inline-flex;flex-shrink:0;'); i.innerHTML = icon;
+    b.appendChild(i);
+    b.appendChild(el('span', '', label));
+    return b;
+  }
+
+  var pickBtn = iconBtn(ICONS.pick, 'Picking: ON');
+  var listBtn = iconBtn(ICONS.notes, 'Notes');
+  var clearBtn = iconBtn(ICONS.clear, 'Clear all');
+  clearBtn.style.color = '#8a8a8a';
+  hud.appendChild(pickBtn);
+  hud.appendChild(divider());
+  hud.appendChild(listBtn);
+  hud.appendChild(divider());
+  hud.appendChild(clearBtn);
+  hud.appendChild(divider());
+
+  var countBadge = el('span', 'display:flex;align-items:center;justify-content:center;min-width:22px;padding:0 7px;font:11px ui-monospace,Menlo,monospace;color:#ff5b45;background:rgba(255,91,69,0.12);border-radius:999px;margin:2px 2px 2px 0;', '0');
+  hud.appendChild(countBadge);
+
+  var hint = el('div', 'position:fixed;top:44px;right:12px;pointer-events:none;color:#8a8a8a;font:11px Inter,system-ui,sans-serif;background:rgba(15,15,15,0.94);padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);opacity:0;transition:opacity .15s;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;');
+  hint.id = PREFIX + 'hint';
+
   stop(hud); // clicks on the HUD never fall through to the page
 
   // ---- Wiring ------------------------------------------------------------
@@ -242,7 +271,7 @@
       stop(wrap);
     } else {
       if (note.note) {
-        wrap.appendChild(el('div', 'background:#111;color:#fff;font:12px/1.4 Inter,system-ui,sans-serif;padding:4px 8px;border-radius:3px;margin-top:-2px;max-width:220px;pointer-events:none;white-space:pre-wrap;word-break:break-word;box-shadow:0 1px 4px rgba(0,0,0,0.3);', note.note));
+        wrap.appendChild(el('div', 'background:rgba(17,17,17,0.97);color:#fff;font:12px/1.4 Inter,system-ui,sans-serif;padding:4px 9px;border-radius:8px;margin-top:-2px;max-width:220px;pointer-events:none;white-space:pre-wrap;word-break:break-word;box-shadow:0 3px 10px rgba(0,0,0,0.35);', note.note));
       }
       wireDrag(wrap, dot, note);
     }
@@ -297,10 +326,17 @@
   var editingNoteId = null;
   var justOpenedNoteId = null; // animates the intro once; select-change re-renders skip it
   var pickingBeforeEdit = null;
+  function showHint(text, autoHideMs) {
+    hint.textContent = text;
+    hint.style.opacity = '1';
+    if (showHint.__t) clearTimeout(showHint.__t);
+    if (autoHideMs) showHint.__t = setTimeout(function () { hint.style.opacity = '0'; }, autoHideMs);
+  }
   function setPicking(on) {
     state.picking = on;
-    pickBtn.textContent = 'Picking: ' + (on ? 'ON' : 'OFF');
-    pickBtn.style.background = on ? '#ff5b45' : '#1a1a1a';
+    pickBtn.lastChild.textContent = 'Picking: ' + (on ? 'ON' : 'OFF');
+    pickBtn.style.background = on ? '#ff5b45' : 'transparent';
+    pickBtn.style.color = on ? '#fff' : '#fff';
     if (!on) { highlight.style.display = 'none'; tip.style.display = 'none'; }
   }
   // Editing a note pauses picking so clicking around the page to read
@@ -326,7 +362,7 @@
   function buildEditingBar(note) {
     var animate = justOpenedNoteId === note.id;
     justOpenedNoteId = null;
-    var box = el('div', 'display:flex;flex-direction:column;gap:5px;background:#111;color:#fff;border:1px solid #333;border-radius:4px;padding:6px 8px;margin-top:-2px;min-width:200px;max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,0.4);transition:opacity .14s ease-out,transform .14s ease-out;' +
+    var box = el('div', 'display:flex;flex-direction:column;gap:7px;background:rgba(17,17,17,0.97);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 10px;margin-top:-2px;min-width:220px;max-width:280px;box-shadow:0 10px 28px rgba(0,0,0,0.5);transition:opacity .14s ease-out,transform .14s ease-out;' +
       (animate ? 'opacity:0;transform:translateY(-2px) scale(0.98);' : 'opacity:1;transform:none;'));
     if (animate) {
       requestAnimationFrame(function () { box.style.opacity = '1'; box.style.transform = 'translateY(0) scale(1)'; });
@@ -353,7 +389,7 @@
     });
     row1.appendChild(input);
 
-    var closeBtn = el('button', 'flex-shrink:0;width:16px;height:16px;line-height:14px;text-align:center;background:transparent;color:#8a8a8a;border:0;cursor:pointer;font:13px monospace;padding:0;', '×');
+    var closeBtn = el('button', 'flex-shrink:0;width:18px;height:18px;line-height:16px;text-align:center;background:transparent;color:#8a8a8a;border:0;border-radius:999px;cursor:pointer;font:13px monospace;padding:0;', '×');
     closeBtn.addEventListener('click', function (e) { e.stopPropagation(); removeNote(note); closeEditor(); });
     row1.appendChild(closeBtn);
     box.appendChild(row1);
@@ -363,7 +399,7 @@
     row2.appendChild(miniSelect(CATEGORIES, note.category, function (v) { note.category = v; render(); }));
     box.appendChild(row2);
 
-    var dc = el('input', 'background:transparent;color:#8a8a8a;border:0;border-top:1px solid #222;outline:0;font:11px Inter,system-ui,sans-serif;padding:4px 0 0;');
+    var dc = el('input', 'background:transparent;color:#8a8a8a;border:0;border-top:1px solid rgba(255,255,255,0.08);outline:0;font:11px Inter,system-ui,sans-serif;padding:6px 0 0;');
     dc.type = 'text';
     dc.placeholder = 'Desired change (optional)';
     dc.value = note.desired_change;
@@ -380,7 +416,7 @@
     return box;
   }
   function miniSelect(opts, val, onChange) {
-    var s = el('select', 'background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:3px;padding:2px 4px;font:10px Inter,system-ui,sans-serif;cursor:pointer;');
+    var s = el('select', 'flex:1;min-width:0;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:999px;padding:4px 8px;font:10px Inter,system-ui,sans-serif;cursor:pointer;');
     opts.forEach(function (o) {
       var opt = el('option', '', o); opt.value = o; if (o === val) opt.selected = true; s.appendChild(opt);
     });
@@ -403,14 +439,14 @@
   });
   listBtn.addEventListener('click', function (e) {
     e.stopPropagation();
-    hint.textContent = state.notes.length
+    showHint(state.notes.length
       ? state.notes.map(function (n, i) { return (i + 1) + '. [' + n.severity + '] ' + (n.note || n.element_label); }).join('  |  ')
-      : 'No notes yet.';
+      : 'No notes yet.', 3000);
   });
   clearBtn.addEventListener('click', function (e) {
     e.stopPropagation();
-    hint.textContent = 'Click "Clear all" again within 3s to confirm.';
-    if (clearBtn.__armed) { state.notes = []; state.seq = 0; render(); closeEditor(); hint.textContent = 'Cleared.'; clearBtn.__armed = false; return; }
+    if (clearBtn.__armed) { state.notes = []; state.seq = 0; render(); closeEditor(); showHint('Cleared.', 1500); clearBtn.__armed = false; return; }
+    showHint('Click "Clear all" again within 3s to confirm.', 3000);
     clearBtn.__armed = true;
     setTimeout(function () { clearBtn.__armed = false; }, 3000);
   });
@@ -433,8 +469,8 @@
       };
     },
     setViewport: function (name) { state.viewport = name; render(); return name; },
-    show: function () { root.style.display = ''; hud.style.display = ''; },
-    hide: function () { root.style.display = 'none'; hud.style.display = 'none'; },
+    show: function () { root.style.display = ''; hud.style.display = ''; hint.style.display = ''; },
+    hide: function () { root.style.display = 'none'; hud.style.display = 'none'; hint.style.display = 'none'; },
     clear: function () { state.notes.length = 0; state.seq = 0; render(); },
     destroy: function () {
       document.removeEventListener('mousemove', onMove, true);
@@ -442,7 +478,7 @@
       window.removeEventListener('scroll', render, true);
       window.removeEventListener('resize', render, true);
       document.removeEventListener('keydown', onKeydown, true);
-      [root, highlight, tip, pinLayer, hud].forEach(function (n) { if (n && n.remove) n.remove(); });
+      [root, highlight, tip, pinLayer, hud, hint].forEach(function (n) { if (n && n.remove) n.remove(); });
       try { delete window.__CRITIC__; } catch (e) { window.__CRITIC__ = undefined; }
     },
   };
@@ -457,7 +493,7 @@
   }
 
   // ---- Boot --------------------------------------------------------------
-  [root, highlight, tip, pinLayer, hud].forEach(function (n) { document.documentElement.appendChild(n); });
+  [root, highlight, tip, pinLayer, hud, hint].forEach(function (n) { document.documentElement.appendChild(n); });
   document.addEventListener('mousemove', onMove, true);
   document.addEventListener('click', onClick, true);
   document.addEventListener('keydown', onKeydown, true);
