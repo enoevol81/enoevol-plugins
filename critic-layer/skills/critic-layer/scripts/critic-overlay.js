@@ -171,7 +171,7 @@
     // Click-away dismisses the open editor instead of falling through to the
     // page (picking is already paused while editing, but the click would
     // otherwise still activate whatever the page renders underneath it).
-    if (editor && !own(document.elementFromPoint(e.clientX, e.clientY))) {
+    if (editingNoteId != null && !own(document.elementFromPoint(e.clientX, e.clientY))) {
       e.preventDefault(); e.stopPropagation();
       closeEditor();
       return;
@@ -200,8 +200,7 @@
       createdAt: Date.now(),
     };
     state.notes.push(note);
-    render();
-    openEditor(note, true);
+    openEditor(note);
   }
 
   // ---- Pins + editor -----------------------------------------------------
@@ -213,23 +212,90 @@
     }
     return { x: note.pageX - window.scrollX, y: note.pageY - window.scrollY, live: false };
   }
+  // A note pin is just a 14px dot until you click it — no card, no header.
+  // Clicking opens a slender inline bar next to the dot (single-line input,
+  // compact category/severity, Enter/blur commits, Escape cancels); the
+  // fields it doesn't need stay hidden entirely instead of an empty shell.
   function render() {
     countBadge.textContent = String(state.notes.length);
     pinLayer.innerHTML = '';
     state.notes.forEach(function (note, i) {
-      var p = pinPos(note);
-      var pin = el('div', 'position:fixed;pointer-events:auto;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:11px/1 Inter,system-ui,sans-serif;font-weight:700;color:#fff;cursor:pointer;transform:translate(-50%,-50%);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);opacity:' + (p.live ? '1' : '0.5') + ';');
-      pin.style.background = SEV_COLOR[note.severity] || '#ff5b45';
-      pin.style.left = p.x + 'px'; pin.style.top = p.y + 'px';
-      pin.style.zIndex = Z + 3;
-      pin.textContent = String(i + 1);
-      pin.title = note.category + ' / ' + note.severity + (note.note ? ' — ' + note.note : '');
-      pin.addEventListener('click', function (ev) { ev.stopPropagation(); openEditor(note, false); });
-      pinLayer.appendChild(pin);
+      pinLayer.appendChild(buildPin(note, i));
     });
   }
 
-  var editor = null;
+  function buildPin(note, i) {
+    var p = pinPos(note);
+    var editing = editingNoteId === note.id;
+    var wrap = el('div', 'position:fixed;pointer-events:auto;display:flex;align-items:flex-start;gap:6px;touch-action:none;transform:translate(-7px,-7px);z-index:' + (Z + (editing ? 6 : 3)) + ';');
+    wrap.style.left = p.x + 'px'; wrap.style.top = p.y + 'px';
+    wrap.dataset.noteId = note.id;
+
+    var dot = el('div', 'width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);flex-shrink:0;cursor:grab;');
+    dot.style.background = SEV_COLOR[note.severity] || '#ff5b45';
+    dot.style.opacity = p.live ? '1' : '0.5';
+    dot.title = '#' + (i + 1) + ' ' + note.category + ' / ' + note.severity + (note.note ? ' — ' + note.note : '');
+    wrap.appendChild(dot);
+
+    if (editing) {
+      wrap.appendChild(buildEditingBar(note));
+      stop(wrap);
+    } else {
+      if (note.note) {
+        wrap.appendChild(el('div', 'background:#111;color:#fff;font:12px/1.4 Inter,system-ui,sans-serif;padding:4px 8px;border-radius:3px;margin-top:-2px;max-width:220px;pointer-events:none;white-space:pre-wrap;word-break:break-word;box-shadow:0 1px 4px rgba(0,0,0,0.3);', note.note));
+      }
+      wireDrag(wrap, dot, note);
+    }
+    return wrap;
+  }
+
+  // Reposition a note from a screen point: re-normalize against its anchor
+  // element when one still resolves (keeps live-anchoring after a drag),
+  // and always refresh the page-relative fallback coords too.
+  function updateNoteFromScreenPos(note, sx, sy) {
+    var node = resolveAnchor(note.anchor);
+    if (node) {
+      var r = node.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) {
+        note.x = +((sx - r.left) / r.width).toFixed(3);
+        note.y = +((sy - r.top) / r.height).toFixed(3);
+      }
+    }
+    note.pageX = Math.round(sx + window.scrollX);
+    note.pageY = Math.round(sy + window.scrollY);
+  }
+  function wireDrag(wrap, dot, note) {
+    dot.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+      if (e.button) return;
+      var startX = e.clientX, startY = e.clientY;
+      var p0 = pinPos(note);
+      var dragging = false;
+      try { dot.setPointerCapture(e.pointerId); } catch (err) {}
+      function onMove(ev) {
+        var dx = ev.clientX - startX, dy = ev.clientY - startY;
+        if (!dragging && Math.hypot(dx, dy) > 4) { dragging = true; dot.style.cursor = 'grabbing'; }
+        if (!dragging) return;
+        wrap.style.left = (p0.x + dx) + 'px'; wrap.style.top = (p0.y + dy) + 'px';
+      }
+      function onUp(ev) {
+        document.removeEventListener('pointermove', onMove, true);
+        document.removeEventListener('pointerup', onUp, true);
+        dot.style.cursor = 'grab';
+        if (dragging) {
+          updateNoteFromScreenPos(note, p0.x + (ev.clientX - startX), p0.y + (ev.clientY - startY));
+          render();
+        } else {
+          openEditor(note);
+        }
+      }
+      document.addEventListener('pointermove', onMove, true);
+      document.addEventListener('pointerup', onUp, true);
+    }, false);
+  }
+
+  var editingNoteId = null;
+  var justOpenedNoteId = null; // animates the intro once; select-change re-renders skip it
   var pickingBeforeEdit = null;
   function setPicking(on) {
     state.picking = on;
@@ -237,66 +303,84 @@
     pickBtn.style.background = on ? '#ff5b45' : '#1a1a1a';
     if (!on) { highlight.style.display = 'none'; tip.style.display = 'none'; }
   }
-  function closeEditorNode() { if (editor) { editor.remove(); editor = null; } }
-  function closeEditor() {
-    var was = !!editor;
-    closeEditorNode();
-    if (was && pickingBeforeEdit != null) { setPicking(pickingBeforeEdit); pickingBeforeEdit = null; }
-  }
   // Editing a note pauses picking so clicking around the page to read
   // context doesn't stamp new notes; picking resumes at whatever it was
-  // once you hit Done/Delete or Escape out.
-  function openEditor(note, isNew) {
-    if (!editor) pickingBeforeEdit = state.picking;
-    closeEditorNode();
+  // once the bar closes (Enter, Escape, blur, or click-away).
+  function closeEditor() {
+    var was = editingNoteId != null;
+    editingNoteId = null;
+    if (was && pickingBeforeEdit != null) { setPicking(pickingBeforeEdit); pickingBeforeEdit = null; }
+    render();
+  }
+  function openEditor(note) {
+    if (editingNoteId == null) pickingBeforeEdit = state.picking;
+    editingNoteId = note.id;
+    justOpenedNoteId = note.id;
     setPicking(false);
-    var p = pinPos(note);
-    editor = el('div', 'position:fixed;pointer-events:auto;z-index:' + (Z + 6) + ';background:#111;color:#fff;border:1px solid #333;width:260px;font:13px Inter,system-ui,sans-serif;');
-    editor.id = PREFIX + 'editor';
-    var left = Math.min(window.innerWidth - 272, Math.max(8, p.x + 14));
-    var top = Math.min(window.innerHeight - 240, Math.max(8, p.y + 14));
-    editor.style.left = left + 'px'; editor.style.top = top + 'px';
+    render();
+    requestAnimationFrame(function () {
+      var input = pinLayer.querySelector('[data-note-id="' + note.id + '"] input[data-role="note-text"]');
+      if (input) input.focus();
+    });
+  }
+  function buildEditingBar(note) {
+    var animate = justOpenedNoteId === note.id;
+    justOpenedNoteId = null;
+    var box = el('div', 'display:flex;flex-direction:column;gap:5px;background:#111;color:#fff;border:1px solid #333;border-radius:4px;padding:6px 8px;margin-top:-2px;min-width:200px;max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,0.4);transition:opacity .14s ease-out,transform .14s ease-out;' +
+      (animate ? 'opacity:0;transform:translateY(-2px) scale(0.98);' : 'opacity:1;transform:none;'));
+    if (animate) {
+      requestAnimationFrame(function () { box.style.opacity = '1'; box.style.transform = 'translateY(0) scale(1)'; });
+    }
 
-    var head = el('div', 'display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid #333;');
-    head.appendChild(el('span', 'font-weight:600;', 'Note ' + note.id.replace('note_', '#')));
-    head.appendChild(el('span', 'color:#8a8a8a;font:11px ui-monospace,monospace;', note.element_label));
-    editor.appendChild(head);
+    function commitAndClose(e) { if (e) { e.preventDefault(); e.stopPropagation(); } closeEditor(); }
 
-    var ta = el('textarea', 'width:100%;box-sizing:border-box;background:#1a1a1a;color:#fff;border:0;border-bottom:1px solid #333;padding:8px 10px;font:13px Inter,system-ui,sans-serif;resize:vertical;min-height:56px;');
-    ta.placeholder = "What's wrong here?";
-    ta.value = note.note;
-    stop(ta);
-    ta.addEventListener('input', function () { note.note = ta.value; });
-    editor.appendChild(ta);
+    var row1 = el('div', 'display:flex;align-items:center;gap:6px;');
+    var input = el('input', 'flex:1;min-width:0;background:transparent;color:#fff;border:0;outline:0;font:12px Inter,system-ui,sans-serif;padding:2px 0;');
+    input.type = 'text';
+    input.placeholder = "What's wrong here?";
+    input.value = note.note;
+    input.setAttribute('data-role', 'note-text');
+    input.addEventListener('input', function () { note.note = input.value; });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === 'Escape') commitAndClose(e);
+      else e.stopPropagation();
+    });
+    input.addEventListener('blur', function () {
+      setTimeout(function () { if (editingNoteId === note.id && !box.contains(document.activeElement)) closeEditor(); }, 100);
+    });
+    ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) {
+      input.addEventListener(ev, function (e) { e.stopPropagation(); }, false);
+    });
+    row1.appendChild(input);
 
-    var dc = el('input', 'width:100%;box-sizing:border-box;background:#1a1a1a;color:#fff;border:0;border-bottom:1px solid #333;padding:8px 10px;font:13px Inter,system-ui,sans-serif;');
+    var closeBtn = el('button', 'flex-shrink:0;width:16px;height:16px;line-height:14px;text-align:center;background:transparent;color:#8a8a8a;border:0;cursor:pointer;font:13px monospace;padding:0;', '×');
+    closeBtn.addEventListener('click', function (e) { e.stopPropagation(); removeNote(note); closeEditor(); });
+    row1.appendChild(closeBtn);
+    box.appendChild(row1);
+
+    var row2 = el('div', 'display:flex;gap:6px;');
+    row2.appendChild(miniSelect(SEVERITIES, note.severity, function (v) { note.severity = v; render(); }));
+    row2.appendChild(miniSelect(CATEGORIES, note.category, function (v) { note.category = v; render(); }));
+    box.appendChild(row2);
+
+    var dc = el('input', 'background:transparent;color:#8a8a8a;border:0;border-top:1px solid #222;outline:0;font:11px Inter,system-ui,sans-serif;padding:4px 0 0;');
+    dc.type = 'text';
     dc.placeholder = 'Desired change (optional)';
     dc.value = note.desired_change;
-    stop(dc);
     dc.addEventListener('input', function () { note.desired_change = dc.value; });
-    editor.appendChild(dc);
+    dc.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === 'Escape') commitAndClose(e);
+      else e.stopPropagation();
+    });
+    ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) {
+      dc.addEventListener(ev, function (e) { e.stopPropagation(); }, false);
+    });
+    box.appendChild(dc);
 
-    var row = el('div', 'display:flex;gap:0;border-bottom:1px solid #333;');
-    var cat = selectFrom(CATEGORIES, note.category, function (v) { note.category = v; });
-    var sev = selectFrom(SEVERITIES, note.severity, function (v) { note.severity = v; render(); });
-    cat.style.flex = '1'; sev.style.flex = '1'; sev.style.borderLeft = '1px solid #333';
-    row.appendChild(cat); row.appendChild(sev);
-    editor.appendChild(row);
-
-    var actions = el('div', 'display:flex;');
-    var del = el('button', 'flex:1;padding:8px;background:#1a1a1a;color:#8a8a8a;border:0;cursor:pointer;font:13px Inter,system-ui,sans-serif;', 'Delete');
-    var done = el('button', 'flex:1;padding:8px;background:#ff5b45;color:#fff;border:0;cursor:pointer;font:13px Inter,system-ui,sans-serif;font-weight:600;', 'Done');
-    del.addEventListener('click', function (e) { e.stopPropagation(); removeNote(note); closeEditor(); });
-    done.addEventListener('click', function (e) { e.stopPropagation(); closeEditor(); });
-    actions.appendChild(del); actions.appendChild(done);
-    editor.appendChild(actions);
-
-    stop(editor);
-    root.appendChild(editor);
-    ta.focus();
+    return box;
   }
-  function selectFrom(opts, val, onChange) {
-    var s = el('select', 'background:#1a1a1a;color:#fff;border:0;padding:8px 10px;font:13px Inter,system-ui,sans-serif;cursor:pointer;');
+  function miniSelect(opts, val, onChange) {
+    var s = el('select', 'background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:3px;padding:2px 4px;font:10px Inter,system-ui,sans-serif;cursor:pointer;');
     opts.forEach(function (o) {
       var opt = el('option', '', o); opt.value = o; if (o === val) opt.selected = true; s.appendChild(opt);
     });
@@ -368,7 +452,7 @@
   // designer can move around the page without stamping notes.
   function onKeydown(e) {
     if (e.key !== 'Escape') return;
-    if (editor) { closeEditor(); return; }
+    if (editingNoteId != null) { closeEditor(); return; }
     if (state.picking) setPicking(false);
   }
 
