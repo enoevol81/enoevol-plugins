@@ -58,6 +58,11 @@
       "name": "cut-weight",
       "source": "./cut-weight",
       "description": "Reachability-first repo cleanup — traces execution entry points to find what's actually needed to run, then an interactive review loop (findings file, multiple-choice decision gate, post-mortem) cuts, quarantines, untracks, or deletes the rest with full rollback. Includes a Claude/agent-artifact gate."
+    },
+    {
+      "name": "critic-layer",
+      "source": "./critic-layer",
+      "description": "Real-time, in-browser UX/UI design review — place sticky notes directly on a live web page, then synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt. A review-to-instruction layer, not a design editor."
     }
   ]
 }
