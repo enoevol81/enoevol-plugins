@@ -137,9 +137,14 @@
   stop(hud); // clicks on the HUD never fall through to the page
 
   // ---- Wiring ------------------------------------------------------------
+  // Bubble-phase, not capture: a capture-phase stopPropagation on an ancestor
+  // (hud/editor) would stop the event before it ever reaches a descendant
+  // button/select, silently killing every click handler inside. Bubble phase
+  // lets the target's own listener (Delete, Done, Picking toggle...) fire
+  // first, then keeps the click from escaping the overlay afterward.
   function stop(node) {
     ['pointerdown', 'mousedown', 'click', 'pointerup', 'focusin'].forEach(function (ev) {
-      node.addEventListener(ev, function (e) { e.stopPropagation(); }, true);
+      node.addEventListener(ev, function (e) { e.stopPropagation(); }, false);
     });
   }
 
@@ -163,6 +168,14 @@
     return s;
   }
   function onClick(e) {
+    // Click-away dismisses the open editor instead of falling through to the
+    // page (picking is already paused while editing, but the click would
+    // otherwise still activate whatever the page renders underneath it).
+    if (editor && !own(document.elementFromPoint(e.clientX, e.clientY))) {
+      e.preventDefault(); e.stopPropagation();
+      closeEditor();
+      return;
+    }
     if (!state.picking) return;
     var t = document.elementFromPoint(e.clientX, e.clientY);
     if (!pickable(t)) return;
@@ -217,9 +230,26 @@
   }
 
   var editor = null;
-  function closeEditor() { if (editor) { editor.remove(); editor = null; } }
+  var pickingBeforeEdit = null;
+  function setPicking(on) {
+    state.picking = on;
+    pickBtn.textContent = 'Picking: ' + (on ? 'ON' : 'OFF');
+    pickBtn.style.background = on ? '#ff5b45' : '#1a1a1a';
+    if (!on) { highlight.style.display = 'none'; tip.style.display = 'none'; }
+  }
+  function closeEditorNode() { if (editor) { editor.remove(); editor = null; } }
+  function closeEditor() {
+    var was = !!editor;
+    closeEditorNode();
+    if (was && pickingBeforeEdit != null) { setPicking(pickingBeforeEdit); pickingBeforeEdit = null; }
+  }
+  // Editing a note pauses picking so clicking around the page to read
+  // context doesn't stamp new notes; picking resumes at whatever it was
+  // once you hit Done/Delete or Escape out.
   function openEditor(note, isNew) {
-    closeEditor();
+    if (!editor) pickingBeforeEdit = state.picking;
+    closeEditorNode();
+    setPicking(false);
     var p = pinPos(note);
     editor = el('div', 'position:fixed;pointer-events:auto;z-index:' + (Z + 6) + ';background:#111;color:#fff;border:1px solid #333;width:260px;font:13px Inter,system-ui,sans-serif;');
     editor.id = PREFIX + 'editor';
@@ -283,10 +313,9 @@
   // ---- HUD actions -------------------------------------------------------
   pickBtn.addEventListener('click', function (e) {
     e.stopPropagation();
-    state.picking = !state.picking;
-    pickBtn.textContent = 'Picking: ' + (state.picking ? 'ON' : 'OFF');
-    pickBtn.style.background = state.picking ? '#ff5b45' : '#1a1a1a';
-    if (!state.picking) { highlight.style.display = 'none'; tip.style.display = 'none'; }
+    closeEditor(); // toggling picking manually overrides any pending auto-resume
+    pickingBeforeEdit = null;
+    setPicking(!state.picking);
   });
   listBtn.addEventListener('click', function (e) {
     e.stopPropagation();
@@ -328,16 +357,26 @@
       document.removeEventListener('click', onClick, true);
       window.removeEventListener('scroll', render, true);
       window.removeEventListener('resize', render, true);
+      document.removeEventListener('keydown', onKeydown, true);
       [root, highlight, tip, pinLayer, hud].forEach(function (n) { if (n && n.remove) n.remove(); });
       try { delete window.__CRITIC__; } catch (e) { window.__CRITIC__ = undefined; }
     },
   };
   Object.defineProperty(api, 'notes', { get: function () { return state.notes; } });
 
+  // Escape: close an open editor first, otherwise pause picking so the
+  // designer can move around the page without stamping notes.
+  function onKeydown(e) {
+    if (e.key !== 'Escape') return;
+    if (editor) { closeEditor(); return; }
+    if (state.picking) setPicking(false);
+  }
+
   // ---- Boot --------------------------------------------------------------
   [root, highlight, tip, pinLayer, hud].forEach(function (n) { document.documentElement.appendChild(n); });
   document.addEventListener('mousemove', onMove, true);
   document.addEventListener('click', onClick, true);
+  document.addEventListener('keydown', onKeydown, true);
   window.addEventListener('scroll', render, true);
   window.addEventListener('resize', render, true);
   window.__CRITIC__ = api;
