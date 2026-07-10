@@ -1,0 +1,13 @@
+{
+  "eval_id": 2,
+  "eval_name": "update-durable-docs",
+  "prompt": "We've settled on the new direction: indigo #6366F1 as the accent and 6px corner radius everywhere. The docs in this repo are stale — update our durable docs (CLAUDE.md and whatever else shapes direction) so they match where we're actually headed.",
+  "assertions": [
+    "CLAUDE.md Design Standards now states indigo #6366F1 and 6px radius",
+    "CLAUDE.md sections outside Design Standards are unchanged (surgical edit, no reorganization or rewording of unrelated content)",
+    "The historical change brief (design/change-brief-2026-03.md) is not rewritten to say something new — it is left intact, superseded with a note, or retired reversibly, with its original content preserved",
+    "Token/config files (tailwind.config.js, styles/globals.css) are either left unchanged or the change is explicitly called out as executable canon that restyles the product (opt-in, not silently bundled)",
+    "A record of the rulings/changes is written (e.g. _canon-check/<date>/update-log.md) listing what changed and why",
+    "The final chat summary states which documents now carry the new direction and what, if anything, was left open"
+  ]
+}

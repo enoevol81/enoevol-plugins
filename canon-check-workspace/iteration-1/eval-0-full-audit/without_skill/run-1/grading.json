@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "A canon report markdown file is written to disk in the working repo (e.g. under _canon-check/<date>/)",
+      "passed": true,
+      "evidence": "No _canon-check/ directory, but a substantive audit report was written to outputs/acme-app/design/design-standards-audit.md (65 lines: TL;DR, source table, component truth table, drift analysis, recommended fix). Judged on substance per grading instructions: an audit report markdown file exists in the working repo."
+    },
+    {
+      "text": "The radius conflict is found: 8px documented (CLAUDE.md / tailwind.config.js / globals.css) vs 6px hardcoded in Button.tsx and Card.tsx",
+      "passed": true,
+      "evidence": "design-standards-audit.md: Canon A '8px radius... Declared in four places: CLAUDE.md, README.md, tailwind.config.js, styles/globals.css' vs Canon B '6px radius... implemented only as hardcoded inline styles'. Component table lists Button.tsx 6px, Card.tsx 6px, Modal.tsx 8px ('Still on Canon A radius'). Matches fixture ground truth."
+    },
+    {
+      "text": "The accent conflict is found: #3B82F6 documented vs #6366F1 in Button.tsx",
+      "passed": true,
+      "evidence": "Canon A 'blue #3B82F6 accent' (CLAUDE.md/README/tailwind/globals) vs Canon B 'indigo #6366F1 CTA'; component table: 'Button.tsx | 6px | #6366F1 hardcoded | Violates CLAUDE.md three ways: wrong accent, wrong radius, hardcoded color + font'."
+    },
+    {
+      "text": "The drift is traced to its origin: design/change-brief-2026-03.md is identified as the source of the indigo and/or icon-padding decisions",
+      "passed": true,
+      "evidence": "Source table row: 'design/change-brief-2026-03.md | CTA -> indigo #6366F1; icon buttons -> 8px padding all sides; cards -> 6px radius (AI-suggested, Priority 2) | The origin of Canon B.' Git history row cites commit 14fe0ef 'Switch CTA to indigo #6366F1 and 6px radius per March critic review'."
+    },
+    {
+      "text": "Single-mention / fragile canon is flagged as such (8px icon padding or the indigo CTA suggestion, existing only in the March brief)",
+      "passed": true,
+      "evidence": "TL;DR: Canon B (indigo CTA, 6px radius, 8px icon padding) 'Declared in one place: design/change-brief-2026-03.md', and 'the 6px-radius item was an AI critic suggestion marked \"dismissible\", yet it shipped \u2014 you may genuinely never have decided it'. Also flags 'Border color exists in no token file' for #E2E8F0 and 'The real design is invisible... nothing declares it as policy, so nothing defends it.'"
+    },
+    {
+      "text": "The change brief itself gets a document-relevance assessment (stale/obsolete) with a proposed disposition (keep/update/supersede/delete)",
+      "passed": false,
+      "evidence": "Closest match is recommended-fix step 6: 'Mark the change brief as superseded/absorbed once tokens reflect it' \u2014 a conditional future disposition, but nowhere in the report or final_message.md is the brief itself assessed for current relevance (stale/obsolete/live). The brief is treated only as the origin of Canon B; no document-status judgment is made, unlike the required relevance assessment + disposition pairing."
+    },
+    {
+      "text": "Findings cite concrete sources (file paths, ideally line numbers), not just category labels",
+      "passed": true,
+      "evidence": "Report cites exact file paths (CLAUDE.md, tailwind.config.js, styles/globals.css, README.md, design/change-brief-2026-03.md, src/components/*.tsx), exact values (#3B82F6, #6366F1, 8px/6px, #E2E8F0), and both commit hashes with messages (c3f72ee, 14fe0ef). No line numbers, but the assertion treats those as ideal, not required."
+    },
+    {
+      "text": "The final chat summary leads with the conflicts and offers a follow-up to update the durable docs",
+      "passed": true,
+      "evidence": "final_message.md opens: 'You have two competing design canons in this repo, and the older one is armed while the newer one is defenseless' \u2014 leads with the conflict. It closes with a concrete doc-update follow-up: 'Recommended next step... pick one canon... then update CLAUDE.md first, sync tailwind/globals/README to match, and refactor components to actually consume tokens', deferring the canon choice to the user. Weaker than an explicit offer to perform the update, but the substance (conflicts first, durable-docs update as next step) is present."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "pass_rate": 0.875
+  }
+}

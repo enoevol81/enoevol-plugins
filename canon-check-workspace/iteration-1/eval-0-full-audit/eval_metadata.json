@@ -1,0 +1,15 @@
+{
+  "eval_id": 0,
+  "eval_name": "full-audit",
+  "prompt": "I've been working in this repo for a while and every time I try to refresh the look, everything kind of drifts back to the same old style and I don't totally get why. Can you figure out what design standards we're actually locked into here and where they're coming from? Some of this stuff I don't even remember deciding.",
+  "assertions": [
+    "A canon report markdown file is written to disk in the working repo (e.g. under _canon-check/<date>/)",
+    "The radius conflict is found: 8px documented (CLAUDE.md / tailwind.config.js / globals.css) vs 6px hardcoded in Button.tsx and Card.tsx",
+    "The accent conflict is found: #3B82F6 documented vs #6366F1 in Button.tsx",
+    "The drift is traced to its origin: design/change-brief-2026-03.md is identified as the source of the indigo and/or icon-padding decisions",
+    "Single-mention / fragile canon is flagged as such (8px icon padding or the indigo CTA suggestion, existing only in the March brief)",
+    "The change brief itself gets a document-relevance assessment (stale/obsolete) with a proposed disposition (keep/update/supersede/delete)",
+    "Findings cite concrete sources (file paths, ideally line numbers), not just category labels",
+    "The final chat summary leads with the conflicts and offers a follow-up to update the durable docs"
+  ]
+}

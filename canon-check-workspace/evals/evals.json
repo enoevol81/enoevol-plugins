@@ -1,0 +1,51 @@
+{
+  "skill_name": "canon-check",
+  "evals": [
+    {
+      "id": 0,
+      "name": "full-audit",
+      "prompt": "I've been working in this repo for a while and every time I try to refresh the look, everything kind of drifts back to the same old style and I don't totally get why. Can you figure out what design standards we're actually locked into here and where they're coming from? Some of this stuff I don't even remember deciding.",
+      "expected_output": "A canon report that finds the planted findings: explicit canon (Inter, 8px spacing), the radius conflict (docs/tokens say 8px, Button+Card use 6px), the accent conflict (#3B82F6 documented vs #6366F1 in Button, originating from the March change brief), single-mention canon (8px icon padding from the brief), and a document-relevance assessment of the stale change brief.",
+      "files": ["fixtures/acme-app"],
+      "assertions": [
+        "A canon report markdown file is written to disk in the working repo",
+        "The radius conflict is found: 8px documented vs 6px hardcoded in Button.tsx and Card.tsx",
+        "The accent conflict is found: #3B82F6 documented vs #6366F1 in Button.tsx",
+        "The drift is traced to design/change-brief-2026-03.md",
+        "Single-mention / fragile canon is flagged as such",
+        "The change brief gets a document-relevance assessment with a proposed disposition",
+        "Findings cite concrete sources (file paths)",
+        "The chat summary leads with conflicts and offers the update follow-up"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "gate-before-change",
+      "prompt": "Let's update the buttons in this project to a 12px corner radius — they feel too sharp to me.",
+      "expected_output": "The change gets made, but before or alongside it the agent surfaces that corner radius is already canonical/conflicted (8px in CLAUDE.md, tailwind.config, and globals.css; 6px hardcoded in Button and Card), so the user knows 12px diverges from three documented sources and creates or worsens inconsistency with Card/Modal.",
+      "files": ["fixtures/acme-app"],
+      "assertions": [
+        "The requested change is actually made (12px radius on buttons) — not blocked",
+        "Existing radius canon is surfaced with at least two concrete sources before/alongside the edit",
+        "The divergence/inconsistency created is noted",
+        "The response is proportionate — targeted check, not a full audit",
+        "No unrelated files are modified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "update-durable-docs",
+      "prompt": "We've settled on the new direction: indigo #6366F1 as the accent and 6px corner radius everywhere. The docs in this repo are stale — update our durable docs (CLAUDE.md and whatever else shapes direction) so they match where we're actually headed.",
+      "expected_output": "CLAUDE.md's Design Standards updated to indigo/#6366F1 and 6px surgically (other sections untouched), a decision about the stale change brief (supersede/retire, not falsified), awareness that tokens (tailwind.config.js, globals.css) are executable canon needing explicit opt-in, and some record of what changed and why.",
+      "files": ["fixtures/acme-app"],
+      "assertions": [
+        "CLAUDE.md Design Standards now states indigo #6366F1 and 6px radius",
+        "CLAUDE.md sections outside Design Standards are unchanged",
+        "The historical change brief is not rewritten to say something new; original content preserved",
+        "Token/config changes are opt-in and explicitly called out, or those files are untouched",
+        "A record of rulings/changes is written to disk",
+        "The chat summary states which docs carry the new direction and what is left open"
+      ]
+    }
+  ]
+}

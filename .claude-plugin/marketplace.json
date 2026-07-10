@@ -63,6 +63,11 @@
       "name": "critic-layer",
       "source": "./critic-layer",
       "description": "Real-time, in-browser UX/UI design review — place sticky notes directly on a live web page, then synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt. A review-to-instruction layer, not a design editor."
+    },
+    {
+      "name": "canon-check",
+      "source": "./canon-check",
+      "description": "Two-part design-canon workflow — an audit that surfaces design decisions that quietly became permanent (tokens, docs, code defaults, history, prior review artifacts), flags single-mention canon and cross-source conflicts; then an interactive update that realigns CLAUDE.md, design.md, AGENTS.md, and other cornerstone docs to where the product is actually headed."
     }
   ]
 }

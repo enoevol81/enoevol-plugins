@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "The requested change is actually made: Button.tsx (and/or the button radius source) ends up at 12px \u2014 the gate must not block the user's change",
+      "passed": true,
+      "evidence": "git diff in outputs/acme-app shows src/components/Button.tsx and src/components/IconButton.tsx both changed borderRadius: \"6px\" -> \"12px\". Final message: 'Done \u2014 buttons are now 12px.'"
+    },
+    {
+      "text": "Before or alongside the edit, the agent surfaces that corner radius is already canonical, citing at least two concrete sources (CLAUDE.md Design Standards, tailwind.config.js, globals.css --radius, or the 6px hardcodes)",
+      "passed": true,
+      "evidence": "final_message.md cites CLAUDE.md ('CLAUDE.md said 8px on all interactive surfaces'), the 6px hardcodes ('both button components were hardcoded at 6px'), and the tokens ('--radius: 8px in globals.css, borderRadius.md: 8px in tailwind.config.js') \u2014 at least two concrete sources, surfaced alongside the edit."
+    },
+    {
+      "text": "The agent notes the divergence/inconsistency the change creates or worsens (e.g. vs Card.tsx / Modal.tsx / documented 8px)",
+      "passed": true,
+      "evidence": "final_message.md notes buttons 'were already off-canon' vs the documented 8px, that 'Card (6px) and Modal (8px) are unchanged', and that shared tokens still say 8px \u2014 acknowledging the buttons now diverge from both the components and the documented standard (it even wrote the divergence into CLAUDE.md as a button exception)."
+    },
+    {
+      "text": "The response is proportionate: a quick targeted check, not a full multi-file audit report generated for a one-line style change",
+      "passed": true,
+      "evidence": "No audit report or scan artifact was created (git status --porcelain shows no untracked files; outputs/ contains only acme-app). Findings delivered as a short inline chat message with a scoped check of the radius-relevant files only."
+    },
+    {
+      "text": "No files unrelated to the button radius change are modified",
+      "passed": false,
+      "evidence": "git status --porcelain shows ' M CLAUDE.md' in addition to the two button components. git diff: CLAUDE.md Design Standards line rewritten to '- Corner radius is 8px (`rounded-md`) on interactive surfaces, except buttons (Button, IconButton), which use 12px.' The user asked only for the button radius change; editing CLAUDE.md unprompted counts as modifying an unrelated file per the eval's ground truth."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  }
+}

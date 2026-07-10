@@ -1,0 +1,40 @@
+{
+  "expectations": [
+    {
+      "text": "CLAUDE.md Design Standards now states indigo #6366F1 and 6px radius",
+      "passed": true,
+      "evidence": "git diff CLAUDE.md shows the Design Standards bullets replaced: '+- Corner radius is 6px everywhere \u2014 all surfaces and interactive elements.' and '+- Accent color is indigo `#6366F1` \u2014 use the `accent` token, never hardcode.' (with_skill/outputs/acme-app/CLAUDE.md)"
+    },
+    {
+      "text": "CLAUDE.md sections outside Design Standards are unchanged (surgical edit, no reorganization or rewording of unrelated content)",
+      "passed": true,
+      "evidence": "git diff for CLAUDE.md contains a single hunk (@@ -10,6 +10,10 @@) entirely within the '## Design Standards' section; the '## Working rules' section (line 5) and all other content are byte-identical since git diff reports no other hunks. git diff --stat: CLAUDE.md 8 ++++++--."
+    },
+    {
+      "text": "The historical change brief (design/change-brief-2026-03.md) is not rewritten to say something new \u2014 it is left intact, superseded with a note, or retired reversibly, with its original content preserved",
+      "passed": true,
+      "evidence": "git diff design/change-brief-2026-03.md is additions-only (+4/-0): a blockquote note prepended at the top ('> **Superseded 2026-07-10.** ... Kept as a historical record only.'). The original body starting at '# Change Brief \u2014 Dashboard review, 2026-03-14' is untouched \u2014 no deletions or rewording of original lines."
+    },
+    {
+      "text": "Token/config files (tailwind.config.js, styles/globals.css) are either left unchanged or the change is explicitly called out as executable canon that restyles the product (opt-in, not silently bundled)",
+      "passed": true,
+      "evidence": "git status --porcelain shows only 'M CLAUDE.md', 'M README.md', 'M design/change-brief-2026-03.md', '?? _canon-check/' \u2014 tailwind.config.js and styles/globals.css are unchanged. Final message additionally states: 'Did not touch code: tailwind.config.js, styles/globals.css, and components are executable canon \u2014 editing them restyles the product, which is opt-in.'"
+    },
+    {
+      "text": "A record of the rulings/changes is written (e.g. _canon-check/<date>/update-log.md) listing what changed and why",
+      "passed": true,
+      "evidence": "_canon-check/2026-07-10/update-log.md exists with a 'Rulings' table (8 rulings, each with basis: 'User stated' or 'Default on user's behalf'), a 'Documents changed' section with per-file line counts, and 'Deliberately left open' / 'Declined / not done' sections. A companion _canon-check/2026-07-10/canon-report.md documents the full audit."
+    },
+    {
+      "text": "The final chat summary states which documents now carry the new direction and what, if anything, was left open",
+      "passed": true,
+      "evidence": "final_message.md lists the three changed docs ('CLAUDE.md \u2014 Design Standards now says indigo #6366F1 accent and 6px radius everywhere', 'README.md \u2014 blue accent -> indigo accent', 'design/change-brief-2026-03.md \u2014 prepended a superseded 2026-07-10 note') and ends with 'Still open (the one real risk): the code is now knowingly behind the docs. tailwind.config.js and globals.css still hold #3B82F6 / 8px, and Modal.tsx hardcodes an 8px radius.'"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  }
+}

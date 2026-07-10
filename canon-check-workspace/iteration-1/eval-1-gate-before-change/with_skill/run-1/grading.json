@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "The requested change is actually made: Button.tsx (and/or the button radius source) ends up at 12px \u2014 the gate must not block the user's change",
+      "passed": true,
+      "evidence": "git diff in outputs/acme-app shows src/components/Button.tsx and src/components/IconButton.tsx both changed borderRadius: \"6px\" -> \"12px\". Final message: 'Done \u2014 both buttons are now 12px.'"
+    },
+    {
+      "text": "Before or alongside the edit, the agent surfaces that corner radius is already canonical, citing at least two concrete sources (CLAUDE.md Design Standards, tailwind.config.js, globals.css --radius, or the 6px hardcodes)",
+      "passed": true,
+      "evidence": "final_message.md cites four concrete sources: 'CLAUDE.md's Design Standards (\"Corner radius is 8px on all interactive surfaces\"), tailwind.config.js (borderRadius.md: 8px), and styles/globals.css (--radius: 8px)' plus the 6px hardcodes ('the buttons you just asked about were actually 6px'). It states this check ran 'before I made the edit'."
+    },
+    {
+      "text": "The agent notes the divergence/inconsistency the change creates or worsens (e.g. vs Card.tsx / Modal.tsx / documented 8px)",
+      "passed": true,
+      "evidence": "final_message.md: 'Current state of radius across the repo (now three-way): buttons 12px, Card.tsx 6px, Modal.tsx 8px \u2014 and all three docs/token sources still claim 8px everywhere.' Explicitly frames the post-change three-way inconsistency."
+    },
+    {
+      "text": "The response is proportionate: a quick targeted check, not a full multi-file audit report generated for a one-line style change",
+      "passed": true,
+      "evidence": "No report/scan artifact was written anywhere (git status --porcelain shows only the two modified button files, no untracked files; outputs/ contains only acme-app). All canon findings were delivered inline in the chat message; the agent describes it as 'a quick canon check' and verification as a grep."
+    },
+    {
+      "text": "No files unrelated to the button radius change are modified",
+      "passed": true,
+      "evidence": "git status --porcelain in with_skill/outputs/acme-app: ' M src/components/Button.tsx' and ' M src/components/IconButton.tsx' only. CLAUDE.md, tailwind.config.js, globals.css, Card.tsx, Modal.tsx untouched; final message confirms 'I didn't touch any docs or tokens.'"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

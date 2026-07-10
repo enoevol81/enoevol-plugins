@@ -1,0 +1,40 @@
+{
+  "expectations": [
+    {
+      "text": "CLAUDE.md Design Standards now states indigo #6366F1 and 6px radius",
+      "passed": true,
+      "evidence": "git diff CLAUDE.md shows: '+- Corner radius is 6px on all surfaces \u2014 interactive elements and containers alike.' and '+- Accent color is indigo `#6366F1` \u2014 use the `accent` token, never hardcode.' (without_skill/outputs/acme-app/CLAUDE.md)"
+    },
+    {
+      "text": "CLAUDE.md sections outside Design Standards are unchanged (surgical edit, no reorganization or rewording of unrelated content)",
+      "passed": true,
+      "evidence": "git diff for CLAUDE.md contains a single hunk (@@ -10,6 +10,8 @@) entirely within the '## Design Standards' section; the '## Working rules' section (line 5) and all other content produce no diff hunks, so they are byte-identical. git diff --stat: CLAUDE.md 6 ++++--."
+    },
+    {
+      "text": "The historical change brief (design/change-brief-2026-03.md) is not rewritten to say something new \u2014 it is left intact, superseded with a note, or retired reversibly, with its original content preserved",
+      "passed": true,
+      "evidence": "git status --porcelain shows only 'M CLAUDE.md' and 'M README.md'; 'git diff -- design/change-brief-2026-03.md' is empty (0 lines). The brief was left fully intact, satisfying the 'left intact' branch. Final message confirms the deliberate choice: 'design/change-brief-2026-03.md untouched \u2014 it's a dated review record, not a direction doc; rewriting history there would be misleading.'"
+    },
+    {
+      "text": "Token/config files (tailwind.config.js, styles/globals.css) are either left unchanged or the change is explicitly called out as executable canon that restyles the product (opt-in, not silently bundled)",
+      "passed": true,
+      "evidence": "git diff for tailwind.config.js and styles/globals.css is empty (0 lines); git status shows neither file modified. Final message flags the resulting drift explicitly ('Tokens are still old: tailwind.config.js and styles/globals.css both define accent #3B82F6 and radius 8px') and offers the token-sync as an opt-in next step."
+    },
+    {
+      "text": "A record of the rulings/changes is written (e.g. _canon-check/<date>/update-log.md) listing what changed and why",
+      "passed": false,
+      "evidence": "No record file was written to disk. git status --porcelain shows only 'M CLAUDE.md' and 'M README.md' with no untracked files \u2014 no _canon-check/ directory or any other new log/record file exists anywhere in outputs/acme-app. The rulings exist only in the ephemeral chat message."
+    },
+    {
+      "text": "The final chat summary states which documents now carry the new direction and what, if anything, was left open",
+      "passed": true,
+      "evidence": "final_message.md states 'Updated the two durable docs' and names them ('CLAUDE.md \u2014 Design Standards now say: accent is indigo #6366F1 ... corner radius is 6px', 'README.md \u2014 design blurb now reads indigo accent (#6366F1), 6px corners'), and lists what was left open under 'Drift you should know about': stale tokens in tailwind.config.js/globals.css and Modal.tsx's 8px radius straggler."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.8333
+  }
+}

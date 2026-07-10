@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "gate-before-change",
+  "prompt": "Let's update the buttons in this project to a 12px corner radius — they feel too sharp to me.",
+  "assertions": [
+    "The requested change is actually made: Button.tsx (and/or the button radius source) ends up at 12px — the gate must not block the user's change",
+    "Before or alongside the edit, the agent surfaces that corner radius is already canonical, citing at least two concrete sources (CLAUDE.md Design Standards, tailwind.config.js, globals.css --radius, or the 6px hardcodes)",
+    "The agent notes the divergence/inconsistency the change creates or worsens (e.g. vs Card.tsx / Modal.tsx / documented 8px)",
+    "The response is proportionate: a quick targeted check, not a full multi-file audit report generated for a one-line style change",
+    "No files unrelated to the button radius change are modified"
+  ]
+}

@@ -1,0 +1,369 @@
+{
+  "metadata": {
+    "skill_name": "canon-check",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-07-10T05:42:11Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 159.9,
+        "tokens": 59983,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A canon report markdown file is written to disk in the working repo (e.g. under _canon-check/<date>/)",
+          "passed": true,
+          "evidence": "outputs/acme-app/_canon-check/2026-07-10/canon-report.md exists (109 lines) with Summary, Color/Typography/Spacing tables, Conflicts, Fragile Canon, and Document Relevance sections."
+        },
+        {
+          "text": "The radius conflict is found: 8px documented (CLAUDE.md / tailwind.config.js / globals.css) vs 6px hardcoded in Button.tsx and Card.tsx",
+          "passed": true,
+          "evidence": "Conflict 2 in canon-report.md: 'Corner radius \u2014 three-way split. Docs and both token files say 8px. Button, Card, and IconButton hardcode 6px. Modal still uses 8px.' Verified against fixture: Button.tsx:9 and Card.tsx:6 have borderRadius \"6px\"; tailwind.config.js:11 md: \"8px\"; globals.css:6 --radius: 8px."
+        },
+        {
+          "text": "The accent conflict is found: #3B82F6 documented vs #6366F1 in Button.tsx",
+          "passed": true,
+          "evidence": "Conflict 1: 'Every written source (CLAUDE.md, README.md, tailwind.config.js, globals.css) says blue #3B82F6. The only actual CTA (Button.tsx) uses indigo #6366F1.' Verified: Button.tsx:6 background \"#6366F1\"; tailwind.config.js:6 accent \"#3B82F6\"."
+        },
+        {
+          "text": "The drift is traced to its origin: design/change-brief-2026-03.md is identified as the source of the indigo and/or icon-padding decisions",
+          "passed": true,
+          "evidence": "Color table row for #6366F1: 'origin: design/change-brief-2026-03.md item 1; commit 14fe0ef'. Icon padding row: 'origin: change brief item 2 (user note n5)'. 6px radius: 'origin: change brief item 3 (an AI-generated, dismissible, Priority-2 suggestion)'. Matches actual brief content (items 1-3, note n5)."
+        },
+        {
+          "text": "Single-mention / fragile canon is flagged as such (8px icon padding or the indigo CTA suggestion, existing only in the March brief)",
+          "passed": true,
+          "evidence": "Dedicated 'Fragile / Single-Mention Canon' section: '8px icon padding \u2014 one critic-layer note (n5), implemented in IconButton.tsx, never promoted to a token or doc' and '6px radius \u2014 originated as one dismissible AI suggestion... never ratified anywhere'. Summary counts 'Single-mention (fragile) canon: 5'."
+        },
+        {
+          "text": "The change brief itself gets a document-relevance assessment (stale/obsolete) with a proposed disposition (keep/update/supersede/delete)",
+          "passed": true,
+          "evidence": "Document Relevance table row: 'design/change-brief-2026-03.md | Obsolete | All 3 items implemented in the March sprint; its only remaining value is as the sole written rationale for indigo and 6px | Supersede \u2014 promote its decisions into CLAUDE.md/tokens with attribution, then archive or delete'. Explicit status (Obsolete) + disposition (Supersede)."
+        },
+        {
+          "text": "Findings cite concrete sources (file paths, ideally line numbers), not just category labels",
+          "passed": true,
+          "evidence": "Report cites file:line throughout, e.g. 'tailwind.config.js:6 (accent)', 'styles/globals.css:2 (--color-accent)', 'src/components/Button.tsx:6', 'Modal.tsx:8', plus commit hash 14fe0ef. Spot-checked: Button.tsx:6 (#6366F1) and Modal.tsx:8 (8px radius) are exact; a few radius line numbers are off by one (report says Button.tsx:8, actual :9; IconButton.tsx:8, actual :9), but paths and values are correct and concrete."
+        },
+        {
+          "text": "The final chat summary leads with the conflicts and offers a follow-up to update the durable docs",
+          "passed": true,
+          "evidence": "final_message.md opens with 'your repo has two competing design systems' followed immediately by 'The 3 conflicts that matter' (accent, radius, token discipline), and closes offering the follow-up: 'the natural next step is the companion canon-update skill \u2014 an interactive pass that realigns CLAUDE.md, README, and the token files... say the word and it'll walk you through each decision.'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 123.8,
+        "tokens": 57678,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The requested change is actually made: Button.tsx (and/or the button radius source) ends up at 12px \u2014 the gate must not block the user's change",
+          "passed": true,
+          "evidence": "git diff in outputs/acme-app shows src/components/Button.tsx and src/components/IconButton.tsx both changed borderRadius: \"6px\" -> \"12px\". Final message: 'Done \u2014 both buttons are now 12px.'"
+        },
+        {
+          "text": "Before or alongside the edit, the agent surfaces that corner radius is already canonical, citing at least two concrete sources (CLAUDE.md Design Standards, tailwind.config.js, globals.css --radius, or the 6px hardcodes)",
+          "passed": true,
+          "evidence": "final_message.md cites four concrete sources: 'CLAUDE.md's Design Standards (\"Corner radius is 8px on all interactive surfaces\"), tailwind.config.js (borderRadius.md: 8px), and styles/globals.css (--radius: 8px)' plus the 6px hardcodes ('the buttons you just asked about were actually 6px'). It states this check ran 'before I made the edit'."
+        },
+        {
+          "text": "The agent notes the divergence/inconsistency the change creates or worsens (e.g. vs Card.tsx / Modal.tsx / documented 8px)",
+          "passed": true,
+          "evidence": "final_message.md: 'Current state of radius across the repo (now three-way): buttons 12px, Card.tsx 6px, Modal.tsx 8px \u2014 and all three docs/token sources still claim 8px everywhere.' Explicitly frames the post-change three-way inconsistency."
+        },
+        {
+          "text": "The response is proportionate: a quick targeted check, not a full multi-file audit report generated for a one-line style change",
+          "passed": true,
+          "evidence": "No report/scan artifact was written anywhere (git status --porcelain shows only the two modified button files, no untracked files; outputs/ contains only acme-app). All canon findings were delivered inline in the chat message; the agent describes it as 'a quick canon check' and verification as a grep."
+        },
+        {
+          "text": "No files unrelated to the button radius change are modified",
+          "passed": true,
+          "evidence": "git status --porcelain in with_skill/outputs/acme-app: ' M src/components/Button.tsx' and ' M src/components/IconButton.tsx' only. CLAUDE.md, tailwind.config.js, globals.css, Card.tsx, Modal.tsx untouched; final message confirms 'I didn't touch any docs or tokens.'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 247.5,
+        "tokens": 69887,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "CLAUDE.md Design Standards now states indigo #6366F1 and 6px radius",
+          "passed": true,
+          "evidence": "git diff CLAUDE.md shows the Design Standards bullets replaced: '+- Corner radius is 6px everywhere \u2014 all surfaces and interactive elements.' and '+- Accent color is indigo `#6366F1` \u2014 use the `accent` token, never hardcode.' (with_skill/outputs/acme-app/CLAUDE.md)"
+        },
+        {
+          "text": "CLAUDE.md sections outside Design Standards are unchanged (surgical edit, no reorganization or rewording of unrelated content)",
+          "passed": true,
+          "evidence": "git diff for CLAUDE.md contains a single hunk (@@ -10,6 +10,10 @@) entirely within the '## Design Standards' section; the '## Working rules' section (line 5) and all other content are byte-identical since git diff reports no other hunks. git diff --stat: CLAUDE.md 8 ++++++--."
+        },
+        {
+          "text": "The historical change brief (design/change-brief-2026-03.md) is not rewritten to say something new \u2014 it is left intact, superseded with a note, or retired reversibly, with its original content preserved",
+          "passed": true,
+          "evidence": "git diff design/change-brief-2026-03.md is additions-only (+4/-0): a blockquote note prepended at the top ('> **Superseded 2026-07-10.** ... Kept as a historical record only.'). The original body starting at '# Change Brief \u2014 Dashboard review, 2026-03-14' is untouched \u2014 no deletions or rewording of original lines."
+        },
+        {
+          "text": "Token/config files (tailwind.config.js, styles/globals.css) are either left unchanged or the change is explicitly called out as executable canon that restyles the product (opt-in, not silently bundled)",
+          "passed": true,
+          "evidence": "git status --porcelain shows only 'M CLAUDE.md', 'M README.md', 'M design/change-brief-2026-03.md', '?? _canon-check/' \u2014 tailwind.config.js and styles/globals.css are unchanged. Final message additionally states: 'Did not touch code: tailwind.config.js, styles/globals.css, and components are executable canon \u2014 editing them restyles the product, which is opt-in.'"
+        },
+        {
+          "text": "A record of the rulings/changes is written (e.g. _canon-check/<date>/update-log.md) listing what changed and why",
+          "passed": true,
+          "evidence": "_canon-check/2026-07-10/update-log.md exists with a 'Rulings' table (8 rulings, each with basis: 'User stated' or 'Default on user's behalf'), a 'Documents changed' section with per-file line counts, and 'Deliberately left open' / 'Declined / not done' sections. A companion _canon-check/2026-07-10/canon-report.md documents the full audit."
+        },
+        {
+          "text": "The final chat summary states which documents now carry the new direction and what, if anything, was left open",
+          "passed": true,
+          "evidence": "final_message.md lists the three changed docs ('CLAUDE.md \u2014 Design Standards now says indigo #6366F1 accent and 6px radius everywhere', 'README.md \u2014 blue accent -> indigo accent', 'design/change-brief-2026-03.md \u2014 prepended a superseded 2026-07-10 note') and ends with 'Still open (the one real risk): the code is now knowingly behind the docs. tailwind.config.js and globals.css still hold #3B82F6 / 8px, and Modal.tsx hardcodes an 8px radius.'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.875,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 140.4,
+        "tokens": 49642,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A canon report markdown file is written to disk in the working repo (e.g. under _canon-check/<date>/)",
+          "passed": true,
+          "evidence": "No _canon-check/ directory, but a substantive audit report was written to outputs/acme-app/design/design-standards-audit.md (65 lines: TL;DR, source table, component truth table, drift analysis, recommended fix). Judged on substance per grading instructions: an audit report markdown file exists in the working repo."
+        },
+        {
+          "text": "The radius conflict is found: 8px documented (CLAUDE.md / tailwind.config.js / globals.css) vs 6px hardcoded in Button.tsx and Card.tsx",
+          "passed": true,
+          "evidence": "design-standards-audit.md: Canon A '8px radius... Declared in four places: CLAUDE.md, README.md, tailwind.config.js, styles/globals.css' vs Canon B '6px radius... implemented only as hardcoded inline styles'. Component table lists Button.tsx 6px, Card.tsx 6px, Modal.tsx 8px ('Still on Canon A radius'). Matches fixture ground truth."
+        },
+        {
+          "text": "The accent conflict is found: #3B82F6 documented vs #6366F1 in Button.tsx",
+          "passed": true,
+          "evidence": "Canon A 'blue #3B82F6 accent' (CLAUDE.md/README/tailwind/globals) vs Canon B 'indigo #6366F1 CTA'; component table: 'Button.tsx | 6px | #6366F1 hardcoded | Violates CLAUDE.md three ways: wrong accent, wrong radius, hardcoded color + font'."
+        },
+        {
+          "text": "The drift is traced to its origin: design/change-brief-2026-03.md is identified as the source of the indigo and/or icon-padding decisions",
+          "passed": true,
+          "evidence": "Source table row: 'design/change-brief-2026-03.md | CTA -> indigo #6366F1; icon buttons -> 8px padding all sides; cards -> 6px radius (AI-suggested, Priority 2) | The origin of Canon B.' Git history row cites commit 14fe0ef 'Switch CTA to indigo #6366F1 and 6px radius per March critic review'."
+        },
+        {
+          "text": "Single-mention / fragile canon is flagged as such (8px icon padding or the indigo CTA suggestion, existing only in the March brief)",
+          "passed": true,
+          "evidence": "TL;DR: Canon B (indigo CTA, 6px radius, 8px icon padding) 'Declared in one place: design/change-brief-2026-03.md', and 'the 6px-radius item was an AI critic suggestion marked \"dismissible\", yet it shipped \u2014 you may genuinely never have decided it'. Also flags 'Border color exists in no token file' for #E2E8F0 and 'The real design is invisible... nothing declares it as policy, so nothing defends it.'"
+        },
+        {
+          "text": "The change brief itself gets a document-relevance assessment (stale/obsolete) with a proposed disposition (keep/update/supersede/delete)",
+          "passed": false,
+          "evidence": "Closest match is recommended-fix step 6: 'Mark the change brief as superseded/absorbed once tokens reflect it' \u2014 a conditional future disposition, but nowhere in the report or final_message.md is the brief itself assessed for current relevance (stale/obsolete/live). The brief is treated only as the origin of Canon B; no document-status judgment is made, unlike the required relevance assessment + disposition pairing."
+        },
+        {
+          "text": "Findings cite concrete sources (file paths, ideally line numbers), not just category labels",
+          "passed": true,
+          "evidence": "Report cites exact file paths (CLAUDE.md, tailwind.config.js, styles/globals.css, README.md, design/change-brief-2026-03.md, src/components/*.tsx), exact values (#3B82F6, #6366F1, 8px/6px, #E2E8F0), and both commit hashes with messages (c3f72ee, 14fe0ef). No line numbers, but the assertion treats those as ideal, not required."
+        },
+        {
+          "text": "The final chat summary leads with the conflicts and offers a follow-up to update the durable docs",
+          "passed": true,
+          "evidence": "final_message.md opens: 'You have two competing design canons in this repo, and the older one is armed while the newer one is defenseless' \u2014 leads with the conflict. It closes with a concrete doc-update follow-up: 'Recommended next step... pick one canon... then update CLAUDE.md first, sync tailwind/globals/README to match, and refactor components to actually consume tokens', deferring the canon choice to the user. Weaker than an explicit offer to perform the update, but the substance (conflicts first, durable-docs update as next step) is present."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 111.1,
+        "tokens": 49607,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The requested change is actually made: Button.tsx (and/or the button radius source) ends up at 12px \u2014 the gate must not block the user's change",
+          "passed": true,
+          "evidence": "git diff in outputs/acme-app shows src/components/Button.tsx and src/components/IconButton.tsx both changed borderRadius: \"6px\" -> \"12px\". Final message: 'Done \u2014 buttons are now 12px.'"
+        },
+        {
+          "text": "Before or alongside the edit, the agent surfaces that corner radius is already canonical, citing at least two concrete sources (CLAUDE.md Design Standards, tailwind.config.js, globals.css --radius, or the 6px hardcodes)",
+          "passed": true,
+          "evidence": "final_message.md cites CLAUDE.md ('CLAUDE.md said 8px on all interactive surfaces'), the 6px hardcodes ('both button components were hardcoded at 6px'), and the tokens ('--radius: 8px in globals.css, borderRadius.md: 8px in tailwind.config.js') \u2014 at least two concrete sources, surfaced alongside the edit."
+        },
+        {
+          "text": "The agent notes the divergence/inconsistency the change creates or worsens (e.g. vs Card.tsx / Modal.tsx / documented 8px)",
+          "passed": true,
+          "evidence": "final_message.md notes buttons 'were already off-canon' vs the documented 8px, that 'Card (6px) and Modal (8px) are unchanged', and that shared tokens still say 8px \u2014 acknowledging the buttons now diverge from both the components and the documented standard (it even wrote the divergence into CLAUDE.md as a button exception)."
+        },
+        {
+          "text": "The response is proportionate: a quick targeted check, not a full multi-file audit report generated for a one-line style change",
+          "passed": true,
+          "evidence": "No audit report or scan artifact was created (git status --porcelain shows no untracked files; outputs/ contains only acme-app). Findings delivered as a short inline chat message with a scoped check of the radius-relevant files only."
+        },
+        {
+          "text": "No files unrelated to the button radius change are modified",
+          "passed": false,
+          "evidence": "git status --porcelain shows ' M CLAUDE.md' in addition to the two button components. git diff: CLAUDE.md Design Standards line rewritten to '- Corner radius is 8px (`rounded-md`) on interactive surfaces, except buttons (Button, IconButton), which use 12px.' The user asked only for the button radius change; editing CLAUDE.md unprompted counts as modifying an unrelated file per the eval's ground truth."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8333,
+        "passed": 5,
+        "failed": 1,
+        "total": 6,
+        "time_seconds": 117.9,
+        "tokens": 48781,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "CLAUDE.md Design Standards now states indigo #6366F1 and 6px radius",
+          "passed": true,
+          "evidence": "git diff CLAUDE.md shows: '+- Corner radius is 6px on all surfaces \u2014 interactive elements and containers alike.' and '+- Accent color is indigo `#6366F1` \u2014 use the `accent` token, never hardcode.' (without_skill/outputs/acme-app/CLAUDE.md)"
+        },
+        {
+          "text": "CLAUDE.md sections outside Design Standards are unchanged (surgical edit, no reorganization or rewording of unrelated content)",
+          "passed": true,
+          "evidence": "git diff for CLAUDE.md contains a single hunk (@@ -10,6 +10,8 @@) entirely within the '## Design Standards' section; the '## Working rules' section (line 5) and all other content produce no diff hunks, so they are byte-identical. git diff --stat: CLAUDE.md 6 ++++--."
+        },
+        {
+          "text": "The historical change brief (design/change-brief-2026-03.md) is not rewritten to say something new \u2014 it is left intact, superseded with a note, or retired reversibly, with its original content preserved",
+          "passed": true,
+          "evidence": "git status --porcelain shows only 'M CLAUDE.md' and 'M README.md'; 'git diff -- design/change-brief-2026-03.md' is empty (0 lines). The brief was left fully intact, satisfying the 'left intact' branch. Final message confirms the deliberate choice: 'design/change-brief-2026-03.md untouched \u2014 it's a dated review record, not a direction doc; rewriting history there would be misleading.'"
+        },
+        {
+          "text": "Token/config files (tailwind.config.js, styles/globals.css) are either left unchanged or the change is explicitly called out as executable canon that restyles the product (opt-in, not silently bundled)",
+          "passed": true,
+          "evidence": "git diff for tailwind.config.js and styles/globals.css is empty (0 lines); git status shows neither file modified. Final message flags the resulting drift explicitly ('Tokens are still old: tailwind.config.js and styles/globals.css both define accent #3B82F6 and radius 8px') and offers the token-sync as an opt-in next step."
+        },
+        {
+          "text": "A record of the rulings/changes is written (e.g. _canon-check/<date>/update-log.md) listing what changed and why",
+          "passed": false,
+          "evidence": "No record file was written to disk. git status --porcelain shows only 'M CLAUDE.md' and 'M README.md' with no untracked files \u2014 no _canon-check/ directory or any other new log/record file exists anywhere in outputs/acme-app. The rulings exist only in the ephemeral chat message."
+        },
+        {
+          "text": "The final chat summary states which documents now carry the new direction and what, if anything, was left open",
+          "passed": true,
+          "evidence": "final_message.md states 'Updated the two durable docs' and names them ('CLAUDE.md \u2014 Design Standards now say: accent is indigo #6366F1 ... corner radius is 6px', 'README.md \u2014 design blurb now reads indigo accent (#6366F1), 6px corners'), and lists what was left open under 'Drift you should know about': stale tokens in tailwind.config.js/globals.css and Modal.tsx's 8px radius straggler."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 177.0667,
+        "stddev": 63.6117,
+        "min": 123.8,
+        "max": 247.5
+      },
+      "tokens": {
+        "mean": 62516.0,
+        "stddev": 6486.6777,
+        "min": 57678,
+        "max": 69887
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8361,
+        "stddev": 0.0376,
+        "min": 0.8,
+        "max": 0.875
+      },
+      "time_seconds": {
+        "mean": 123.1333,
+        "stddev": 15.335,
+        "min": 111.1,
+        "max": 140.4
+      },
+      "tokens": {
+        "mean": 49343.3333,
+        "stddev": 487.3093,
+        "min": 48781,
+        "max": 49642
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.16",
+      "time_seconds": "+53.9",
+      "tokens": "+13173"
+    }
+  },
+  "notes": [
+    "Every baseline failure shares one theme: durable-record discipline. Eval-1 baseline silently edited CLAUDE.md to document its own new rule (unprompted canon mutation); eval-2 baseline made clean doc edits but left all rulings ephemeral in chat. The skill's measured value is restraint + on-disk records, not raw analysis ability.",
+    "Content-finding assertions barely discriminate: a capable baseline found both planted conflicts and traced them to the March brief unaided (eval-0 baseline scored 7/8). Discrimination came from the structured document-relevance pass, output conventions (_canon-check/<date>/), and the explicit follow-up offer.",
+    "Cost of the skill: with-skill runs used ~16-43% more tokens and ~11-110% more wall time (eval-2 doubled because it correctly ran the prerequisite audit first). Reasonable for audits; watch proportionality on quick gate checks.",
+    "Accuracy nit (eval-0 with-skill): a few cited line numbers in the canon report are off by one (Button.tsx:8 vs actual :9). Values and paths correct. Next iteration could assert 'cited line numbers resolve to claimed values'.",
+    "Assertion gaps flagged by graders: eval-1 doesn't require IconButton.tsx (the second 6px hardcode) to be updated; eval-0's 'offers a follow-up' passes on substance for a mere recommendation; eval-2 could assert rulings are labeled user-stated vs defaulted."
+  ]
+}

@@ -16,6 +16,8 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 | **swiss-design** | Apply Swiss / International Typographic Style discipline to any visual work — grid construction, typographic hierarchy, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate. |
 | **design-signal-scout** | A design/tech/cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, and creative-AI signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities. |
 | **cut-weight** | Reachability-first repo cleanup — traces execution entry points to find what's actually needed to run, then an interactive review loop (findings file, multiple-choice decision gate, post-mortem) cuts, quarantines, untracks, or deletes the rest with full rollback. Includes a Claude/agent-artifact gate. |
+| **critic-layer** | Real-time, in-browser UX/UI design review — place sticky notes directly on a live web page, then synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt. A review-to-instruction layer, not a design editor. |
+| **canon-check** | Two-part design-canon workflow — an audit that surfaces design decisions that quietly became permanent (tokens, docs, code defaults, history, prior review artifacts), flags single-mention canon and cross-source conflicts; then an interactive update that realigns CLAUDE.md, design.md, AGENTS.md, and other cornerstone docs to where the product is actually headed. |
 
 ## Using the marketplace
 
@@ -69,9 +71,16 @@ enoevol-plugins/
 │       technology-radar,pain-point-miner,trend-clusterer,
 │       inspiration-curator,content-opportunity-generator,
 │       weekly-creative-brief,signal-feedback-loop}/SKILL.md
-└── cut-weight/
+├── cut-weight/
+│   ├── .claude-plugin/plugin.json
+│   └── skills/cut-weight/{SKILL.md, references/, scripts/}
+├── critic-layer/
+│   ├── .claude-plugin/plugin.json
+│   └── skills/critic-layer/{SKILL.md, references/, scripts/}
+└── canon-check/
     ├── .claude-plugin/plugin.json
-    └── skills/cut-weight/{SKILL.md, references/, scripts/}
+    └── skills/{canon-check/{SKILL.md, references/, scripts/},
+        canon-update/{SKILL.md, references/}}
 ```
 
 Each plugin is self-contained. To add a new skill, create a new top-level plugin directory with its own `.claude-plugin/plugin.json` and `skills/<name>/SKILL.md`, then add an entry to `.claude-plugin/marketplace.json`.
