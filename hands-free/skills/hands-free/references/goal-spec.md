@@ -34,6 +34,11 @@ construction" below.
     data-loss risk, over-budget spend, or a step failing after one retry) or a
     HUMAN APPROVAL gate. Gates always bind. Prefer the cheapest viable tier.
 
+  PLAN FILE: <optional — path to a goal-plan.md holding full milestone/subtask
+    detail. Present ONLY for large goals emitted in lean-spine mode; omit it
+    entirely for goals that fit inline. See "Large goals: externalize detail to a
+    plan file" below.>
+
   ORCHESTRATION:
     LEAD: Run milestones in dependency order. Per milestone, dispatch all parallel
       subtasks at once on each subtask's tier, giving each sub-agent only its
@@ -191,6 +196,86 @@ than a leaner, complete one: compress, don't clip.
 
 This budget also serves token frugality — a tight goal is cheaper for the Lead
 and every sub-agent to carry.
+
+## Large goals: externalize detail to a plan file
+
+Some outcomes genuinely need more than a handful of milestones, each with several
+subtasks and non-trivial per-agent briefs. For those, compression fights a losing
+battle against the 4000-char ceiling: you either clip real structure or land at
+the edge every time. The fix is architectural, not editorial — **move the detail
+off the critical line into a plan file on disk, and emit a lean `/goal` spine that
+points at it.**
+
+**When to switch to lean-spine mode.** Use it when *either* holds:
+- The block still projects over ~3500 after honest compression, or
+- The plan has **> 4 milestones**, or any milestone carries **> 3 subtasks** with
+  briefs that don't collapse to one terse line each.
+
+Small and mid-size goals stay fully inline — do not add a plan file when the whole
+thing fits; the pointer is pure overhead below the threshold.
+
+**How it works.**
+
+1. **Spawn a sub-agent to author `goal-plan.md`.** Use the Agent/Task tool
+   (`standard` tier is plenty) to write a single markdown file to disk — default
+   path `./goal-plan.md`, or the repo's working dir if one is in play. Hand that
+   agent the milestone/subtask breakdown you designed in Phase 3 and have it emit
+   one section per milestone, in the format below. The main window stays lean; the
+   detail lives in the file.
+
+2. **`goal-plan.md` structure** — one `##` section per milestone, each holding the
+   full ribs the `/goal` spine omits:
+
+   ```markdown
+   # Goal Plan — <outcome, one line>
+
+   ## Milestone 1 — <name>   [depends on: none]
+   done when: <definition of done>
+   gate: <none | review by @reviewer | HUMAN APPROVAL before proceeding>
+   subtasks:
+     - [@skill] (tier) <subtask> -> produces <artifact> | done when <check>
+     - [@skill] (tier) <subtask> -> produces <artifact> | done when <check>
+   brief for @skill: <the minimal context this sub-agent needs — inputs, named
+     upstream artifact(s), binding constraints. Nothing from the main convo.>
+
+   ## Milestone 2 — <name>   [depends on: Milestone 1]
+   ...
+   ```
+
+3. **Emit the lean `/goal` spine.** The block keeps OUTCOME, SUCCESS CRITERIA,
+   CONSTRAINTS, ASSUMPTIONS, EXECUTION MODE, LEAD, DELIVERABLES, and ESCALATION in
+   full — those are load-bearing and small. It adds a `PLAN FILE:` line and reduces
+   MILESTONES to a **spine only**: name, `depends on`, `done when`, and `gate` per
+   milestone, with the subtasks replaced by a pointer. Example milestone in
+   spine mode:
+
+   ```
+     MILESTONE 2 — Build  [depends on: Milestone 1]
+       done when: <definition of done>
+       subtasks: see PLAN FILE § "Milestone 2 — Build"
+       gate: review by @reviewer
+   ```
+
+4. **Point the Lead at the file.** Add one clause to the goal so the orchestrator
+   knows to hydrate detail lazily. Put it in `PLAN FILE:` itself, e.g.:
+
+   ```
+     PLAN FILE: ./goal-plan.md — for each milestone, read ONLY that milestone's
+       section from this file before dispatching, and give each sub-agent only its
+       own brief from that section. Never load the whole plan into one context.
+   ```
+
+This is a double win: the `/goal` block clears the ceiling with room to spare, and
+the Lead pulls only the slice it needs per milestone — so no single context ever
+carries the entire plan. It is the same "lean context, low tokens" principle
+applied to the plan itself.
+
+**Verification is unchanged.** The `PLAN FILE:` pointer and spine still live inside
+the `/goal [ … ]` block, so `check-goal-budget.sh` counts them — the lean spine is
+what brings the count under 4000. The externalized `goal-plan.md` is a separate
+file and does not count against the budget (same as the "Run it headless"
+addendum). Before emitting, confirm `goal-plan.md` was actually written and is
+non-empty; a spine that points at a missing file is a broken goal.
 
 ## Quality bar before you emit
 
