@@ -80,6 +80,17 @@ design there.
     action, outward-facing publish, security/data-loss risk, over-budget spend, or
     a step still failing after one retry) or an explicit HUMAN APPROVAL gate. This
     autonomy never overrides an approval gate.
+11. **Large goals externalize detail, they don't cram.** When a goal is big enough
+    that a complete inline block would still crowd or exceed the 4000-char ceiling
+    — roughly **> 4 milestones, or any milestone with > 3 non-trivial subtasks** —
+    do not shave the block to fit. Switch to **lean-spine mode**: spawn a sub-agent
+    to write the full milestone/subtask detail to a `goal-plan.md` file on disk,
+    and emit a lean `/goal` that carries the spine plus a `PLAN FILE:` pointer. The
+    Lead reads only the relevant section per milestone. Compression is for
+    trimming; externalization is for goals that are structurally too large to trim.
+    See `references/goal-spec.md` → "Large goals: externalize detail to a plan
+    file". Keep goals that fit fully inline — the plan file is overhead below the
+    threshold.
 
 ## Workflow
 
@@ -115,16 +126,31 @@ Build the orchestration plan:
 ### Phase 4 — Emit the `/goal` + headless instructions
 Build the block to budget, then render it. Work in this order so it is lean by
 construction rather than trimmed after the fact:
+
+0. **Decide inline vs. lean-spine first.** Look at the plan from Phase 3. If it has
+   **> 4 milestones, or any milestone with > 3 non-trivial subtasks** — or a quick
+   sketch already projects the inline block past ~3500 — switch to **lean-spine
+   mode** before writing: spawn a sub-agent (Agent/Task tool, `standard` tier) to
+   write the full milestone/subtask detail to `./goal-plan.md`, then emit a lean
+   `/goal` spine (name + `depends on` + `done when` + `gate` per milestone) with a
+   `PLAN FILE:` pointer in place of inline subtasks. Follow
+   `references/goal-spec.md` → "Large goals: externalize detail to a plan file",
+   and confirm `goal-plan.md` was written and is non-empty before emitting.
+   Otherwise stay fully inline and continue below.
 1. **Lay the fixed boilerplate first.** Drop in the canonical `EXECUTION MODE` and
    `LEAD` paragraphs from `references/goal-spec.md` verbatim (~1000 chars with
    scaffolding). Do not re-author them.
 2. **Budget the remaining ~2500** across OUTCOME, SUCCESS CRITERIA, CONSTRAINTS,
    ASSUMPTIONS, MILESTONES, DELIVERABLES, ESCALATION — see the budget table in
-   `references/goal-spec.md`. Milestones/subtasks are the main lever.
+   `references/goal-spec.md`. Milestones/subtasks are the main lever. (In
+   lean-spine mode the subtasks live in `goal-plan.md`, so this section is just the
+   spine plus the `PLAN FILE:` line.)
 3. **Fill each section to its allowance**, using the terse subtask grammar
    (`[@skill] (tier) subtask → artifact | done when check`) and the fewest
    milestones that reach the outcome. If the skeleton already projects past
-   ~3500, cut scope *before* writing — don't write fat and shave.
+   ~3500, cut scope *before* writing — don't write fat and shave. If cutting scope
+   would drop real work, that is the signal to switch to lean-spine mode (step 0),
+   not to clip.
 4. **Run the budget gate — this is mandatory and blocking, not advisory.** Write
    the finished block to a file and run the bundled validator:
 
@@ -171,7 +197,9 @@ line for this skill.
 - Keep the `/goal` block **≤ 3500 characters (4000 hard ceiling)** — build to
   budget so it is lean by construction. **Verify with `scripts/check-goal-budget.sh`
   before emitting; never present a block that has not passed the gate.** Use the
-  canonical EXECUTION MODE and LEAD blocks verbatim.
+  canonical EXECUTION MODE and LEAD blocks verbatim. If the goal is structurally
+  too large to fit inline, switch to lean-spine mode and externalize detail to
+  `goal-plan.md` (Phase 4 step 0) — do **not** clip milestones to force a fit.
 - Instruct the Lead to dispatch each sub-agent with only the minimal context it
   needs; never pass the whole main-window conversation downstream.
 - Surface assumptions; never bury a guess inside the goal as if it were a fact.

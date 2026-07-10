@@ -106,9 +106,22 @@ hands-free/
   block and fails above the 4000 ceiling, and a bundled **Stop hook**
   (`hooks/enforce-goal-budget.sh`) runs it automatically — if the final turn
   emits an over-ceiling `/goal` block, the hook blocks the stop and tells the
-  model to compress and re-emit. The hook is a strict no-op on any turn that
-  doesn't emit a `/goal` block, and fails open (allows the stop) if its
-  dependencies are missing.
+  model to compress and re-emit. The hook forces **up to four retries** (via a
+  per-transcript counter, not a single-shot flag), and escalates the guidance
+  after the first pass: if line-level trimming isn't closing the gap, it directs
+  the model to make the structural fix below — externalize detail to a plan file —
+  before finally failing open so a stubborn block can never wedge the session. The
+  hook is a strict no-op on any turn that doesn't emit a `/goal` block, and fails
+  open (allows the stop) if its dependencies are missing.
+- **Large goals externalize detail to a plan file.** When a goal is too big to fit
+  inline (roughly > 4 milestones, or a milestone with > 3 non-trivial subtasks),
+  the skill switches to **lean-spine mode**: it spawns a sub-agent to write the
+  full milestone/subtask breakdown to a `goal-plan.md` file on disk and emits a
+  lean `/goal` block that carries only the milestone spine plus a `PLAN FILE:`
+  pointer. The Lead reads only the relevant section per milestone — so the block
+  clears the 4000-char ceiling *and* no single context ever carries the whole
+  plan. See `references/goal-spec.md` → "Large goals: externalize detail to a plan
+  file".
 - **Lean context downstream.** The emitted goal instructs the Lead to dispatch
   each sub-agent with only the slice it needs — its subtask, the named upstream
   artifact(s), and binding constraints — not the main-window conversation. This
