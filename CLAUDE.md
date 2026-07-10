@@ -62,3 +62,4 @@ enoevol-plugins/
 The online marketplace reflects whatever is on the **`main`** branch. A plugin added on a
 feature branch won't appear in `/plugin` listings until it's merged to `main`; an installed
 marketplace may also need `/plugin marketplace update enoevol-plugins` to refresh its cache.
+
