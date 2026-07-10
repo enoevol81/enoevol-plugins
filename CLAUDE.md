@@ -62,3 +62,30 @@ enoevol-plugins/
 The online marketplace reflects whatever is on the **`main`** branch. A plugin added on a
 feature branch won't appear in `/plugin` listings until it's merged to `main`; an installed
 marketplace may also need `/plugin marketplace update enoevol-plugins` to refresh its cache.
+
+## Local dev on Matt's machine (this repo is the installed source)
+
+On Matt's machine the `enoevol-plugins` marketplace is registered as a **local directory
+source** pointing at this working folder (`C:\Users\mcohe\enoevol-plugins`), not the GitHub
+clone. Both the Claude Code CLI and the desktop app share `~/.claude/plugins/`, so a plugin
+installed once is live in both. Consequences:
+
+- This working folder **is** the source of truth for installed plugins here. Pushing to GitHub
+  is backup / for other machines only — it no longer drives what's installed locally.
+- Claude Code copies each plugin into a **version-keyed cache**
+  (`~/.claude/plugins/cache/enoevol-plugins/<plugin>/<version>/`), so edits are **not** read
+  live. To publish an edit to your sessions:
+
+  ```
+  # 1. bump the version in <plugin>/.claude-plugin/plugin.json
+  claude plugin marketplace update enoevol-plugins        # re-read the local dir
+  claude plugin update <plugin>@enoevol-plugins           # re-copy into the cache
+  # 2. restart the CLI / desktop session to load it
+  ```
+
+  The **version bump is required** — `update` skips a plugin whose version is unchanged, so an
+  edit without a bump silently won't take.
+- To live-test one plugin with **no cache and no version bump** (single session only):
+  `claude --plugin-dir C:\Users\mcohe\enoevol-plugins\<plugin>`.
+- To re-point back to the GitHub source:
+  `claude plugin marketplace add https://github.com/enoevol81/enoevol-plugins.git`.
