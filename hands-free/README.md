@@ -25,6 +25,16 @@ Each emitted goal also ships with:
   running the same goal unattended (cron/CI/background), emitted alongside the
   block.
 
+## Requirements
+
+- **[`jq`](https://jqlang.org/)** — used by the bundled Stop hook
+  (`hooks/enforce-goal-budget.sh`) to parse the hook payload/transcript and to
+  build its JSON response. Install it via `brew install jq` (macOS),
+  `apt install jq` (Debian/Ubuntu), or `choco install jq` (Windows). If `jq`
+  isn't found on `PATH`, the hook no-ops (fails open) and the rest of the
+  plugin works normally — you just lose the automatic budget-enforcement
+  retries described below.
+
 ## Install
 
 Distributed via the [enoevol-plugins](https://github.com/enoevol81/enoevol-plugins)
