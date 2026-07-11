@@ -21,10 +21,28 @@ opportunities.
 | `weekly-creative-brief` | Synthesizes the week's signals into one ranked, actionable report. |
 | `signal-feedback-loop` | Learns from Matt's reactions to tune future scouting without overfitting. |
 
-All nine skills share [`references/operating-model.md`](references/operating-model.md) —
-the signal categories, priority scale, required signal-record schema, scoring
-dimensions, default output format, and escalation/non-goal rules that keep
-output consistent across skills.
+All ten skills share [`references/operating-model.md`](references/operating-model.md) —
+the persistent workspace convention, signal categories, priority scale, required
+signal-record schema, the canonical scoring rubric, web/freshness discipline,
+default output format, and escalation/non-goal rules that keep output consistent
+across skills.
+
+## Persistence
+
+The system's value compounds across sessions. All skills share one workspace
+(default `~/design-signal-scout/`, created on first use with the user's OK):
+
+```
+~/design-signal-scout/
+├── sources.md          # source network (source-manager)
+├── preferences.md      # learned weights + feedback log (signal-feedback-loop)
+├── clusters.md         # trend clusters (trend-clusterer)
+├── signals/            # dated signal records (scout, analyzer, radar, miner, generator)
+├── collections/        # inspiration sets (inspiration-curator)
+└── briefs/             # weekly briefs (weekly-creative-brief)
+```
+
+Decline persistence and every skill still works — session-only, and it says so.
 
 ## Install
 
@@ -35,8 +53,7 @@ output consistent across skills.
 
 ## Notes for Hermes
 
-- Store signals, sources, clusters, and feedback in a persistent structured
-  store (database, notes vault, or structured files) — this system's value
-  compounds only if records survive across sessions.
 - Nothing here auto-publishes, auto-contacts, or takes purchase/account
   actions. Every skill requires explicit approval before those.
+- Content ideas end at the idea — final drafting should go through the
+  `personal-voice` plugin so posts land in Matt's voice.

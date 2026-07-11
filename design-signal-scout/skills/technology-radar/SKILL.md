@@ -16,6 +16,16 @@ description: >-
 
 Read [../../references/operating-model.md](../../references/operating-model.md) first for the shared decision filter (revenue / leverage / business goal / creative momentum) this skill's classification should reflect.
 
+## Reads / Writes (workspace)
+- **Reads:** recent `signals/` files (has this tool been evaluated before? re-open
+  the old record instead of starting fresh), `preferences.md` (tool-type weights).
+- **Writes:** a signal record (category `technology`, with the classification in
+  `recommended_action` and the radar score in `evidence`) appended to
+  `signals/YYYY-MM-DD.md`.
+- Without web access, evaluate only from documentation the user provides; mark
+  every unchecked claim (pricing, licensing, benchmarks) as `unverified` and say
+  which fields an online pass would confirm.
+
 ## Objective
 Track creative technologies and classify whether they are worth watching, testing, adopting, or ignoring.
 
@@ -127,7 +137,7 @@ Subtract for:
 ```markdown
 # Technology: [Name]
 
-**Status:** Test now / Watch / Adopt / Ignore
+**Status:** one of the Classification values above (e.g. `test_now`, `watch`, `probably_hype`)
 **What it does:**
 **Why it matters:**
 **Best use case:**

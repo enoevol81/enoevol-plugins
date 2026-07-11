@@ -59,6 +59,22 @@ Confirm the mode from the user's phrasing before acting:
   single revertable commit, and the decision gate still runs for anything
   genuinely ambiguous.
 
+## Hard safety rules (every mode, no exceptions)
+
+- **Nothing is deleted, moved, or untracked before the user approves the plan**
+  at the Phase 4-5 gate. Phases 0-5 are read-only apart from the checkpoint
+  commit and writing the report files.
+- **Protected paths are never candidates**, whatever the evidence says:
+  `.git/`, `_quarantine/` (every run, including old ones), the run's own
+  reports (`findings.md`, `decisions.md`, `postmortem.md`, `inventory.json`),
+  and anything the user marked keep in this or a prior gate. inventory.py
+  refuses to walk the first two; you enforce the rest.
+- **Quarantine over delete.** Direct deletion is reserved for regenerable
+  artifacts whose rebuild command exists; everything else transits quarantine.
+- **Every action ships with its exact undo command** (real SHAs, real paths)
+  in the post-mortem -- see
+  [references/quarantine-protocol.md](references/quarantine-protocol.md).
+
 ## Workflow
 
 ### Phase 0 -- Baseline
@@ -89,12 +105,23 @@ north poisons every downstream decision.
 
 ### Phase 2 -- Build the keep-set
 
-Run the bundled inventory script for a full picture of the tree (sizes, ages
-on both clocks, name signals, artifact dirs):
+Create the run folder `_quarantine/<date>/` now -- it holds the inventory and
+every report, even if nothing is ever quarantined. Then run the bundled
+inventory script for a full picture of the tree (sizes, ages on both clocks,
+name signals, artifact dirs, agent artifacts, unreadable paths):
 
 ```
-python <skill-path>/scripts/inventory.py <project-root> --out inventory.json
+python "${CLAUDE_PLUGIN_ROOT}/skills/cut-weight/scripts/inventory.py" <project-root> --out _quarantine/<date>/inventory.json
 ```
+
+`${CLAUDE_PLUGIN_ROOT}` is set when this skill runs as an installed plugin --
+never invoke the script by a bare relative path, because the session's cwd is
+the user's project, not the skill folder. If the variable is unset, locate
+`inventory.py` under this skill's own directory first. Use `python` on
+Windows, `python3` where `python` is Python 2 or missing; the script is
+stdlib-only. Check the summary it prints: a `[CAPPED]` or `unreadable` line
+means partial coverage -- carry that into the findings file's Coverage
+section.
 
 Then trace outward from each entry point: static imports, requires, path
 literals (`fetch("/api/x")`, `open("data/...")`, script/link tags in HTML),
@@ -144,7 +171,7 @@ The rest of the workflow is a report-driven review loop: a clear findings file,
 a multiple-choice decision gate, a plan the user signs off, execution, a
 post-mortem, and a confirmed teardown. The stages and the exact file shapes are
 in [references/review-loop.md](references/review-loop.md) -- follow it exactly.
-Create the run folder `_quarantine/<date>/` now; the reports live there.
+The reports live in the run folder created in Phase 2.
 
 ### Phase 4 -- Findings + decision gate
 
@@ -153,7 +180,11 @@ auto-decided CUT/QUARANTINE, agent artifacts, and the numbered **DECISIONS
 NEEDED** list. In **audit mode this is the final deliverable -- stop here.**
 
 Otherwise run the decision gate (Stage 2): walk DECISIONS NEEDED as
-**multiple-choice questions**, recommended option first, related items batched.
+**multiple-choice questions** -- use the structured multiple-choice prompt
+(AskUserQuestion) when available, recommended option first. Batch by group,
+never one prompt per file: items sharing the same evidence pattern and
+proposed disposition are one question ("these 14 dated scratch scripts --
+quarantine all?"), with a free-text answer always available to split a group.
 Do not ask about matrix-decided items. Record every answer.
 
 ### Phase 5 -- Decision report
@@ -203,6 +234,15 @@ irreversible, so warn and default to keeping it.
   directory level and say so in the report.
 - **Treating data like code.** An unreferenced `.json`, `.csv`, `.sqlite`, or
   media file is ASK, never CUT -- code is in git, data often is not.
+- **Cutting generated-but-required files.** Lockfiles, database migrations,
+  test snapshots, and committed codegen look machine-made but are inputs the
+  project cannot rebuild identically -- they are KEEP, never CUT. See the
+  regenerability section of
+  [references/evidence-signals.md](references/evidence-signals.md).
+- **Killing files that run remotely or are read by tools, not code.** CI
+  workflows, `dependabot.yml`, hosting configs (`netlify.toml`, `vercel.json`,
+  `Procfile`), and toolchain dotfiles (`.editorconfig`, `.nvmrc`, linter
+  configs) have zero in-repo references by design. Platform-consumed = KEEP.
 - **Blind-quarantining Claude/agent files.** `CLAUDE.md`, `AGENTS.md`, and
   `.claude/` config are not dead weight to trace or age out -- they are
   workspace conventions with their own gate (leave / untrack / gitignore /

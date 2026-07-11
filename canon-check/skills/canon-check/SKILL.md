@@ -50,11 +50,23 @@ rebrand, or no report exists yet / the last one predates recent work.
    design-review artifacts from other tools, code defaults. Don't assume one
    canonical style-guide file exists; the whole premise is that canon is
    scattered and half of it was never written down as a rule.
-2. **Run the deterministic pass.** `scripts/scan_tokens.py <repo-root>` greps
-   colors, spacing/sizing values, and font stacks across the codebase and
-   returns frequency counts with file locations. This does the tedious
-   counting so you can spend your judgment on what the numbers *mean*,
-   not on manually tallying occurrences.
+2. **Run the deterministic pass.**
+
+   ```
+   python "${CLAUDE_PLUGIN_ROOT}/skills/canon-check/scripts/scan_tokens.py" <repo-root>
+   ```
+
+   (You run from the user's cwd, not the plugin directory — always use
+   `${CLAUDE_PLUGIN_ROOT}`, never a bare relative path. If that variable is
+   unset, locate the script with Glob for `**/canon-check/scripts/scan_tokens.py`
+   under the plugin cache before falling back to manual Greps. Try `python3`
+   if `python` isn't on PATH.) The script greps colors, spacing/sizing
+   values, and font stacks across the codebase and returns frequency counts
+   with file locations. This does the tedious counting so you can spend your
+   judgment on what the numbers *mean*, not on manually tallying
+   occurrences. Check `scan_complete` in its JSON: if `false`, the scan hit
+   its file cap — say so in the report's Scope & limits rather than
+   presenting counts as exhaustive.
 3. **Read the written sources directly.** CLAUDE.md design sections, style
    guides, and any design-review/design-brief artifacts from other plugins
    need actual reading comprehension, not regex — a design brief might state
@@ -73,8 +85,14 @@ rebrand, or no report exists yet / the last one predates recent work.
    delete. An old artifact that keeps getting read as a live rule is
    actively harmful, not just clutter.
 6. **Write the report** to `_canon-check/<date>/canon-report.md` using the
-   template in `references/report-format.md`, including the Document
-   Relevance section with a proposed disposition per document.
+   exact template in `references/report-format.md`, including the Document
+   Relevance section with a proposed disposition per document. The
+   non-negotiable rule there: **every finding carries a real citation
+   (`file:line`, commit hash, or artifact + date) or gets dropped** —
+   hallucinated canon is worse than no report. If the repo has essentially
+   no design canon (greenfield), say exactly that in a short report instead
+   of inventing findings; if it's a monorepo, attribute findings per app —
+   both cases are spelled out in the report format's Edge cases section.
 7. **Lead with the headline in chat.** Don't make the user open the file to
    learn the two or three things that actually matter — conflicts especially,
    since those are usually the most useful and most overlooked finding.
@@ -111,23 +129,25 @@ color." You don't need a full re-audit for this:
 
 ## Confidence levels
 
-Not everything that looks like a rule was chosen as one. Rate every finding:
+Not everything that looks like a rule was chosen as one. Rate every finding
+using the **operational definitions in `references/report-format.md`** —
+they're evidence rules, not adjectives. In brief:
 
-- **Explicit** — written down on purpose as a standard: a tokens file, a
-  style guide, a CLAUDE.md "Design Standards" section. Treat as a real rule.
-- **Established by repetition** — the same value shows up across several
-  independent files/components with no doc backing it. Nobody wrote it down,
-  but changing it in only one place would create visible inconsistency.
-  Treat as canon in practice, worth naming explicitly since it's invisible.
-- **Single-mention** — appears in exactly one place: one past design-review
-  suggestion, one commit message, one component nobody's touched since.
-  This is the case the user is most likely to have forgotten about, and the
-  most likely to be an accident that stuck rather than a real decision. Flag
-  it as fragile, not as a hard rule.
-- **Conflicting** — two or more sources disagree (a doc says one thing, the
-  code does another; two components use different values for what's clearly
-  meant to be the same design token). This is usually the single most useful
-  thing the report can surface, since it's drift nobody noticed happening.
+- **Explicit** — declared in an artifact whose purpose is to declare
+  standards (tokens file, style guide, CLAUDE.md Design Standards section),
+  uncontradicted. A passing mention in prose doesn't qualify.
+- **Established by repetition** — no standards artifact, but the same value
+  in **3+ independent files** with no competitor in the same role. Canon in
+  practice; worth naming explicitly since it's invisible.
+- **Single-mention** — exactly one source anywhere: one past design-review
+  suggestion, one commit message, one component nobody's touched since. The
+  likeliest to be an accident that stuck. Flag as fragile, never as a rule.
+- **Conflicting** — two or more sources disagree about the same role (doc
+  vs code, component vs component). Usually the single most useful thing
+  the report surfaces. Neither side wins by default — the code is what
+  ships, the doc is the stated intent; the ruling belongs to canon-update.
+
+When a finding sits between two levels, take the weaker one.
 
 ## What counts as a durable document
 
@@ -151,10 +171,14 @@ chat.
 
 ## Bundled scripts
 
-- `scripts/scan_tokens.py` — deterministic first pass over the repo. Extracts
-  hex/rgb/hsl colors, px/rem/em spacing-like values, and font-family
-  declarations from CSS/SCSS/JS/TS/JSON/config files, tallies frequency, and
-  reports which files each value appears in. Run it once per audit and reuse
-  its JSON output rather than re-deriving frequency counts by hand. It
-  explicitly reports how many files it scanned and truncates long lists with
-  a stated count — never silently drops results.
+- `scripts/scan_tokens.py` (invoke via `${CLAUDE_PLUGIN_ROOT}` as shown
+  above) — deterministic first pass over the repo. Extracts hex/rgb/hsl
+  colors, px/rem/em spacing-like values, and font-family declarations from
+  CSS/SCSS/JS/TS/JSON/config files, tallies frequency, and ranks by file
+  spread (`file_count`) — the direct input to the "3+ independent files"
+  repetition rule. Run it once per audit and reuse its JSON output rather
+  than re-deriving frequency counts by hand. It is bounded and honest about
+  it: skips binaries and files over `--max-bytes` (1 MB default), stops at
+  `--max-files` (5000 default), and reports every skip plus a
+  `scan_complete` flag and a greenfield note when nothing is found — it
+  never silently drops results. Zero dependencies; works on Windows paths.

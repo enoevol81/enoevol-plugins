@@ -1,7 +1,7 @@
 {
   "name": "loadout",
-  "version": "0.1.0",
-  "description": "Audit and optimize your active Claude Code loadout — inventory of installed vs enabled plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal.",
+  "version": "0.2.0",
+  "description": "Audit and optimize your active Claude Code loadout — inventory of installed vs enabled plugins, MCP servers, skills, agents, commands, and hooks, with context-cost estimates and tuning recommendations for any goal.",
   "author": {
     "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"

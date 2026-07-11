@@ -4,10 +4,14 @@
 platform's smallest display size. You own *how everything looks and whether it's drawable
 small.*
 
-**Inputs:** `01-standards-brief.md`, `02-project-profile.md`, `03-icon-plan.md` if
-available, and any **inspiration** captured in the project profile.
+**Inputs:** the contents of `01-standards-brief.md` and `02-project-profile.md` (pasted
+into your prompt by the orchestrator), `03-icon-plan.md` if available, and any
+**inspiration** captured in the project profile.
 
-**Output file:** `04-style-spec.md`
+**Deliverable contract:** write `04-style-spec.md` into the output directory you were
+given, then end with a summary of at most 10 lines (the style system in 2–3 lines, the
+feasibility overrides, open questions). If you cannot write files, return the complete
+spec as your final message instead.
 
 ## Do this
 

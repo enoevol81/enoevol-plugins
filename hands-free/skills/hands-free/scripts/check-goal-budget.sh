@@ -55,6 +55,16 @@ if [ -z "$block" ]; then
   exit 2
 fi
 
+# Reject an unclosed block: if the last captured line is not a lone `]`, the
+# block never closed and the count above would be meaningless (it would swallow
+# everything to end-of-input, or pass a truncated fragment).
+last_line="$(printf '%s\n' "$block" | awk 'END { print }')"
+if ! printf '%s' "$last_line" | grep -Eq '^[[:space:]]*\][[:space:]]*$'; then
+  echo "FAIL: /goal block is not closed — no lone ']' line found after '/goal ['." >&2
+  echo "      Emit a complete block before checking its budget." >&2
+  exit 2
+fi
+
 # --- count characters (the metric the 4000 limit is measured in) ----------
 # Use wc -m (characters), trimming the trailing newline awk adds.
 count="$(printf '%s' "$block" | wc -m | tr -d '[:space:]')"
