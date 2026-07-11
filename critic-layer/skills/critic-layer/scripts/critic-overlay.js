@@ -13,16 +13,34 @@
  *  - All overlay nodes are id/class-namespaced so they never pick themselves and
  *    cleanup stays a one-liner.
  *  - Pins re-anchor to their element on scroll/resize/re-render.
+ *  - Export is versioned + self-describing (schemaVersion, url, viewport,
+ *    timestamp, notes) and reachable three ways: the API, the HUD Export button
+ *    (clipboard), and a console dump — so notes survive losing the MCP bridge.
  */
 (function () {
   'use strict';
   var PREFIX = '__critic__';
   var Z = 2147480000; // above almost everything, below nothing sane
 
-  // Idempotency: if already booted, just re-show and bail.
+  // Idempotency: if already booted AND our DOM is still attached, re-show and
+  // bail. If the page tore our nodes out (aggressive SPA re-render, document
+  // rewrite) the old instance is a zombie: salvage its notes, tear down its
+  // listeners, and rebuild fresh so re-injection always yields a working HUD.
+  var salvagedNotes = null;
+  var salvagedSeq = 0;
   if (window.__CRITIC__ && window.__CRITIC__.__booted) {
-    window.__CRITIC__.show();
-    return '__CRITIC__ already active: ' + window.__CRITIC__.notes.length + ' note(s)';
+    if (document.getElementById(PREFIX + 'root')) {
+      window.__CRITIC__.show();
+      return '__CRITIC__ already active: ' + window.__CRITIC__.notes.length + ' note(s)';
+    }
+    try {
+      salvagedNotes = window.__CRITIC__.notes.slice();
+      salvagedNotes.forEach(function (n) {
+        var m = /^note_(\d+)$/.exec(n.id || '');
+        if (m) salvagedSeq = Math.max(salvagedSeq, +m[1]);
+      });
+    } catch (e) { salvagedNotes = null; salvagedSeq = 0; }
+    try { window.__CRITIC__.destroy(); } catch (e) { try { window.__CRITIC__ = undefined; } catch (e2) {} }
   }
 
   var CATEGORIES = ['layout', 'typography', 'spacing', 'color', 'hierarchy',
@@ -31,8 +49,8 @@
   var SEV_COLOR = { low: '#8a8a8a', medium: '#d8a200', high: '#ff5b45', blocker: '#c1121f' };
 
   var state = {
-    notes: [],
-    seq: 0,
+    notes: salvagedNotes || [],
+    seq: salvagedSeq,
     picking: true,
     viewport: null,
   };
@@ -56,8 +74,6 @@
     var r = node.getBoundingClientRect();
     return r.width >= 16 && r.height >= 16;
   }
-  function esc(s) { return String(s == null ? '' : s); }
-
   // A robust-ish element identity that survives re-renders: id-first, then
   // tag+classes, then tag+text snippet. Mirrors the anchor-snapshot strategy.
   function anchorSnapshot(node) {
@@ -123,6 +139,7 @@
     mark: '<svg width="11" height="11" viewBox="0 0 11 11"><path d="M8.5 0.5L2.5 10.5" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>',
     pick: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
     notes: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 3.5h12M2 8h12M2 12.5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    exp: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 10V2M5 4.5L8 1.5l3 3M2.5 9.5v3a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     clear: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5l.6 8.5a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
   var hud = el('div', 'position:fixed;top:12px;right:12px;pointer-events:auto;z-index:' + (Z + 5) + ';display:flex;align-items:stretch;gap:1px;background:rgba(15,15,15,0.94);backdrop-filter:blur(8px);color:#fff;font:12px/1.4 Inter,system-ui,sans-serif;border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,0.45);');
@@ -148,11 +165,15 @@
 
   var pickBtn = iconBtn(ICONS.pick, 'Picking: ON');
   var listBtn = iconBtn(ICONS.notes, 'Notes');
+  var exportBtn = iconBtn(ICONS.exp, 'Export');
+  exportBtn.title = 'Copy all notes as JSON (also logged to the console)';
   var clearBtn = iconBtn(ICONS.clear, 'Clear all');
   clearBtn.style.color = '#8a8a8a';
   hud.appendChild(pickBtn);
   hud.appendChild(divider());
   hud.appendChild(listBtn);
+  hud.appendChild(divider());
+  hud.appendChild(exportBtn);
   hud.appendChild(divider());
   hud.appendChild(clearBtn);
   hud.appendChild(divider());
@@ -243,8 +264,9 @@
   }
   // A note pin is just a 14px dot until you click it — no card, no header.
   // Clicking opens a slender inline bar next to the dot (single-line input,
-  // compact category/severity, Enter/blur commits, Escape cancels); the
-  // fields it doesn't need stay hidden entirely instead of an empty shell.
+  // compact category/severity; Enter/blur/Escape all commit, except Escape on
+  // a still-empty note discards the accidental pin); fields it doesn't need
+  // stay hidden entirely instead of an empty shell.
   function render() {
     countBadge.textContent = String(state.notes.length);
     pinLayer.innerHTML = '';
@@ -258,6 +280,8 @@
   // down and rebuild every pin's DOM, including the one currently focused
   // for text entry, firing blur -> auto-close-and-discard mid-keystroke.
   // Reposition-only: move existing wraps, never touch their children/focus.
+  // rAF-coalesced: resolveAnchor runs querySelector per note, so raw scroll
+  // events on a heavy page would otherwise burn a frame budget for nothing.
   function reposition() {
     for (var i = 0; i < pinLayer.children.length; i++) {
       var wrap = pinLayer.children[i];
@@ -269,14 +293,31 @@
       var p = pinPos(note);
       wrap.style.left = p.x + 'px';
       wrap.style.top = p.y + 'px';
+      wrap.style.display = pinVisible(note, p) ? 'flex' : 'none';
     }
   }
+  var repositionQueued = false;
+  function scheduleReposition() {
+    if (repositionQueued) return;
+    repositionQueued = true;
+    requestAnimationFrame(function () { repositionQueued = false; reposition(); });
+  }
+  // A dead-anchored pin from a *different* SPA route is pure noise on the
+  // current one (its pageX/pageY fallback points at the old page's layout) —
+  // hide it instead of drawing a misleading dot. It comes back if the user
+  // navigates back and the anchor resolves, and it always stays in the export.
+  function pinVisible(note, p) {
+    if (editingNoteId === note.id) return true;
+    return p.live || note.url === location.pathname;
+  }
+  function onRouteChange() { render(); }
 
   function buildPin(note, i) {
     var p = pinPos(note);
     var editing = editingNoteId === note.id;
     var wrap = el('div', 'position:fixed;pointer-events:auto;display:flex;align-items:flex-start;gap:6px;touch-action:none;transform:translate(-7px,-7px);z-index:' + (Z + (editing ? 6 : 3)) + ';');
     wrap.style.left = p.x + 'px'; wrap.style.top = p.y + 'px';
+    if (!pinVisible(note, p)) wrap.style.display = 'none';
     wrap.dataset.noteId = note.id;
 
     var dot = el('div', 'width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.35);flex-shrink:0;cursor:grab;');
@@ -355,7 +396,6 @@
     state.picking = on;
     pickBtn.lastChild.textContent = 'Picking: ' + (on ? 'ON' : 'OFF');
     pickBtn.style.background = on ? '#ff5b45' : 'transparent';
-    pickBtn.style.color = on ? '#fff' : '#fff';
     if (!on) { highlight.style.display = 'none'; tip.style.display = 'none'; }
   }
   // Editing a note pauses picking so clicking around the page to read
@@ -388,6 +428,17 @@
     }
 
     function commitAndClose(e) { if (e) { e.preventDefault(); e.stopPropagation(); } closeEditor(); }
+    // Escape on a note with no text yet = an accidental pin; discard it so
+    // stray clicks don't leave empty notes polluting the export.
+    function editorKeydown(e) {
+      if (e.key === 'Enter') { commitAndClose(e); return; }
+      if (e.key === 'Escape') {
+        if (!note.note && !note.desired_change) removeNote(note);
+        commitAndClose(e);
+        return;
+      }
+      e.stopPropagation();
+    }
 
     var row1 = el('div', 'display:flex;align-items:center;gap:6px;');
     var input = el('input', 'flex:1;min-width:0;background:transparent;color:#fff;border:0;outline:0;font:12px Inter,system-ui,sans-serif;padding:2px 0;');
@@ -396,10 +447,7 @@
     input.value = note.note;
     input.setAttribute('data-role', 'note-text');
     input.addEventListener('input', function () { note.note = input.value; });
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === 'Escape') commitAndClose(e);
-      else e.stopPropagation();
-    });
+    input.addEventListener('keydown', editorKeydown);
     input.addEventListener('blur', function () {
       setTimeout(function () { if (editingNoteId === note.id && !box.contains(document.activeElement)) closeEditor(); }, 100);
     });
@@ -409,6 +457,7 @@
     row1.appendChild(input);
 
     var closeBtn = el('button', 'flex-shrink:0;width:18px;height:18px;line-height:16px;text-align:center;background:transparent;color:#8a8a8a;border:0;border-radius:999px;cursor:pointer;font:13px monospace;padding:0;', '×');
+    closeBtn.title = 'Delete this note';
     closeBtn.addEventListener('click', function (e) { e.stopPropagation(); removeNote(note); closeEditor(); });
     row1.appendChild(closeBtn);
     box.appendChild(row1);
@@ -423,10 +472,7 @@
     dc.placeholder = 'Desired change (optional)';
     dc.value = note.desired_change;
     dc.addEventListener('input', function () { note.desired_change = dc.value; });
-    dc.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === 'Escape') commitAndClose(e);
-      else e.stopPropagation();
-    });
+    dc.addEventListener('keydown', editorKeydown);
     ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) {
       dc.addEventListener(ev, function (e) { e.stopPropagation(); }, false);
     });
@@ -462,6 +508,36 @@
       ? state.notes.map(function (n, i) { return (i + 1) + '. [' + n.severity + '] ' + (n.note || n.element_label); }).join('  |  ')
       : 'No notes yet.', 3000);
   });
+  // Escape hatch: the designer can always get their notes out of the page
+  // themselves — clipboard via this button, console via the dump — even if
+  // the MCP bridge has lost the tab and the skill can't call export().
+  exportBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var json = exportJSONString();
+    try { console.log('__CRITIC_EXPORT__\n' + json); } catch (err) {}
+    function done(copied) {
+      showHint(copied
+        ? state.notes.length + ' note(s) copied to clipboard as JSON (also in the console).'
+        : 'Clipboard blocked — export logged to the console (look for __CRITIC_EXPORT__).', 4000);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(json).then(function () { done(true); }, function () { done(legacyCopy(json)); });
+    } else {
+      done(legacyCopy(json));
+    }
+  });
+  function legacyCopy(text) {
+    var ta = el('textarea', 'position:fixed;left:-9999px;top:0;');
+    ta.id = PREFIX + 'copybuf';
+    ta.value = text;
+    document.documentElement.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) {}
+    ta.remove();
+    return ok;
+  }
+  function exportJSONString() { return JSON.stringify(api.export(), null, 2); }
   clearBtn.addEventListener('click', function (e) {
     e.stopPropagation();
     if (clearBtn.__armed) { state.notes = []; state.seq = 0; render(); closeEditor(); showHint('Cleared.', 1500); clearBtn.__armed = false; return; }
@@ -474,18 +550,28 @@
   var api = {
     __booted: true,
     notes: state.notes,
+    // Versioned, self-describing capture: downstream tools key on
+    // schemaVersion + tool, so only make additive changes at version 1.
     export: function () {
       return {
+        schemaVersion: 1,
+        tool: 'critic-layer',
         url: location.href,
         path: location.pathname,
         title: document.title,
         viewport: state.viewport || (window.innerWidth + 'x' + window.innerHeight),
+        viewportSize: { width: window.innerWidth, height: window.innerHeight },
         capturedAt: new Date().toISOString(),
         notes: state.notes.map(function (n) {
           var live = !!resolveAnchor(n.anchor);
           return Object.assign({}, n, { anchorLive: live });
         }),
       };
+    },
+    dump: function () {
+      var json = JSON.stringify(api.export(), null, 2);
+      try { console.log('__CRITIC_EXPORT__\n' + json); } catch (e) {}
+      return json;
     },
     setViewport: function (name) { state.viewport = name; render(); return name; },
     show: function () { root.style.display = ''; hud.style.display = ''; hint.style.display = ''; },
@@ -494,8 +580,10 @@
     destroy: function () {
       document.removeEventListener('mousemove', onMove, true);
       document.removeEventListener('click', onClick, true);
-      window.removeEventListener('scroll', reposition, true);
-      window.removeEventListener('resize', reposition, true);
+      window.removeEventListener('scroll', scheduleReposition, true);
+      window.removeEventListener('resize', scheduleReposition, true);
+      window.removeEventListener('popstate', onRouteChange, false);
+      window.removeEventListener('hashchange', onRouteChange, false);
       document.removeEventListener('keydown', onKeydown, true);
       [root, highlight, tip, pinLayer, hud, hint].forEach(function (n) { if (n && n.remove) n.remove(); });
       try { delete window.__CRITIC__; } catch (e) { window.__CRITIC__ = undefined; }
@@ -516,9 +604,14 @@
   document.addEventListener('mousemove', onMove, true);
   document.addEventListener('click', onClick, true);
   document.addEventListener('keydown', onKeydown, true);
-  window.addEventListener('scroll', reposition, true);
-  window.addEventListener('resize', reposition, true);
+  window.addEventListener('scroll', scheduleReposition, true);
+  window.addEventListener('resize', scheduleReposition, true);
+  // SPA route changes: re-evaluate which pins belong on the current path.
+  // (pushState isn't patched — the next scroll/resize catches those anyway.)
+  window.addEventListener('popstate', onRouteChange, false);
+  window.addEventListener('hashchange', onRouteChange, false);
   window.__CRITIC__ = api;
   render();
-  return 'Critic Layer injected. Click elements to pin notes; read via JSON.stringify(window.__CRITIC__.export())';
+  return 'Critic Layer ' + (salvagedNotes ? 're-injected (' + state.notes.length + ' note(s) recovered)' : 'injected')
+    + '. Click elements to pin notes; read via JSON.stringify(window.__CRITIC__.export())';
 })();

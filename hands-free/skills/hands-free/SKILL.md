@@ -37,6 +37,13 @@ Do **not** use for a single atomic action the user could run directly
 (e.g. "rename this file", "what does line 40 do") — there is no orchestration to
 design there.
 
+**Too-small threshold — say so, don't scaffold.** If the outcome decomposes to a
+single milestone with one or two subtasks a single agent could finish in one
+pass, orchestration is pure overhead. Tell the user plainly: "This is small
+enough to just do directly — no `/goal` needed" and offer to do it (or hand back
+the one-liner that does). Emit a `/goal` only when there is a real spine: two or
+more dependent milestones, or genuinely parallel subtasks worth fanning out.
+
 ## Operating principles
 
 1. **Outcome first, mechanism second.** Anchor everything to the end state the
@@ -106,6 +113,12 @@ checklist in `references/exploration.md`, but include a question only if its
 answer would change milestones, owners, gates, or success criteria. For
 everything else, choose a sensible default and record it as a stated assumption.
 
+**Stop condition: exploration is exactly one round.** After the batched answers
+come back (or the user declines to answer), proceed — convert every remaining
+gap into a stated assumption and move to Phase 3. Never ask a second round on
+your own initiative; a vague answer becomes a conservative default plus an
+ASSUMPTIONS line the user can correct, not another question.
+
 If the user said "hands free" / "don't ask me", skip straight to assumptions —
 ask at most one blocking question, and only if proceeding would otherwise risk
 the wrong outcome.
@@ -167,7 +180,10 @@ construction rather than trimmed after the fact:
 
 After the block:
 1. Add a 2–3 line plain-language summary and list any assumptions you made so the
-   user can correct course before launch.
+   user can correct course before launch. For a lean-spine-sized goal, if the
+   `loadout` plugin is installed, you may add one line suggesting its `optimize`
+   skill to tune the Claude Code setup before launching — one line max, only if
+   natural.
 2. Append a **"Run it headless"** section (a fenced shell snippet + one caution
    line) showing how to run the goal non-interactively — per the
    "Headless-run addendum" in `references/goal-spec.md`. This lives *outside* the
@@ -191,6 +207,11 @@ line for this skill.
 
 - Never emit a `/goal` that ships, sends, publishes, or deploys anything
   outward-facing without an explicit approval gate before that step.
+- Any **destructive or irreversible** step (deleting data or files in bulk,
+  dropping/migrating live databases, force-pushing, overwriting existing work,
+  spending money) gets an explicit `HUMAN APPROVAL` gate in the emitted `/goal`
+  immediately before it — the EXECUTION MODE halt list is a backstop, not a
+  substitute for the gate.
 - Never invent capabilities or agents not in the roster; if the outcome needs a
   skill that does not exist, say so and propose the closest fit.
 - Keep the `/goal` block self-contained and copy-paste runnable.

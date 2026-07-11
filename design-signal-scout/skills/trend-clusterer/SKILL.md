@@ -19,24 +19,30 @@ Read [../../references/operating-model.md](../../references/operating-model.md) 
 ## Objective
 Group related signals into coherent themes and track whether those themes are gaining or losing momentum.
 
+## Reads / Writes (workspace)
+- **Reads:** `signals/` files (member candidates — this is where momentum history
+  comes from), `clusters.md` (prior clusters to update rather than recreate).
+- **Writes:** `clusters.md` — this skill owns the file. Also flips member signals'
+  `status` to `clustered` in their `signals/` files.
+- Without a persistent workspace this skill degrades hardest: it can cluster the
+  signals in front of it, but stage and momentum tracking need history. Say so,
+  and cluster what's available.
+
 ## Inputs
-- signal records
-- embeddings
-- tags
-- source metadata
-- timestamps
-- engagement
-- prior clusters
+- signal records (from `signals/` or pasted by the user)
+- tags and categories
+- source metadata and timestamps
+- prior clusters (from `clusters.md`)
 
 ## Process
-1. Compare new signals with existing clusters.
+1. Load prior clusters; compare new signals against them first.
 2. Merge near-duplicates.
 3. Create a new cluster only when needed.
 4. Require multiple independent sources for trend status.
 5. Track first seen, last seen, and velocity.
 6. Identify cross-domain movement.
 7. Record counter-signals.
-8. Update stage and confidence.
+8. Update stage and confidence, and write the result back to `clusters.md`.
 
 ## Cluster Record
 ```yaml

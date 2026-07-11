@@ -39,8 +39,18 @@ def unregister_icons():
 
 
 def get_icon(icon_id: str) -> int:
-    """Return icon_id int for use as icon_value=... in layouts."""
-    return _pcoll[icon_id].icon_id
+    """Return icon_id int for use as icon_value=... in layouts.
+
+    Returns 0 (Blender's "no icon") instead of raising if the id is unknown or
+    register_icons() hasn't run — a missing icon shouldn't crash the whole panel draw.
+    """
+    if _pcoll is None:
+        return 0
+    preview = _pcoll.get(icon_id)
+    if preview is None:
+        print(f"[icon-forge] unknown icon id: {icon_id}")
+        return 0
+    return preview.icon_id
 
 
 # --- usage in a Panel/Operator layout ---

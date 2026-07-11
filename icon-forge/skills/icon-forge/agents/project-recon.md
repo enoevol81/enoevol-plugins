@@ -8,7 +8,10 @@ fold in any inspiration the user provided.
 target platform and any **inspiration** the user supplied (images, reference icon sets,
 brand colors, adjectives, a competitor UI).
 
-**Output file:** `02-project-profile.md`
+**Deliverable contract:** write `02-project-profile.md` into the output directory you were
+given, then end with a summary of at most 10 lines (project gist, inventory size, aesthetic
+in one line, open questions). If you cannot write files, return the complete profile as
+your final message instead.
 
 ## Do this
 

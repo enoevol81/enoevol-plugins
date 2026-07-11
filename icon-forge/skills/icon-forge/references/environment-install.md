@@ -6,9 +6,23 @@ layout, and the manual fallback if the server isn't connected.
 
 ## The icon-forge MCP server
 
-Registered automatically by the plugin via `.mcp.json` (runs `node mcp/server.mjs`).
+Registered automatically by the plugin via `.mcp.json` (runs
+`node ${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs`).
 **One-time setup:** the server needs its deps installed —
-`cd <plugin>/mcp && npm install` (installs `@modelcontextprotocol/sdk` + `zod`).
+`cd <plugin>/mcp && npm install` (installs `@modelcontextprotocol/sdk` + `zod`,
+Node >= 18). `<plugin>` is the plugin's install root — on a marketplace install it's the
+version-keyed cache dir under `~/.claude/plugins/cache/enoevol-plugins/icon-forge/…`.
+
+### Server not connected? Diagnose in this order
+
+1. **`npm install` never ran** (the usual cause) — the server exits on start with an
+   "[icon-forge] MCP server dependencies are not installed" message in the MCP logs
+   (`/mcp` in Claude Code shows the failed server). Run the one-time setup above, then
+   **restart the Claude Code session** — MCP servers only launch at session start.
+2. **Node missing or < 18** — `node --version` to check.
+3. Still down, or you can't restart mid-run? Use the **manual fallback** at the bottom of
+   this file for this session; the pipeline output is identical, only the install step is
+   done by hand.
 
 ### Tools
 

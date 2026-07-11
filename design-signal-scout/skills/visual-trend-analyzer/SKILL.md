@@ -16,6 +16,16 @@ description: >-
 
 Read [../../references/operating-model.md](../../references/operating-model.md) first — this skill's confidence levels and application ideas feed into the shared signal record and `trend-clusterer`.
 
+## Reads / Writes (workspace)
+- **Reads:** images/links the user or a scouting cycle provides; recent `signals/`
+  files when checking whether a motif has appeared before.
+- **Writes:** a signal record (category `visual_trend`, scored per the canonical
+  rubric) appended to `signals/YYYY-MM-DD.md` for any pattern rated `emerging` or
+  stronger; weaker reads stay in the conversation.
+- This skill analyzes only imagery it can actually see — user-shared images or
+  fetchable pages. If a referenced image can't be loaded, say so; never describe
+  an image from its URL or caption alone.
+
 ## Objective
 Analyze images and video frames to identify visual patterns, form language, materials, color, composition, and repeated design motifs.
 

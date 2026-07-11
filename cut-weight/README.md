@@ -27,8 +27,9 @@ Cleanup runs as a report-driven conversation, not a silent batch:
 1. **Findings** (`findings.md`) — a clear results file: keep-set, auto-decided
    cuts, and a numbered **decisions-needed** list. In audit mode this is the final
    deliverable.
-2. **Decision gate** — multiple-choice questions (recommended option first) on each
-   questionable item; your answers are recorded.
+2. **Decision gate** — multiple-choice questions (recommended option first),
+   batched by evidence group so a 400-candidate repo is a handful of grouped
+   questions, never one prompt per file; your answers are recorded.
 3. **Decision report** (`decisions.md`) — the resolved action plan, ending with a
    last call for changes.
 4. **Execute + verify** against the recorded baseline.
@@ -61,7 +62,7 @@ cut-weight/
     │   ├── agent-artifacts.md            # Claude/agent artifact taxonomy + the four-way disposition gate
     │   └── review-loop.md                # findings / decision-gate / post-mortem stages + report file shapes
     └── scripts/
-        └── inventory.py                  # stdlib-only tree inventory: sizes, dual-clock ages, name signals, artifact + agent-artifact detection
+        └── inventory.py                  # stdlib-only tree inventory: sizes, dual-clock ages, name signals, artifact + agent-artifact detection; skips protected dirs, reports unreadable paths and symlinks, caps stated
 ```
 
 ## Install
@@ -79,9 +80,18 @@ including audit-only passes where nothing is removed yet.
 
 ## Guarantees the skill makes
 
+- Nothing is deleted, moved, or untracked before you approve the plan at the
+  decision gate; quarantine (move) is always preferred over delete.
+- Protected paths are never candidates: `.git/`, the quarantine buffer itself,
+  the run's own reports, and anything you marked keep.
 - A checkpoint commit before anything moves; the report always includes the exact
-  restore command with the real SHA.
+  per-disposition undo commands with real SHAs (including the correct undo for an
+  untrack — `git add` + ignore-line removal, not `git revert`).
+- Generated-but-required files (lockfiles, migrations, test snapshots) and
+  platform-consumed files (CI workflows, hosting configs, toolchain dotfiles)
+  are never cut, whatever their reference count.
 - Verification against a recorded baseline (tests/build/start) after every change,
   with automatic restore on regression.
 - Honest coverage accounting: "analyzed N of M files", every bound stated, no
-  silent caps, no "verified" claims for checks that did not run.
+  silent caps, unreadable paths reported, no "verified" claims for checks that
+  did not run.
