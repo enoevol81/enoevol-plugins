@@ -6,9 +6,16 @@ web check if something looks stale.
 
 ## Universal construction rules (apply everywhere)
 
+- **One `viewBox` for the whole set** (e.g. `0 0 24 24` or `0 0 20 20`), declared on every
+  SVG. Mixed viewBoxes break sprite alignment and optical sizing; the sprite builder falls
+  back to `0 0 24 24` if an SVG omits it — don't rely on that.
 - **Design on a grid.** Snap strokes and rectangles to whole units so they stay crisp when
   scaled down. One strong silhouette per icon.
 - **Hold one stroke weight** across the whole set. Pick stroked OR filled and commit.
+  If stroked, set explicit `stroke-linecap`/`stroke-linejoin` and keep them identical.
+- **Optically compensate.** Round and diagonal shapes look smaller than squares of the same
+  bounding box — let circles/diamonds overshoot the grid keyline slightly (~1 unit on 24)
+  so all icons *look* the same size.
 - **≤2 levels of detail.** Gradients, soft shadows, and fine texture vanish at 16px.
 - **Silhouette carries meaning, not color.** The icon must read in pure black-on-white.
 
@@ -65,7 +72,9 @@ def unregister():
 
 - **Command / view icons → SVG**, referenced from `package.json` `contributes` with
   `light`/`dark` variants, e.g. `"icon": { "light": "icons/x.svg", "dark": "icons/x.svg" }`.
-  Author monochrome so both themes work; 16×16 design target.
+  Author monochrome; 16×16 design target. Note VS Code renders these SVG files as-is (no
+  `currentColor` injection for contributed images) — so either ship one mid-gray icon that
+  reads on both themes, or ship real light/dark variants with baked fills.
 - **Product/file icon themes** use an **icon font** (heavier; only if building a full
   theme). For most extensions, plain per-command SVGs are right.
 

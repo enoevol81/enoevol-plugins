@@ -108,6 +108,11 @@ export const TARGETS = {
 };
 
 export function detectTarget(projectDir) {
+  if (!exists(projectDir)) {
+    throw new Error(
+      `projectDir does not exist: ${projectDir} — pass the absolute path to the project root.`
+    );
+  }
   const evidence = [];
   const has = (rel) => exists(path.join(projectDir, rel));
 
@@ -174,10 +179,9 @@ function rel(projectDir, p) {
 function installBlender(projectDir, icons, opts) {
   const wrote = [];
   const dest = path.join(projectDir, "icons");
+  // Blender's previews API needs raster; if only SVGs exist we still place them
+  // as sources and say so in `notes` below.
   const sources = icons.pngs.length ? icons.pngs : icons.svgs;
-  if (!icons.pngs.length) {
-    // Blender's previews API needs raster. Warn but still place SVGs as source.
-  }
   const ids = [];
   for (const src of sources) {
     const out = path.join(dest, path.basename(src));
@@ -380,7 +384,14 @@ def unregister_icons():
 
 
 def get_icon(icon_id: str) -> int:
-    return _pcoll[icon_id].icon_id
+    """icon_value for layouts. Returns 0 (no icon) instead of raising if missing."""
+    if _pcoll is None:
+        return 0
+    preview = _pcoll.get(icon_id)
+    if preview is None:
+        print(f"[icon-forge] unknown icon id: {icon_id}")
+        return 0
+    return preview.icon_id
 `;
 }
 

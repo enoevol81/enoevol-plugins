@@ -39,6 +39,9 @@ Tiers default down: link checks and staging are `basic`, the judgment-heavy
 positioning call is `deep`. The whole run is hands-free under elevated permissions,
 stopping only on a high-level issue or the go-live gate.
 
+Mode check: 4 milestones, none with more than 2 subtasks — at the threshold, not
+over it, so the goal stays **fully inline** (no `PLAN FILE:` / lean-spine mode).
+
 ## Phase 4 — Emit the `/goal`
 
 ```

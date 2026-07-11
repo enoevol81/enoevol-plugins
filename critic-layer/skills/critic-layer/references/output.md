@@ -18,8 +18,16 @@ order** — a human reads the brief, an agent runs the prompt, they never disagr
 The overlay export, optionally merged across breakpoints and enriched with AI
 issues. Save it so a future round-trip pass can diff resolved vs unresolved.
 
+**This file is a contract, not a scratch file.** Downstream tools — notably the
+`canon-check` plugin, which consumes Critic Layer manifests as prior
+design-review artifacts — key on `schemaVersion`, field names, and the enums
+below. Changes at version 1 must be additive; anything breaking bumps
+`schemaVersion`.
+
 ```json
 {
+  "schemaVersion": 1,
+  "tool": "critic-layer",
   "project": {
     "site_name": "…", "base_url": "https://…", "review_goal": "…",
     "assertiveness": "quiet", "design_intent_source": "PRODUCT.md",
@@ -27,20 +35,23 @@ issues. Save it so a future round-trip pass can diff resolved vs unresolved.
   },
   "captures": [
     { "url": "https://…/", "path": "/", "title": "Homepage", "viewport": "desktop",
+      "viewportSize": { "width": 1440, "height": 1200 },
       "screenshot": "screenshots/home_desktop.png", "capturedAt": "…",
       "notes": [ /* note objects — see capture.md */ ] }
   ]
 }
 ```
 
-- One `export()` = one capture; collect one per (url, viewport) into `captures`.
-  Keep note ids unique (prefix with viewport on collision).
+- One `export()` = one capture; collect one per (url, viewport) into `captures`,
+  carrying the export's fields through (`viewportSize`, `capturedAt`, …). Keep
+  note ids unique (prefix with viewport on collision).
 - AI issues use the same note shape with `authoredBy: "ai"` (no `x/y/anchor`
   required), dismissible, never mutating a user note. `uncertain` items also
   surface as an open question.
 - `category` ∈ layout|typography|spacing|color|hierarchy|interaction|copy|
   performance|bug|accessibility. `severity` ∈ low|medium|high|blocker.
-  `status` ∈ open|resolved|dismissed.
+  `status` ∈ open|resolved|dismissed. `effort` ∈ S|M|L (optional, added at
+  synthesis — see `synthesis.md`).
 - Preserve the user's `note` text verbatim in the manifest even after rewriting
   it into a directive — the manifest is the source of record.
 
@@ -66,7 +77,7 @@ Assertiveness: {quiet|proactive} · Design intent: {source or "verbal"}
 # Page: {Homepage}
 
 ## Issue {n}: {short title}
-Severity: {…} · Category: {…} · Location: {section / element_label}
+Severity: {…} · Effort: {S|M|L} · Category: {…} · Location: {section / element_label}
 Viewport: {…} · Author: {user|ai|uncertain} · Source: {note_001, note_004}
 
 ### Problem
@@ -77,6 +88,9 @@ Viewport: {…} · Author: {user|ai|uncertain} · Source: {note_001, note_004}
 
 ### Suggested implementation
 - {concrete delta — px, spacing, contrast direction, breakpoint behavior}
+
+### Acceptance check
+{Observable end state — same check the implementation prompt uses.}
 
 ---
 
@@ -108,7 +122,7 @@ the codebase and confirm before diverging".}
 
 ## Tasks (priority order)
 
-### 1. {title} · {severity} · {page} / {viewport}
+### 1. {title} · {severity} · effort {S|M|L} · {page} / {viewport}
 Target: {element_label / anchor.selector as a hint}
 Change: {precise directive}
 Details:
@@ -131,7 +145,7 @@ selectors.
 ## `issue_priority_table.md` (optional)
 
 ```md
-| # | Issue | Sev | Page | Author | Source |
-|---|-------|-----|------|--------|--------|
-| 1 | Hero CTA lacks emphasis | high | Home | user | note_001 |
+| # | Issue | Sev | Effort | Page | Author | Source |
+|---|-------|-----|--------|------|--------|--------|
+| 1 | Hero CTA lacks emphasis | high | S | Home | user | note_001 |
 ```

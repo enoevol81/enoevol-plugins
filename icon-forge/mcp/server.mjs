@@ -9,10 +9,27 @@
 //   node server.mjs
 // (after `npm install` in this folder).
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { TARGETS, detectTarget, installIconSet } from "./targets.mjs";
+
+// Deps are loaded dynamically so a missing `npm install` produces one clear,
+// actionable message in the MCP log instead of a raw ERR_MODULE_NOT_FOUND stack.
+let McpServer, StdioServerTransport, z;
+try {
+  ({ McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js"));
+  ({ StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js"));
+  ({ z } = await import("zod"));
+} catch (err) {
+  const here = dirname(fileURLToPath(import.meta.url));
+  console.error(
+    "[icon-forge] MCP server dependencies are not installed.\n" +
+      `[icon-forge] Run once:  cd "${here}" && npm install\n` +
+      "[icon-forge] (installs @modelcontextprotocol/sdk + zod, Node >= 18), then restart Claude Code.\n" +
+      `[icon-forge] Underlying error: ${err?.message || err}`
+  );
+  process.exit(1);
+}
 
 const server = new McpServer({ name: "icon-forge", version: "0.1.0" });
 

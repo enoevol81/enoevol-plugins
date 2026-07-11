@@ -9,9 +9,9 @@ conventions, recon the project's function and aesthetic, ingest any **inspiratio
 provide, build an icon-set game plan, and emit:
 
 - **Deterministic SVG sources + rasterized PNGs** — the production path for functional
-  small UI icons.
-- **FLUX.2 (fal.ai) prompts + a batch runner** — for hero art, larger decorative icons,
-  logos, and style exploration.
+  small UI icons. **Needs no fal.ai account, key, or network.**
+- **FLUX.2 (fal.ai) prompts + a batch runner** *(optional)* — for hero art, larger
+  decorative icons, logos, and style exploration. This tier alone needs a `FAL_KEY`.
 
 Then a final **install** step uses the bundled **icon-forge MCP server** to populate the
 project natively:
@@ -46,9 +46,12 @@ cd <plugin-dir>/icon-forge/mcp
 npm install
 ```
 
-(`<plugin-dir>` is where the marketplace installed the plugin — usually under
-`~/.claude/plugins/…/icon-forge`.) Requires Node ≥ 18. After that, Claude Code auto-starts
-the `icon-forge` MCP server via the plugin's `.mcp.json`.
+(`<plugin-dir>` is where the marketplace installed the plugin — usually the version-keyed
+cache dir under `~/.claude/plugins/cache/enoevol-plugins/icon-forge/<version>/`.) Requires
+Node ≥ 18. Restart the Claude Code session afterwards; it then auto-starts the
+`icon-forge` MCP server via the plugin's `.mcp.json`. If the install was skipped, the
+server logs a clear "dependencies are not installed" message (visible via `/mcp`) and the
+skill falls back to a manual, hand-placed install — nothing else breaks.
 
 ## Use
 
@@ -58,11 +61,13 @@ Just ask for icons and point at a project:
 > "Generate a favicon + nav icon pack for this Next.js site. Here's some inspiration: …"
 
 The skill asks only for what's missing (path, scope, optional inspiration), runs the
-research + design agents in parallel, writes the SVG/PNG set, and then calls the MCP server
-to install everything into the project.
+research + design agents in parallel, gets **one** approval on the game plan, then writes
+the SVG/PNG set and calls the MCP server to install everything into the project — no
+further interruptions.
 
-To generate the FLUX art too, set `FAL_KEY` in your environment and run the emitted
-`prompts/generate_fal.py`.
+To generate the optional FLUX art tier too, set `FAL_KEY` in your environment and run the
+emitted `prompts/generate_fal.py` (`pip install fal-client`). Without a fal.ai account,
+simply skip this — the SVG/PNG set is complete on its own.
 
 ## What's in the box
 

@@ -4,10 +4,13 @@
 Produces a JSON inventory with, per file: size, age on two clocks (mtime and
 git last-touch), tracked/untracked status, and name-pattern signals. Known
 regenerable-artifact directories are summarized as single entries instead of
-walked file-by-file. Output is ASCII-only.
+walked file-by-file. Protected paths (.git/, _quarantine/) are never listed
+as candidate files. Unreadable directories and broken symlinks are reported,
+not silently skipped. Output is ASCII-only.
 
 Usage:
   python inventory.py [root] [--out inventory.json] [--max-commits 500]
+                      [--max-files 200000]
 
 Exit code 0 on success. Prints a short ASCII summary table to stdout; the
 full data goes to the JSON file.
@@ -25,7 +28,9 @@ ARTIFACT_DIRS = {
     "venv", ".cache", ".vite", ".turbo", ".parcel-cache",
     "playwright-report", "test-results", ".mypy_cache", ".ruff_cache",
 }
-SKIP_DIRS = {".git"}
+# Never walked, never candidates: git internals and the quarantine buffer
+# (a prior run's quarantined files must not be re-classified as cuttable).
+PROTECTED_DIRS = {".git", "_quarantine"}
 
 NAME_SIGNAL_SUFFIXES = (".bak", ".old", ".orig", ".tmp", "~")
 NAME_SIGNAL_PARTS = (
@@ -51,7 +56,7 @@ AGENT_DROPPING_DIRS = {".specstory"}
 
 
 def agent_category(rel, name):
-    """Classify a path as an agent artifact, or None. rel is cwd-relative."""
+    """Classify a path as an agent artifact, or None. rel is root-relative."""
     low = name.lower()
     rl = rel.lower()
     if (low in AGENT_CANONICAL_NAMES or rl in AGENT_CANONICAL_PATHS
@@ -81,7 +86,7 @@ def name_signals(name):
 def run_git(root, args):
     try:
         r = subprocess.run(
-            ["git", "-C", root] + args,
+            ["git", "-C", root, "-c", "core.quotepath=off"] + args,
             capture_output=True, text=True, encoding="utf-8",
             errors="replace", timeout=120,
         )
@@ -98,7 +103,7 @@ def git_data(root, max_commits):
     tracked = {p.replace("\\", "/") for p in ls.split("\0") if p}
 
     # git log prints paths relative to the repo root even when run in a
-    # subdirectory; strip the prefix so keys match our cwd-relative paths.
+    # subdirectory; strip the prefix so keys match our root-relative paths.
     prefix = (run_git(root, ["rev-parse", "--show-prefix"]) or "").strip()
 
     log = run_git(root, [
@@ -139,26 +144,55 @@ def main():
     ap.add_argument("root", nargs="?", default=".")
     ap.add_argument("--out", default="inventory.json")
     ap.add_argument("--max-commits", type=int, default=500)
+    ap.add_argument("--max-files", type=int, default=200000,
+                    help="stop inventorying after this many files "
+                         "(the JSON says so if the cap is hit)")
     args = ap.parse_args()
 
     root = os.path.abspath(args.root)
+    if not os.path.isdir(root):
+        print("error: not a directory: %s" % root, file=sys.stderr)
+        return 2
+    out = args.out if os.path.isabs(args.out) else os.path.join(root, args.out)
+    out = os.path.abspath(out)
     now = time.time()
     tracked, last_touch, commits, truncated = git_data(root, args.max_commits)
 
     files, artifacts, agent_dirs = [], [], []
-    for dp, dns, fns in os.walk(root):
+    protected, errors = [], []
+    files_capped = False
+
+    def on_walk_error(err):
+        # Unreadable directory: report it, do not silently drop coverage.
+        errors.append({
+            "path": os.path.relpath(err.filename, root).replace("\\", "/"),
+            "error": err.__class__.__name__,
+        })
+
+    for dp, dns, fns in os.walk(root, onerror=on_walk_error):
+        if files_capped:
+            break
         pruned = []
         for d in list(dns):
-            if d in SKIP_DIRS:
+            full = os.path.join(dp, d)
+            rel = os.path.relpath(full, root).replace("\\", "/")
+            if d in PROTECTED_DIRS:
                 dns.remove(d)
+                protected.append(rel + "/")
+            elif os.path.islink(full):
+                # Directory symlinks are recorded, never followed.
+                dns.remove(d)
+                files.append({"path": rel, "bytes": 0, "mtime_days": None,
+                              "git_last_touch_days": None,
+                              "tracked": (rel in tracked) if tracked is not None
+                                         else None,
+                              "signals": [], "symlink": True})
             elif d in ARTIFACT_DIRS:
                 dns.remove(d)
                 pruned.append(d)
             elif d in AGENT_DROPPING_DIRS:
                 dns.remove(d)
-                full = os.path.join(dp, d)
                 size, count = dir_stats(full)
-                rel = os.path.relpath(full, root).replace("\\", "/")
                 agent_dirs.append({
                     "path": rel + "/", "bytes": size, "files": count,
                     "category": "tool-dropping",
@@ -173,25 +207,36 @@ def main():
             })
         for fn in fns:
             full = os.path.join(dp, fn)
+            if os.path.abspath(full) == out:
+                continue  # never inventory our own output file
             rel = os.path.relpath(full, root).replace("\\", "/")
+            link = os.path.islink(full)
             try:
-                st = os.stat(full)
-            except OSError:
+                st = os.lstat(full) if link else os.stat(full)
+            except OSError as e:
+                errors.append({"path": rel, "error": e.__class__.__name__})
                 continue
-            gt = last_touch.get(rel)
             entry = {
                 "path": rel,
                 "bytes": st.st_size,
                 "mtime_days": round((now - st.st_mtime) / 86400, 1),
                 "git_last_touch_days":
-                    round((now - gt) / 86400, 1) if gt else None,
+                    round((now - (last_touch.get(rel))) / 86400, 1)
+                    if last_touch.get(rel) else None,
                 "tracked": (rel in tracked) if tracked is not None else None,
                 "signals": name_signals(fn),
             }
+            if link:
+                entry["symlink"] = True
+                if not os.path.exists(full):
+                    entry["broken_symlink"] = True
             cat = agent_category(rel, fn)
             if cat:
                 entry["agent_artifact"] = cat
             files.append(entry)
+            if len(files) >= args.max_files:
+                files_capped = True
+                break
 
     files.sort(key=lambda f: f["path"])
 
@@ -220,18 +265,30 @@ def main():
                      "window (older, or untracked)" % commits)
                     if truncated else None,
         },
+        "protected_dirs": {
+            "paths": protected,
+            "note": ("skipped by design (.git internals, quarantine buffer); "
+                     "NEVER candidates for cut or quarantine"),
+        },
+        "files_capped": ("walk stopped at %d files (--max-files); coverage "
+                         "is partial" % args.max_files) if files_capped else False,
+        "errors": errors,
         "artifact_dirs": artifacts,
         "agent_artifacts": agent_artifacts,
         "files": files,
     }
-    out = os.path.join(root, args.out) if not os.path.isabs(args.out) else args.out
+    out_dir = os.path.dirname(out)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 
     flagged = [f for f in files if f["signals"]]
     art_bytes = sum(a["bytes"] for a in artifacts)
     print("cut-weight inventory: %s" % root)
-    print("  files inventoried : %d" % len(files))
+    print("  files inventoried : %d%s" % (
+        len(files), " [CAPPED at --max-files - coverage is partial]"
+        if files_capped else ""))
     print("  artifact dirs     : %d (%.1f MB regenerable)"
           % (len(artifacts), art_bytes / 1e6))
     print("  name-signal files : %d" % len(flagged))
@@ -239,6 +296,11 @@ def main():
           "(-> Phase 2.5 gate)"
           % (len(agent_artifacts["canonical"]), len(agent_artifacts["config"]),
              len(agent_artifacts["droppings"])))
+    if protected:
+        print("  protected (skip)  : %s" % ", ".join(protected))
+    if errors:
+        print("  unreadable        : %d path(s) -- listed under 'errors' "
+              "in the JSON" % len(errors))
     print("  git               : %s" % (
         "%d commits scanned%s" % (commits, " [TRUNCATED - see note in JSON]"
                                   if truncated else "")

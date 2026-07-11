@@ -28,7 +28,9 @@ product.
 2. **Inject** the sticky-note overlay. A small HUD appears; click any element to
    pin a note, type your comment, set a category and severity.
 3. **Review** at your own pace across breakpoints. Notes anchor to real DOM nodes
-   and survive scroll and re-render.
+   and survive scroll and re-render. The HUD's **Export** button copies all notes
+   as versioned JSON (and logs them to the console) at any time — your review
+   survives even if the browser bridge doesn't.
 4. **Synthesize.** Critic Layer reads your notes back and produces:
    - `ux_ui_change_brief.md` — the human-readable brief
    - `implementation_prompt.md` — a paste-ready Claude Code prompt
@@ -52,10 +54,15 @@ blurred.
 
 - **Live review:** the [claude-in-chrome](https://www.anthropic.com) MCP
   (controls your real Chrome). The overlay uses inline DOM inputs only and never
-  triggers native dialogs.
+  triggers native dialogs. No MCP? Paste `critic-overlay.js` into DevTools
+  yourself, review, hit Export, and hand Claude the JSON.
 - **Synthesis-only:** no browser required.
 - **Optional:** a `design.md` / `DESIGN.md` / brand-notes file to ground the AI's
   second pass.
+
+The exported manifest is versioned and self-describing (`schemaVersion: 1` —
+URL, viewport, timestamp, note array), so downstream tools like `canon-check`
+can consume it as a prior design-review artifact.
 
 ## Triggering
 

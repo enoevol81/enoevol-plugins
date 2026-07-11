@@ -32,7 +32,7 @@
     {
       "name": "loadout",
       "source": "./loadout",
-      "description": "Audit and optimize your active Claude Code loadout — inventory of plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal."
+      "description": "Audit and optimize your active Claude Code loadout — inventory of installed vs enabled plugins, MCP servers, skills, agents, commands, and hooks, with context-cost estimates and tuning recommendations for any goal."
     },
     {
       "name": "hands-free",
@@ -47,7 +47,7 @@
     {
       "name": "swiss-design",
       "source": "./swiss-design",
-      "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate."
+      "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction with real numbers, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction. Two modes (make layout specs/CSS, or review a layout against a nine-point approval gate) plus an annotated canon of Swiss reference works."
     },
     {
       "name": "design-signal-scout",

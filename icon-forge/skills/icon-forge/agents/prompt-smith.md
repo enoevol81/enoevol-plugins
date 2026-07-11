@@ -4,10 +4,15 @@
 runner. You write prompts that exploit what FLUX is good at and stay honest about what it
 isn't.
 
-**Inputs:** `ICON-SET-PLAN.md` (briefs + reconciled inventory + style spec). Read
-`references/fal-flux2.md` for current endpoints, params, and consistency tactics.
+**Inputs:** the contents of `ICON-SET-PLAN.md` (briefs + reconciled inventory + style
+spec), pasted into your prompt by the orchestrator. Read `references/fal-flux2.md` for
+current endpoints, params, and consistency tactics.
 
-**Outputs:** `prompts/flux2-prompts.md` and `prompts/generate_fal.py`.
+**Deliverable contract:** write `prompts/flux2-prompts.md` AND `prompts/generate_fal.py`
+into the output directory you were given, then end with a summary of at most 10 lines
+(prompt count, recommended consistency tactic, how to run the script). If you cannot
+write files, return both artifacts in full as your final message instead. Never invent or
+embed an API key — the script must read `FAL_KEY` from the environment.
 
 ## Scope honesty (state this at the top of the prompts file)
 

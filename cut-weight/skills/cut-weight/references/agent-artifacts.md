@@ -71,8 +71,11 @@ canonical file silently.
   identical to a CUT/QUARANTINE elsewhere (see
   [quarantine-protocol.md](quarantine-protocol.md)) -- reversible.
 - **An untrack still lands as a commit** (the index removal + `.gitignore`
-  edit). Keep it in the pass's revertable commit family so the whole gate can
-  be undone with one `git revert`.
+  edit), in its own commit, separate from the quarantine moves. Its undo is
+  `git add <path>` + removing the ignore line -- NOT `git revert`, which
+  fails on untrack commits (git refuses to overwrite the untracked
+  working-tree copy). See the Restoring section of
+  [quarantine-protocol.md](quarantine-protocol.md).
 
 ## Shared-workspace caution
 

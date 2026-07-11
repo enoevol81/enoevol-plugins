@@ -52,10 +52,19 @@ times that changing it in one place would look wrong next to the rest.
 
 Decisions that were said once, out loud, and never made it into a doc.
 
+- First check what history you actually have: if `git log` fails, or
+  `git rev-parse --is-shallow-repository` prints `true`, note "git history:
+  shallow/unavailable" in the report Summary and mark untraceable origins
+  as `untraced` — never present the oldest visible commit as where a value
+  began.
 - `git log --grep` for design-related keywords ("spacing", "radius",
   "color", "rebrand", "design system") to find commits where a value was
   deliberately chosen or changed, and check whether that decision is
   reflected anywhere durable today.
+- `git log -S"<value>" --oneline --reverse` (pickaxe) to find the commit
+  that *introduced* a specific token value — this is the "First appeared"
+  evidence the report asks for, and often reveals whether a value arrived
+  deliberately (its own commit, a design message) or as a side effect.
 - PR descriptions, if the repo has a GitHub remote (`gh pr list --state all
   --search "design"` or similar) — a PR description is often the *only*
   place a design rationale was ever written down.
@@ -74,20 +83,45 @@ implemented it, and the artifact itself now sits unreferenced in the repo
 looking exactly like an accident rather than a decision.
 
 Look for outputs from other design-oriented skills that may already be
-installed in this ecosystem:
-- **critic-layer**: `annotation_manifest.json`, change-brief markdown files,
-  paste-ready Claude Code prompts from a past review session.
+installed in this ecosystem. None of these tools pin their outputs to a
+fixed directory — the files can sit anywhere in the repo (project root, a
+`design/` or `reviews/` folder, next to the code they reviewed), so glob
+repo-wide by filename:
+
+- **critic-layer** (sticky-note design review): emits
+  `ux_ui_change_brief.md`, `implementation_prompt.md`,
+  `annotation_manifest.json`, and optionally `issue_priority_table.md`,
+  usually alongside a `screenshots/` folder. The manifest is the most
+  useful for this audit: each note has `category`, `severity`, and
+  `status` (`open` / `resolved` / `dismissed`) — a note marked `resolved`
+  is a past suggestion that *was implemented*, i.e. exactly the kind of
+  one-off that may have ossified into unwritten law.
+- **swiss-design**: layout/typography critiques and grid-system
+  recommendations, typically markdown; specific values it prescribed
+  (type scale, grid columns) may now be live in the code.
 - **ux-strategy** skills: design-brief, design-principles,
   north-star-vision, or information-architecture outputs (typically
   markdown files with a clear title matching the skill name).
-- **swiss-design**: layout/typography critique documents.
 - **design-consultation** / **design-review** (gstack): proposed design
   systems, font/color preview outputs, QA findings.
 - **portfolio-story-builder**: case-study or style documentation that may
   encode design rationale even though it wasn't the primary purpose.
 
-Glob broadly: `**/*design-brief*`, `**/*design-principles*`,
-`**/*change-brief*`, `**/*critic*manifest*`, `**/*style-audit*`,
-`**/*design-review*`. If a match exists, read it and ask: did its
-suggestions get implemented, and if so, are they still being followed
-without anyone having consciously re-affirmed them?
+Glob broadly: `**/*change_brief*`, `**/*change-brief*`,
+`**/annotation_manifest*.json`, `**/implementation_prompt*`,
+`**/*design-brief*`, `**/*design-principles*`, `**/*style-audit*`,
+`**/*design-review*`, `**/*critique*`. If a match exists, read it and ask
+exactly one question per suggestion: **did it get implemented, and is it
+still being followed without anyone having consciously re-affirmed it?**
+
+Two boundaries keep this source honest:
+
+- **Absence is normal, not a finding.** Most repos have none of these
+  artifacts. If the globs come up empty, the Summary just says "0 prior
+  design-review artifacts" and the audit proceeds — don't hunt harder, and
+  don't treat their absence as evidence of anything.
+- **Don't redo their jobs.** critic-layer runs live reviews; swiss-design
+  critiques layouts. This audit never re-critiques the design or re-opens
+  their issues on the merits — it only traces whether a past artifact's
+  suggestion quietly became canon, and whether the artifact itself is
+  still live (Document Relevance).

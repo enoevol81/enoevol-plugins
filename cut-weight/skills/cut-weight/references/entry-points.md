@@ -80,6 +80,11 @@ that.
 
 - **Static edges**: `import`/`require`/`from ... import`, HTML tag
   references, config keys naming files. Follow them transitively.
+- **Stylesheets and web assets are edges too**: CSS `url(...)` (fonts,
+  background images) and `@import`, `<link rel="icon">`/`manifest` targets,
+  `srcset` variants, and everything a `site.webmanifest`/`manifest.json`
+  names. An image referenced only from CSS has zero code references and is
+  still load-bearing.
 - **String-literal paths**: grep the keep-set for quoted paths
   (`open(`, `fetch(`, `readFile(`, `src=`, `href=`). A path built at runtime
   from variables cannot be traced -- see next rule.
@@ -89,7 +94,10 @@ that.
   Note in the report that precision was lost and why.
 - **Config, data, and secrets are implicitly reachable**: dotenv files,
   migration folders, seed data the code opens by convention. When code reads
-  a directory rather than a file, keep the directory.
+  a directory rather than a file, keep the directory. The same goes for
+  platform-consumed files nothing in the repo references (CI workflows,
+  `dependabot.yml`, hosting configs, toolchain dotfiles) -- see signal 7 in
+  [evidence-signals.md](evidence-signals.md).
 - **Tests are entry points too** (via the test command), which is what makes
   a test for a *deleted* feature detectable: it is reachable from the test
   runner but its subject import is broken or gone -- flag those as

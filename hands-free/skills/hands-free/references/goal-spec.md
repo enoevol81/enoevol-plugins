@@ -74,6 +74,27 @@ construction" below.
 ]
 ```
 
+## Section order & requiredness
+
+Emit sections in exactly the anatomy's order. Never emit an empty header.
+
+| # | Section | Required? |
+| --- | --- | --- |
+| 1 | OUTCOME | mandatory |
+| 2 | SUCCESS CRITERIA | mandatory |
+| 3 | CONSTRAINTS | omit if none |
+| 4 | ASSUMPTIONS | omit if none (rare — most goals assume something) |
+| 5 | EXECUTION MODE | mandatory, canonical text verbatim |
+| 6 | PLAN FILE | **lean-spine mode only** — omit entirely for inline goals |
+| 7 | ORCHESTRATION (LEAD + MILESTONES) | mandatory; LEAD canonical verbatim |
+| 8 | DELIVERABLES | mandatory |
+| 9 | ESCALATION | mandatory |
+
+Lean-spine mode changes exactly two things: `PLAN FILE:` appears (section 6),
+and each milestone's `parallel subtasks:` list is replaced by a one-line
+`subtasks: see PLAN FILE § "<milestone>"` pointer. Every other section is
+identical in both modes.
+
 ## Field rules
 
 - **OUTCOME** — exactly one sentence, outcome-shaped ("a published, reviewed
@@ -100,8 +121,13 @@ construction" below.
   `agent-roster.md` → "Model tier routing"; default to the cheapest tier that can
   do the job. Never place two subtasks in the same milestone if one depends on the
   other — split them across milestones instead.
-- **gate** — `none`, a `review by @reviewer`, or `HUMAN APPROVAL`. Mandatory
-  before any outward-facing action (publish/send/deploy).
+- **gate** — `none`, a `review by @reviewer`, or `HUMAN APPROVAL`. A review
+  gate may carry a `(tier)` for the reviewer dispatch, e.g.
+  `review by @reviewer (brand voice) — (deep)`. A gate is **mandatory** before:
+  - any **outward-facing** action (publish/send/deploy) → `HUMAN APPROVAL`;
+  - any **destructive or irreversible** action (bulk delete, live-DB
+    drop/migration, force-push, overwrite of existing work, spend) →
+    `HUMAN APPROVAL` immediately before that step.
 
 ## Lead mandate (standing instructions for the orchestrator)
 
@@ -288,6 +314,10 @@ non-empty; a spine that points at a missing file is a broken goal.
       gates still bind).
 - [ ] No parallel subtask depends on a sibling in the same milestone.
 - [ ] Every outward-facing action sits behind an explicit gate.
+- [ ] Every destructive/irreversible step sits behind a HUMAN APPROVAL gate
+      placed immediately before it.
+- [ ] Sections appear in the canonical order; empty sections are omitted;
+      PLAN FILE appears only in lean-spine mode.
 - [ ] EXECUTION MODE and LEAD are the canonical blocks, copied verbatim (not
       re-authored).
 - [ ] A "Run it headless" addendum follows the block (outside the budget).
