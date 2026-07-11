@@ -37,6 +37,30 @@ behavior). Ranges are fine when flagged: "increase button height ~8-12px (to
 ~48px) — verify against the type scale." Never "make it better" / "polish this" —
 if you can't make it concrete, it's an open question.
 
+## Reading drawings and edits
+
+Notes are one of three inputs. The other two sharpen or replace the guesswork:
+
+- **Drawings** (`export().drawings`) are visual markup — freehand, arrows, boxes,
+  ellipses — in page coordinates with a `bbox`. Use `bbox` + the annotated
+  screenshot to find *what* the designer circled/pointed at, then treat a
+  **labeled** drawing like a note whose text is the label, and an **unlabeled**
+  one as emphasis for the nearest note/edit (or, alone, an "attention here" item —
+  ask what they meant if there's no companion note). An arrow implies direction
+  ("move this → there"); a box/ellipse implies "this region/element".
+- **Edits** (`export().edits`) are the strongest signal: the designer changed the
+  live element and Critic Layer captured the exact `changes` diff. **Do not
+  re-derive the value** — carry it through verbatim (`font-size 34px→40px`,
+  `color→rgb(0,0,255)`, copy "Old"→"New"). Problem = what the original state got
+  wrong (infer from the change + any companion note); Direction = "apply this
+  change"; Implementation = the diff itself, mapped to a design token only when one
+  clearly matches (name it; don't silently swap). An edit is `authoredBy: user`
+  and outranks AI inferences about the same element.
+
+When a note, a drawing, and an edit all point at one element, **merge them into a
+single issue**: the note gives the *why*, the drawing the *where*, the edit the
+*exact what*. Cite all their ids.
+
 ## Cross-note reasoning
 
 - **Group** related notes (three CTA notes → one "CTA consistency" issue).

@@ -1,18 +1,27 @@
 /*
- * Critic Layer — injectable sticky-note review overlay
- * -----------------------------------------------------
+ * Critic Layer — injectable review + markup + live-edit overlay
+ * ------------------------------------------------------------
  * Injected into a live page via claude-in-chrome's javascript_tool. The designer
- * clicks any element to pin a note; notes are anchored to the DOM element under
- * the click and stored client-side on window.__CRITIC__. The skill reads them
- * back on demand with:  JSON.stringify(window.__CRITIC__.export())
+ * works in one of three modes, all driven from a single on-page HUD:
  *
- * Design constraints:
+ *   • Pick  — click any element to pin a sticky NOTE (anchored to the DOM node).
+ *   • Draw  — freehand / arrow / shape MARKUP drawn over the page (like circling
+ *             something on a printout). Vector strokes, undo/redo, colors.
+ *   • Edit  — click an element to open a live EDIT panel (text / style / attrs /
+ *             html). Edits mutate the real DOM (WYSIWYG) AND record an exact
+ *             before→after diff, so the change survives as a precise directive.
+ *
+ * Everything is read back on demand with:
+ *   JSON.stringify(window.__CRITIC__.export())
+ * which returns { notes, drawings, edits, ... } for the synthesis pipeline.
+ *
+ * Design constraints (unchanged from the notes-only overlay):
  *  - Idempotent: re-injection re-uses the existing instance, never duplicates.
  *  - Never calls window.prompt/alert/confirm (they freeze the browser bridge).
  *    All text entry is inline DOM inputs.
  *  - All overlay nodes are id/class-namespaced so they never pick themselves and
  *    cleanup stays a one-liner.
- *  - Pins re-anchor to their element on scroll/resize/re-render.
+ *  - Pins + drawings re-anchor/reposition on scroll/resize/re-render.
  */
 (function () {
   'use strict';
@@ -22,7 +31,8 @@
   // Idempotency: if already booted, just re-show and bail.
   if (window.__CRITIC__ && window.__CRITIC__.__booted) {
     window.__CRITIC__.show();
-    return '__CRITIC__ already active: ' + window.__CRITIC__.notes.length + ' note(s)';
+    return '__CRITIC__ already active: ' + window.__CRITIC__.notes.length + ' note(s), ' +
+      window.__CRITIC__.drawings.length + ' drawing(s), ' + window.__CRITIC__.edits.length + ' edit(s)';
   }
 
   var CATEGORIES = ['layout', 'typography', 'spacing', 'color', 'hierarchy',
@@ -30,10 +40,35 @@
   var SEVERITIES = ['low', 'medium', 'high', 'blocker'];
   var SEV_COLOR = { low: '#8a8a8a', medium: '#d8a200', high: '#ff5b45', blocker: '#c1121f' };
 
+  var DRAW_TOOLS = ['pen', 'arrow', 'line', 'rect', 'ellipse'];
+  var DRAW_COLORS = ['#ff5b45', '#d8a200', '#2ea3ff', '#28c76f', '#111111'];
+
+  // Inline style properties the Edit panel exposes, in panel order. Each maps a
+  // friendly label to a CSS property read from computed style and written inline.
+  var STYLE_FIELDS = [
+    { key: 'color', label: 'Text color', css: 'color' },
+    { key: 'backgroundColor', label: 'Background', css: 'background-color' },
+    { key: 'fontSize', label: 'Font size', css: 'font-size' },
+    { key: 'fontWeight', label: 'Weight', css: 'font-weight' },
+    { key: 'textAlign', label: 'Align', css: 'text-align' },
+    { key: 'padding', label: 'Padding', css: 'padding' },
+    { key: 'margin', label: 'Margin', css: 'margin' },
+    { key: 'borderRadius', label: 'Radius', css: 'border-radius' },
+    { key: 'border', label: 'Border', css: 'border' },
+  ];
+
   var state = {
     notes: [],
+    drawings: [],       // committed vector strokes {id,tool,color,width,pts[],label}
+    drawRedo: [],       // undo/redo stack for drawings
+    edits: [],          // live edits with before→after diffs
     seq: 0,
-    picking: true,
+    drawSeq: 0,
+    editSeq: 0,
+    mode: 'pick',       // 'pick' | 'draw' | 'edit' | 'off'
+    drawTool: 'pen',
+    drawColor: '#ff5b45',
+    drawWidth: 3,
     viewport: null,
   };
 
@@ -42,6 +77,11 @@
     var n = document.createElement(tag);
     if (css) n.style.cssText = css;
     if (text != null) n.textContent = text;
+    return n;
+  }
+  function svgEl(tag, attrs) {
+    var n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    if (attrs) for (var k in attrs) n.setAttribute(k, attrs[k]);
     return n;
   }
   function own(node) {
@@ -90,6 +130,7 @@
   }
   // Re-find an element from its snapshot (best-effort, for re-anchoring).
   function resolveAnchor(snap) {
+    if (!snap) return null;
     if (snap.id) { var byId = document.getElementById(snap.id); if (byId) return byId; }
     if (snap.selector) { try { var bySel = document.querySelector(snap.selector); if (bySel) return bySel; } catch (e) {} }
     if (snap.classes && snap.classes.length) {
@@ -105,6 +146,12 @@
     }
     return null;
   }
+  function descOf(node) {
+    var s = node.tagName.toLowerCase();
+    if (node.id) s += '#' + node.id;
+    if (node.classList && node.classList.length) s += '.' + Array.prototype.slice.call(node.classList).slice(0, 2).join('.');
+    return s;
+  }
 
   // ---- Overlay roots -----------------------------------------------------
   var root = el('div', 'position:fixed;inset:0;pointer-events:none;z-index:' + Z + ';');
@@ -113,17 +160,28 @@
   highlight.id = PREFIX + 'hl';
   var tip = el('div', 'position:fixed;pointer-events:none;background:#111;color:#fff;font:11px/1.4 ui-monospace,Menlo,monospace;padding:3px 7px;border-radius:5px;display:none;z-index:' + (Z + 2) + ';white-space:nowrap;');
   tip.id = PREFIX + 'tip';
+  // SVG markup layer. pointer-events toggles to 'auto' only in draw mode so it
+  // never eats clicks meant for the page or for picking/editing.
+  var drawSvg = svgEl('svg', { id: PREFIX + 'draw' });
+  drawSvg.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:' + (Z + 2) + ';overflow:visible;';
   var pinLayer = el('div', 'position:fixed;inset:0;pointer-events:none;z-index:' + (Z + 3) + ';');
   pinLayer.id = PREFIX + 'pins';
+  // A faint persistent outline marks elements the designer has live-edited.
+  var styleTag = el('style');
+  styleTag.id = PREFIX + 'style';
+  styleTag.textContent = '.' + PREFIX + 'edited{outline:1.5px dashed rgba(46,163,255,0.9)!important;outline-offset:1px;}';
 
   // ---- HUD -----------------------------------------------------------------
-  // Single-row rounded pill: brand mark, icon segments, count chip. Divider
-  // hairlines between segments read the row without needing a boxed header.
+  // Single-row rounded pill: brand mark, mode segments, count chips.
   var ICONS = {
     mark: '<svg width="11" height="11" viewBox="0 0 11 11"><path d="M8.5 0.5L2.5 10.5" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>',
     pick: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    draw: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 14l1-3.2L10.5 3.3a1.4 1.4 0 012 0l.2.2a1.4 1.4 0 010 2L5.2 13 2 14z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+    edit: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 13.5H14M2.5 13.5l.3-2.4 6.7-6.7a1.3 1.3 0 011.9 0l.9.9a1.3 1.3 0 010 1.9l-6.7 6.7-2.4.3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
     notes: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 3.5h12M2 8h12M2 12.5h7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
     clear: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 011-1h1a1 1 0 011 1v1.5M4.5 4.5l.6 8.5a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    undo: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 4L2.5 7 6 10M2.8 7H10a3.5 3.5 0 010 7H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    redo: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M10 4l3.5 3L10 10M13.2 7H6a3.5 3.5 0 000 7h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
   var hud = el('div', 'position:fixed;top:12px;right:12px;pointer-events:auto;z-index:' + (Z + 5) + ';display:flex;align-items:stretch;gap:1px;background:rgba(15,15,15,0.94);backdrop-filter:blur(8px);color:#fff;font:12px/1.4 Inter,system-ui,sans-serif;border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,0.45);');
   hud.id = PREFIX + 'hud';
@@ -142,46 +200,112 @@
     var b = el('button', segBtnCss());
     var i = el('span', 'display:inline-flex;flex-shrink:0;'); i.innerHTML = icon;
     b.appendChild(i);
-    b.appendChild(el('span', '', label));
+    if (label != null) b.appendChild(el('span', '', label));
     return b;
   }
 
-  var pickBtn = iconBtn(ICONS.pick, 'Picking: ON');
+  // Three mode toggles. Clicking a mode activates it (and deactivates the rest);
+  // clicking the active mode turns everything off (mode 'off' = inert overlay).
+  var pickBtn = iconBtn(ICONS.pick, 'Pick');
+  var drawBtn = iconBtn(ICONS.draw, 'Draw');
+  var editBtn = iconBtn(ICONS.edit, 'Edit');
   var listBtn = iconBtn(ICONS.notes, 'Notes');
   var clearBtn = iconBtn(ICONS.clear, 'Clear all');
   clearBtn.style.color = '#8a8a8a';
-  hud.appendChild(pickBtn);
-  hud.appendChild(divider());
-  hud.appendChild(listBtn);
-  hud.appendChild(divider());
-  hud.appendChild(clearBtn);
-  hud.appendChild(divider());
+  hud.appendChild(pickBtn); hud.appendChild(divider());
+  hud.appendChild(drawBtn); hud.appendChild(divider());
+  hud.appendChild(editBtn); hud.appendChild(divider());
+  hud.appendChild(listBtn); hud.appendChild(divider());
+  hud.appendChild(clearBtn); hud.appendChild(divider());
 
   var countBadge = el('span', 'display:flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;font:11px ui-monospace,Menlo,monospace;font-weight:700;color:#fff;background:#ff5b45;border-radius:999px;margin:2px 2px 2px 0;box-shadow:0 0 0 1px rgba(0,0,0,0.3);', '0');
+  countBadge.title = 'notes · drawings · edits';
   hud.appendChild(countBadge);
 
   var hint = el('div', 'position:fixed;top:44px;right:12px;pointer-events:none;color:#eee;font:11px Inter,system-ui,sans-serif;background:rgba(15,15,15,0.94);padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);opacity:0;transition:opacity .15s;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:' + (Z + 5) + ';');
   hint.id = PREFIX + 'hint';
 
+  // ---- Draw sub-toolbar (visible only in Draw mode) ----------------------
+  var drawBar = el('div', 'position:fixed;top:44px;right:12px;pointer-events:auto;z-index:' + (Z + 5) + ';display:none;align-items:center;gap:8px;background:rgba(15,15,15,0.94);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:5px 8px;box-shadow:0 8px 24px rgba(0,0,0,0.45);');
+  drawBar.id = PREFIX + 'drawbar';
+  var toolBtns = {};
+  DRAW_TOOLS.forEach(function (t) {
+    var b = el('button', 'display:flex;align-items:center;justify-content:center;width:26px;height:24px;background:transparent;color:#fff;border:0;border-radius:7px;cursor:pointer;font:11px Inter,system-ui,sans-serif;');
+    b.textContent = ({ pen: '✎', arrow: '↗', line: '／', rect: '▭', ellipse: '◯' })[t];
+    b.title = t;
+    b.addEventListener('click', function (e) { e.stopPropagation(); state.drawTool = t; syncDrawBar(); });
+    toolBtns[t] = b;
+    drawBar.appendChild(b);
+  });
+  drawBar.appendChild(divider());
+  var colorBtns = {};
+  DRAW_COLORS.forEach(function (c) {
+    var b = el('button', 'width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;');
+    b.style.background = c;
+    b.addEventListener('click', function (e) { e.stopPropagation(); state.drawColor = c; syncDrawBar(); });
+    colorBtns[c] = b;
+    drawBar.appendChild(b);
+  });
+  drawBar.appendChild(divider());
+  var undoBtn = iconBtn(ICONS.undo, null); undoBtn.style.padding = '5px 7px';
+  var redoBtn = iconBtn(ICONS.redo, null); redoBtn.style.padding = '5px 7px';
+  undoBtn.title = 'Undo stroke'; redoBtn.title = 'Redo stroke';
+  undoBtn.addEventListener('click', function (e) { e.stopPropagation(); undoDraw(); });
+  redoBtn.addEventListener('click', function (e) { e.stopPropagation(); redoDraw(); });
+  drawBar.appendChild(undoBtn);
+  drawBar.appendChild(redoBtn);
+  drawBar.appendChild(divider());
+  // Optional label attached to the most recent stroke (the "annotate what I drew"
+  // input). Enter commits the label onto the last drawing.
+  var drawLabel = el('input', 'width:150px;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:999px;outline:0;font:11px Inter,system-ui,sans-serif;padding:4px 10px;');
+  drawLabel.type = 'text';
+  drawLabel.placeholder = 'Label last mark…';
+  drawLabel.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      var last = state.drawings[state.drawings.length - 1];
+      if (last) { last.label = drawLabel.value.trim(); drawLabel.value = ''; showHint('Labeled.', 1200); }
+    } else e.stopPropagation();
+  });
+  ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) {
+    drawLabel.addEventListener(ev, function (e) { e.stopPropagation(); }, false);
+  });
+  drawBar.appendChild(drawLabel);
+  function syncDrawBar() {
+    DRAW_TOOLS.forEach(function (t) {
+      toolBtns[t].style.background = state.drawTool === t ? 'rgba(255,255,255,0.16)' : 'transparent';
+    });
+    DRAW_COLORS.forEach(function (c) {
+      colorBtns[c].style.borderColor = state.drawColor === c ? '#fff' : 'transparent';
+    });
+    undoBtn.style.opacity = state.drawings.length ? '1' : '0.4';
+    redoBtn.style.opacity = state.drawRedo.length ? '1' : '0.4';
+  }
+
   stop(hud); // clicks on the HUD never fall through to the page
+  stop(drawBar);
 
   // ---- Wiring ------------------------------------------------------------
   // Bubble-phase, not capture: a capture-phase stopPropagation on an ancestor
   // (hud/editor) would stop the event before it ever reaches a descendant
   // button/select, silently killing every click handler inside. Bubble phase
-  // lets the target's own listener (Delete, Done, Picking toggle...) fire
-  // first, then keeps the click from escaping the overlay afterward.
+  // lets the target's own listener fire first, then keeps the click from
+  // escaping the overlay afterward.
   function stop(node) {
     ['pointerdown', 'mousedown', 'click', 'pointerup', 'focusin'].forEach(function (ev) {
       node.addEventListener(ev, function (e) { e.stopPropagation(); }, false);
     });
   }
 
+  // Hover highlight applies in Pick and Edit modes (both target an element).
   function onMove(e) {
-    if (!state.picking) { highlight.style.display = 'none'; tip.style.display = 'none'; return; }
+    var hovering = (state.mode === 'pick' || state.mode === 'edit') && editingNoteId == null;
+    if (!hovering) { highlight.style.display = 'none'; tip.style.display = 'none'; return; }
     var t = document.elementFromPoint(e.clientX, e.clientY);
     if (!pickable(t)) { highlight.style.display = 'none'; tip.style.display = 'none'; return; }
     var r = t.getBoundingClientRect();
+    var accent = state.mode === 'edit' ? '#2ea3ff' : '#ff5b45';
+    highlight.style.borderColor = accent;
+    highlight.style.background = state.mode === 'edit' ? 'rgba(46,163,255,0.08)' : 'rgba(255,91,69,0.08)';
     highlight.style.display = 'block';
     highlight.style.top = r.top + 'px'; highlight.style.left = r.left + 'px';
     highlight.style.width = r.width + 'px'; highlight.style.height = r.height + 'px';
@@ -190,22 +314,17 @@
     tip.style.top = Math.max(0, r.top - 18) + 'px';
     tip.style.left = r.left + 'px';
   }
-  function descOf(node) {
-    var s = node.tagName.toLowerCase();
-    if (node.id) s += '#' + node.id;
-    if (node.classList && node.classList.length) s += '.' + Array.prototype.slice.call(node.classList).slice(0, 2).join('.');
-    return s;
-  }
   function onClick(e) {
-    // Click-away dismisses the open editor instead of falling through to the
-    // page (picking is already paused while editing, but the click would
-    // otherwise still activate whatever the page renders underneath it).
+    // Click-away dismisses an open note editor instead of falling through.
     if (editingNoteId != null && !own(document.elementFromPoint(e.clientX, e.clientY))) {
       e.preventDefault(); e.stopPropagation();
-      closeEditor();
+      closeNoteEditor();
       return;
     }
-    if (!state.picking) return;
+    if (state.mode === 'pick') return onPickClick(e);
+    if (state.mode === 'edit') return onEditClick(e);
+  }
+  function onPickClick(e) {
     var t = document.elementFromPoint(e.clientX, e.clientY);
     if (!pickable(t)) return;
     e.preventDefault(); e.stopPropagation();
@@ -229,10 +348,10 @@
       createdAt: Date.now(),
     };
     state.notes.push(note);
-    openEditor(note);
+    openNoteEditor(note);
   }
 
-  // ---- Pins + editor -----------------------------------------------------
+  // ---- Pins + note editor (unchanged behavior) ---------------------------
   function pinPos(note) {
     var node = resolveAnchor(note.anchor);
     if (node) {
@@ -241,23 +360,20 @@
     }
     return { x: note.pageX - window.scrollX, y: note.pageY - window.scrollY, live: false };
   }
-  // A note pin is just a 14px dot until you click it — no card, no header.
-  // Clicking opens a slender inline bar next to the dot (single-line input,
-  // compact category/severity, Enter/blur commits, Escape cancels); the
-  // fields it doesn't need stay hidden entirely instead of an empty shell.
   function render() {
-    countBadge.textContent = String(state.notes.length);
+    updateCounts();
     pinLayer.innerHTML = '';
     state.notes.forEach(function (note, i) {
       pinLayer.appendChild(buildPin(note, i));
     });
+    renderDraw();
+    syncDrawBar();
   }
-  // Scroll/resize fire on any nested scrollable/pannable ancestor (capture
-  // phase catches those even though 'scroll' doesn't bubble) — potentially
-  // many times a second while dragging a board. A full render() would tear
-  // down and rebuild every pin's DOM, including the one currently focused
-  // for text entry, firing blur -> auto-close-and-discard mid-keystroke.
-  // Reposition-only: move existing wraps, never touch their children/focus.
+  function updateCounts() {
+    countBadge.textContent = state.notes.length + ' · ' + state.drawings.length + ' · ' + state.edits.length;
+  }
+  // Reposition-only: move existing wraps + redraw the vector layer, never touch
+  // children/focus (a full render() mid-keystroke blurs the focused input).
   function reposition() {
     for (var i = 0; i < pinLayer.children.length; i++) {
       var wrap = pinLayer.children[i];
@@ -270,6 +386,7 @@
       wrap.style.left = p.x + 'px';
       wrap.style.top = p.y + 'px';
     }
+    renderDraw();
   }
 
   function buildPin(note, i) {
@@ -297,9 +414,6 @@
     return wrap;
   }
 
-  // Reposition a note from a screen point: re-normalize against its anchor
-  // element when one still resolves (keeps live-anchoring after a drag),
-  // and always refresh the page-relative fallback coords too.
   function updateNoteFromScreenPos(note, sx, sy) {
     var node = resolveAnchor(note.anchor);
     if (node) {
@@ -334,7 +448,7 @@
           updateNoteFromScreenPos(note, p0.x + (ev.clientX - startX), p0.y + (ev.clientY - startY));
           render();
         } else {
-          openEditor(note);
+          openNoteEditor(note);
         }
       }
       document.addEventListener('pointermove', onMove, true);
@@ -343,35 +457,23 @@
   }
 
   var editingNoteId = null;
-  var justOpenedNoteId = null; // animates the intro once; select-change re-renders skip it
-  var pickingBeforeEdit = null;
+  var justOpenedNoteId = null;
   function showHint(text, autoHideMs) {
     hint.textContent = text;
     hint.style.opacity = '1';
     if (showHint.__t) clearTimeout(showHint.__t);
     if (autoHideMs) showHint.__t = setTimeout(function () { hint.style.opacity = '0'; }, autoHideMs);
   }
-  function setPicking(on) {
-    state.picking = on;
-    pickBtn.lastChild.textContent = 'Picking: ' + (on ? 'ON' : 'OFF');
-    pickBtn.style.background = on ? '#ff5b45' : 'transparent';
-    pickBtn.style.color = on ? '#fff' : '#fff';
-    if (!on) { highlight.style.display = 'none'; tip.style.display = 'none'; }
-  }
-  // Editing a note pauses picking so clicking around the page to read
-  // context doesn't stamp new notes; picking resumes at whatever it was
-  // once the bar closes (Enter, Escape, blur, or click-away).
-  function closeEditor() {
-    var was = editingNoteId != null;
+  // Editing a note suppresses element picking/editing (via the editingNoteId gate
+  // in onMove/onClick) so reading context around the page doesn't stamp/select.
+  function closeNoteEditor() {
     editingNoteId = null;
-    if (was && pickingBeforeEdit != null) { setPicking(pickingBeforeEdit); pickingBeforeEdit = null; }
     render();
   }
-  function openEditor(note) {
-    if (editingNoteId == null) pickingBeforeEdit = state.picking;
+  function openNoteEditor(note) {
     editingNoteId = note.id;
     justOpenedNoteId = note.id;
-    setPicking(false);
+    highlight.style.display = 'none'; tip.style.display = 'none';
     render();
     requestAnimationFrame(function () {
       var input = pinLayer.querySelector('[data-note-id="' + note.id + '"] input[data-role="note-text"]');
@@ -387,7 +489,7 @@
       requestAnimationFrame(function () { box.style.opacity = '1'; box.style.transform = 'translateY(0) scale(1)'; });
     }
 
-    function commitAndClose(e) { if (e) { e.preventDefault(); e.stopPropagation(); } closeEditor(); }
+    function commitAndClose(e) { if (e) { e.preventDefault(); e.stopPropagation(); } closeNoteEditor(); }
 
     var row1 = el('div', 'display:flex;align-items:center;gap:6px;');
     var input = el('input', 'flex:1;min-width:0;background:transparent;color:#fff;border:0;outline:0;font:12px Inter,system-ui,sans-serif;padding:2px 0;');
@@ -401,7 +503,7 @@
       else e.stopPropagation();
     });
     input.addEventListener('blur', function () {
-      setTimeout(function () { if (editingNoteId === note.id && !box.contains(document.activeElement)) closeEditor(); }, 100);
+      setTimeout(function () { if (editingNoteId === note.id && !box.contains(document.activeElement)) closeNoteEditor(); }, 100);
     });
     ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) {
       input.addEventListener(ev, function (e) { e.stopPropagation(); }, false);
@@ -409,7 +511,7 @@
     row1.appendChild(input);
 
     var closeBtn = el('button', 'flex-shrink:0;width:18px;height:18px;line-height:16px;text-align:center;background:transparent;color:#8a8a8a;border:0;border-radius:999px;cursor:pointer;font:13px monospace;padding:0;', '×');
-    closeBtn.addEventListener('click', function (e) { e.stopPropagation(); removeNote(note); closeEditor(); });
+    closeBtn.addEventListener('click', function (e) { e.stopPropagation(); removeNote(note); closeNoteEditor(); });
     row1.appendChild(closeBtn);
     box.appendChild(row1);
 
@@ -449,22 +551,418 @@
     render();
   }
 
+  // ==== DRAW MODE =========================================================
+  // Strokes are stored in PAGE coordinates so they stay glued to content on
+  // scroll; renderDraw() projects them to screen space each frame.
+  var drawing = null; // in-progress stroke while the pointer is down
+  function pageToScreen(pt) { return { x: pt.px - window.scrollX, y: pt.py - window.scrollY }; }
+  function screenToPage(x, y) { return { px: x + window.scrollX, py: y + window.scrollY }; }
+
+  function onDrawDown(e) {
+    if (state.mode !== 'draw' || e.button) return;
+    e.preventDefault(); e.stopPropagation();
+    var start = screenToPage(e.clientX, e.clientY);
+    drawing = {
+      id: 'draw_' + String(++state.drawSeq).padStart(3, '0'),
+      tool: state.drawTool,
+      color: state.drawColor,
+      width: state.drawWidth,
+      pts: [start],
+      label: '',
+      viewport: state.viewport || (window.innerWidth + 'x' + window.innerHeight),
+      url: location.pathname,
+      createdAt: Date.now(),
+    };
+    try { drawSvg.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  function onDrawMove(e) {
+    if (!drawing) return;
+    var p = screenToPage(e.clientX, e.clientY);
+    if (drawing.tool === 'pen') drawing.pts.push(p);
+    else drawing.pts[1] = p; // shapes/lines/arrows use start+current
+    renderDraw();
+  }
+  function onDrawUp(e) {
+    if (!drawing) return;
+    // Discard a zero-length tap so a stray click doesn't leave a dot artifact.
+    var meaningful = drawing.tool === 'pen'
+      ? drawing.pts.length > 2
+      : (drawing.pts[1] && Math.hypot(drawing.pts[1].px - drawing.pts[0].px, drawing.pts[1].py - drawing.pts[0].py) > 6);
+    if (meaningful) { state.drawings.push(drawing); state.drawRedo.length = 0; }
+    drawing = null;
+    render();
+  }
+  function undoDraw() {
+    if (!state.drawings.length) return;
+    state.drawRedo.push(state.drawings.pop());
+    render();
+  }
+  function redoDraw() {
+    if (!state.drawRedo.length) return;
+    state.drawings.push(state.drawRedo.pop());
+    render();
+  }
+  function pathFromStroke(s) {
+    var pts = s.pts.map(pageToScreen);
+    if (!pts.length) return null;
+    var g = svgEl('g');
+    var common = { stroke: s.color, 'stroke-width': s.width, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+    if (s.tool === 'pen') {
+      var d = 'M' + pts[0].x + ' ' + pts[0].y + pts.slice(1).map(function (p) { return 'L' + p.x + ' ' + p.y; }).join('');
+      g.appendChild(svgEl('path', Object.assign({ d: d }, common)));
+    } else if (pts.length >= 2) {
+      var a = pts[0], b = pts[1];
+      if (s.tool === 'line' || s.tool === 'arrow') {
+        g.appendChild(svgEl('line', Object.assign({ x1: a.x, y1: a.y, x2: b.x, y2: b.y }, common)));
+        if (s.tool === 'arrow') {
+          var ang = Math.atan2(b.y - a.y, b.x - a.x), len = 12;
+          var p1x = b.x - len * Math.cos(ang - Math.PI / 7), p1y = b.y - len * Math.sin(ang - Math.PI / 7);
+          var p2x = b.x - len * Math.cos(ang + Math.PI / 7), p2y = b.y - len * Math.sin(ang + Math.PI / 7);
+          g.appendChild(svgEl('path', Object.assign({ d: 'M' + p1x + ' ' + p1y + 'L' + b.x + ' ' + b.y + 'L' + p2x + ' ' + p2y }, common)));
+        }
+      } else if (s.tool === 'rect') {
+        g.appendChild(svgEl('rect', Object.assign({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), width: Math.abs(b.x - a.x), height: Math.abs(b.y - a.y), rx: 4 }, common)));
+      } else if (s.tool === 'ellipse') {
+        g.appendChild(svgEl('ellipse', Object.assign({ cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, rx: Math.abs(b.x - a.x) / 2, ry: Math.abs(b.y - a.y) / 2 }, common)));
+      }
+    }
+    // A drawn label rides at the stroke's end/last point.
+    if (s.label) {
+      var lp = pts[pts.length - 1];
+      var t = svgEl('text', { x: lp.x + 6, y: lp.y - 6, fill: s.color, 'font-family': 'Inter,system-ui,sans-serif', 'font-size': 12, 'font-weight': 600, 'paint-order': 'stroke', stroke: 'rgba(255,255,255,0.85)', 'stroke-width': 3 });
+      t.textContent = s.label;
+      g.appendChild(t);
+    }
+    return g;
+  }
+  function renderDraw() {
+    while (drawSvg.firstChild) drawSvg.removeChild(drawSvg.firstChild);
+    state.drawings.forEach(function (s) { var g = pathFromStroke(s); if (g) drawSvg.appendChild(g); });
+    if (drawing) { var g2 = pathFromStroke(drawing); if (g2) drawSvg.appendChild(g2); }
+  }
+
+  // ==== EDIT MODE =========================================================
+  // Live edit + capture. Selecting an element snapshots `before`; every field
+  // mutates the real DOM immediately and updates `after`; the entry lands in
+  // state.edits so the exact diff survives into the manifest. One entry per
+  // element (tracked by reference) — re-selecting updates it, never duplicates.
+  var editRegistry = new WeakMap(); // element -> edit entry
+  var editEl = null;                // currently selected element
+  var editPanel = null;             // floating panel node
+  var editPanelPos = null;          // {left,top} once dragged
+
+  function styleSnapshot(node) {
+    var cs = getComputedStyle(node), out = {};
+    STYLE_FIELDS.forEach(function (f) { out[f.key] = cs.getPropertyValue(f.css).trim(); });
+    return out;
+  }
+  // What the designer explicitly set inline. Change detection keys off THIS (not
+  // computed) so editing `color` doesn't cascade a spurious `border` diff via
+  // currentColor — only properties actually authored count as changes.
+  function inlineSnapshot(node) {
+    var out = {};
+    STYLE_FIELDS.forEach(function (f) { out[f.key] = node.style.getPropertyValue(f.css).trim(); });
+    return out;
+  }
+  function attrSnapshot(node) {
+    var out = {};
+    Array.prototype.forEach.call(node.attributes, function (a) {
+      if (a.name === 'class' && a.value.indexOf(PREFIX + 'edited') >= 0) {
+        out[a.name] = a.value.replace(PREFIX + 'edited', '').trim();
+      } else out[a.name] = a.value;
+    });
+    return out;
+  }
+  function onEditClick(e) {
+    var t = document.elementFromPoint(e.clientX, e.clientY);
+    if (!pickable(t)) return;
+    e.preventDefault(); e.stopPropagation();
+    selectForEdit(t);
+  }
+  function selectForEdit(node) {
+    editEl = node;
+    var entry = editRegistry.get(node);
+    if (!entry) {
+      entry = {
+        id: 'edit_' + String(++state.editSeq).padStart(3, '0'),
+        anchor: anchorSnapshot(node),
+        element_label: descOf(node),
+        selector: cssPath(node),
+        viewport: state.viewport || (window.innerWidth + 'x' + window.innerHeight),
+        url: location.pathname,
+        before: { html: node.outerHTML, text: node.textContent, style: styleSnapshot(node), inline: inlineSnapshot(node), attrs: attrSnapshot(node) },
+        after: null,
+        changes: [],
+        authoredBy: 'user',
+        createdAt: Date.now(),
+      };
+      editRegistry.set(node, entry);
+      state.edits.push(entry);
+    }
+    node.classList.add(PREFIX + 'edited');
+    highlight.style.display = 'none'; tip.style.display = 'none';
+    openEditPanel(entry);
+  }
+  // Recompute after-state + the concrete change list from the live element.
+  function captureEdit(entry) {
+    if (!editEl || !entry || !entry.before) return;
+    var cleanHtml = editEl.outerHTML.replace(new RegExp('\\s*' + PREFIX + 'edited', 'g'), '');
+    entry.after = { html: cleanHtml, text: editEl.textContent, style: styleSnapshot(editEl), inline: inlineSnapshot(editEl), attrs: attrSnapshot(editEl) };
+    var ch = [];
+    if (entry.before.text !== entry.after.text && (editEl.children.length === 0)) {
+      ch.push({ kind: 'text', from: entry.before.text, to: entry.after.text });
+    }
+    // Detect via inline intent; report computed values (more readable for the agent).
+    STYLE_FIELDS.forEach(function (f) {
+      if (entry.before.inline[f.key] === entry.after.inline[f.key]) return;
+      ch.push({ kind: 'style', prop: f.css, from: entry.before.style[f.key], to: entry.after.style[f.key] });
+    });
+    var keys = {};
+    Object.keys(entry.before.attrs).concat(Object.keys(entry.after.attrs)).forEach(function (k) { keys[k] = 1; });
+    Object.keys(keys).forEach(function (k) {
+      if (k === 'style') return; // style edits are already reported as `style` changes above
+      var a = entry.before.attrs[k], b = entry.after.attrs[k];
+      if (a !== b) ch.push({ kind: 'attr', prop: k, from: a == null ? null : a, to: b == null ? null : b });
+    });
+    entry.changes = ch;
+    updateCounts();
+  }
+  function tabBtn(label, active) {
+    var b = el('button', 'flex:1;padding:5px 4px;background:' + (active ? 'rgba(46,163,255,0.18)' : 'transparent') + ';color:#fff;border:0;border-bottom:2px solid ' + (active ? '#2ea3ff' : 'transparent') + ';font:11px Inter,system-ui,sans-serif;cursor:pointer;', label);
+    return b;
+  }
+  function fieldRow(label, valueNode) {
+    var row = el('div', 'display:flex;align-items:center;gap:8px;');
+    var l = el('div', 'width:78px;flex-shrink:0;color:#9aa;font:10px Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:0.03em;', label);
+    row.appendChild(l); row.appendChild(valueNode);
+    return row;
+  }
+  function textInput(value, ph) {
+    var i = el('input', 'flex:1;min-width:0;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:6px;outline:0;font:11px ui-monospace,Menlo,monospace;padding:5px 7px;');
+    i.type = 'text'; i.value = value == null ? '' : value; if (ph) i.placeholder = ph;
+    ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) { i.addEventListener(ev, function (e) { e.stopPropagation(); }, false); });
+    i.addEventListener('keydown', function (e) { if (e.key !== 'Escape') e.stopPropagation(); });
+    return i;
+  }
+  var editTab = 'style';
+  function openEditPanel(entry) {
+    editTab = editTab || 'style';
+    buildEditPanel(entry);
+  }
+  function buildEditPanel(entry) {
+    if (editPanel) editPanel.remove();
+    editPanel = el('div', 'position:fixed;z-index:' + (Z + 7) + ';width:300px;max-height:80vh;overflow:auto;display:flex;flex-direction:column;background:rgba(17,17,17,0.98);backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,0.55);pointer-events:auto;');
+    editPanel.id = PREFIX + 'editpanel';
+    var pos = editPanelPos || { left: 16, top: 56 };
+    editPanel.style.left = pos.left + 'px'; editPanel.style.top = pos.top + 'px';
+
+    // Titlebar (drag handle + label + close)
+    var bar = el('div', 'display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.08);cursor:grab;');
+    var handle = el('div', 'color:#667;flex-shrink:0;', '⋮⋮');
+    var title = el('div', 'flex:1;min-width:0;font:12px Inter,system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;', entry.element_label);
+    var close = el('button', 'flex-shrink:0;width:20px;height:20px;background:transparent;color:#8a8a8a;border:0;cursor:pointer;font:14px monospace;', '×');
+    close.addEventListener('click', function (e) { e.stopPropagation(); closeEditPanel(); });
+    bar.appendChild(handle); bar.appendChild(title); bar.appendChild(close);
+    wiretPanelDrag(bar);
+    editPanel.appendChild(bar);
+
+    // Tabs
+    var tabs = el('div', 'display:flex;border-bottom:1px solid rgba(255,255,255,0.08);');
+    ['text', 'style', 'attrs', 'html'].forEach(function (name) {
+      var b = tabBtn(({ text: 'Text', style: 'Style', attrs: 'Attrs', html: 'HTML' })[name], editTab === name);
+      b.addEventListener('click', function (e) { e.stopPropagation(); editTab = name; buildEditPanel(entry); });
+      tabs.appendChild(b);
+    });
+    editPanel.appendChild(tabs);
+
+    var body = el('div', 'display:flex;flex-direction:column;gap:8px;padding:11px;');
+    editPanel.appendChild(body);
+
+    if (editTab === 'text') buildTextTab(body, entry);
+    else if (editTab === 'style') buildStyleTab(body, entry);
+    else if (editTab === 'attrs') buildAttrsTab(body, entry);
+    else buildHtmlTab(body, entry);
+
+    // Footer: change count + revert
+    var footer = el('div', 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-top:1px solid rgba(255,255,255,0.08);');
+    var cnt = el('div', 'color:#9aa;font:10px ui-monospace,Menlo,monospace;', (entry.changes.length) + ' change' + (entry.changes.length === 1 ? '' : 's') + ' captured');
+    var revert = el('button', 'background:transparent;color:#ff5b45;border:1px solid rgba(255,91,69,0.4);border-radius:7px;padding:4px 10px;font:11px Inter,system-ui,sans-serif;cursor:pointer;', 'Revert');
+    revert.addEventListener('click', function (e) { e.stopPropagation(); revertEdit(entry); });
+    footer.appendChild(cnt); footer.appendChild(revert);
+    editPanel.appendChild(footer);
+
+    stop(editPanel);
+    root.parentNode.appendChild(editPanel); // documentElement — above everything
+  }
+  function refreshFooter(entry) {
+    // Cheap: rebuild only the footer count without tearing the whole panel.
+    captureEdit(entry);
+    var footer = editPanel && editPanel.lastChild;
+    if (footer && footer.firstChild) footer.firstChild.textContent = entry.changes.length + ' change' + (entry.changes.length === 1 ? '' : 's') + ' captured';
+  }
+  function buildTextTab(body, entry) {
+    if (editEl.children.length > 0) {
+      body.appendChild(el('div', 'color:#c98;font:10px Inter,system-ui,sans-serif;line-height:1.5;', 'This element has child elements. Editing text here replaces all of its content — use the HTML tab for structural edits.'));
+    }
+    var ta = el('textarea', 'width:100%;min-height:70px;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:7px;outline:0;font:12px Inter,system-ui,sans-serif;padding:7px;resize:vertical;box-sizing:border-box;');
+    ta.value = editEl.textContent;
+    ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) { ta.addEventListener(ev, function (e) { e.stopPropagation(); }, false); });
+    ta.addEventListener('keydown', function (e) { if (e.key !== 'Escape') e.stopPropagation(); });
+    ta.addEventListener('input', function () { editEl.textContent = ta.value; refreshFooter(entry); });
+    body.appendChild(fieldRow('Text', ta));
+  }
+  function buildStyleTab(body, entry) {
+    STYLE_FIELDS.forEach(function (f) {
+      var cur = getComputedStyle(editEl).getPropertyValue(f.css).trim();
+      var inp = textInput(cur, f.css);
+      inp.addEventListener('input', function () {
+        editEl.style.setProperty(f.css, inp.value);
+        refreshFooter(entry);
+      });
+      body.appendChild(fieldRow(f.label, inp));
+    });
+  }
+  function buildAttrsTab(body, entry) {
+    body.appendChild(el('div', 'color:#9aa;font:10px Inter,system-ui,sans-serif;line-height:1.5;', 'Edit attributes as JSON. Apply writes them to the element (class/style/href/src/alt/aria-*…).'));
+    var ta = el('textarea', 'width:100%;min-height:120px;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:7px;outline:0;font:11px ui-monospace,Menlo,monospace;padding:7px;resize:vertical;box-sizing:border-box;');
+    ta.value = JSON.stringify(attrSnapshot(editEl), null, 2);
+    ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) { ta.addEventListener(ev, function (e) { e.stopPropagation(); }, false); });
+    ta.addEventListener('keydown', function (e) { e.stopPropagation(); });
+    body.appendChild(ta);
+    var apply = el('button', 'align-self:flex-start;background:#2ea3ff;color:#fff;border:0;border-radius:7px;padding:6px 12px;font:11px Inter,system-ui,sans-serif;cursor:pointer;', 'Apply Attributes');
+    var err = el('div', 'color:#ff5b45;font:10px Inter,system-ui,sans-serif;');
+    apply.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var obj; try { obj = JSON.parse(ta.value); } catch (ex) { err.textContent = 'Invalid JSON.'; return; }
+      err.textContent = '';
+      // Remove attributes no longer present, then set the rest. Keep our marker.
+      Array.prototype.slice.call(editEl.attributes).forEach(function (a) {
+        if (a.name !== 'class' && !(a.name in obj)) editEl.removeAttribute(a.name);
+      });
+      Object.keys(obj).forEach(function (k) {
+        if (k === 'class') editEl.setAttribute('class', obj[k] + ' ' + PREFIX + 'edited');
+        else editEl.setAttribute(k, obj[k]);
+      });
+      if (!editEl.classList.contains(PREFIX + 'edited')) editEl.classList.add(PREFIX + 'edited');
+      refreshFooter(entry);
+      showHint('Attributes applied.', 1200);
+    });
+    body.appendChild(apply); body.appendChild(err);
+  }
+  function buildHtmlTab(body, entry) {
+    body.appendChild(el('div', 'color:#9aa;font:10px Inter,system-ui,sans-serif;line-height:1.5;', "Full element HTML. Apply replaces the element in place (the panel re-targets the new node)."));
+    var ta = el('textarea', 'width:100%;min-height:150px;background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:7px;outline:0;font:11px ui-monospace,Menlo,monospace;padding:7px;resize:vertical;box-sizing:border-box;');
+    // Show HTML without our edit marker so the designer sees clean source.
+    ta.value = editEl.outerHTML.replace(new RegExp('\\s*' + PREFIX + 'edited', 'g'), '');
+    ['pointerdown', 'mousedown', 'click', 'pointerup'].forEach(function (ev) { ta.addEventListener(ev, function (e) { e.stopPropagation(); }, false); });
+    ta.addEventListener('keydown', function (e) { e.stopPropagation(); });
+    body.appendChild(ta);
+    var apply = el('button', 'align-self:flex-start;background:#2ea3ff;color:#fff;border:0;border-radius:7px;padding:6px 12px;font:11px Inter,system-ui,sans-serif;cursor:pointer;', 'Apply HTML');
+    var err = el('div', 'color:#ff5b45;font:10px Inter,system-ui,sans-serif;');
+    apply.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var tmp = document.createElement('div');
+      try { tmp.innerHTML = ta.value.trim(); } catch (ex) { err.textContent = 'Invalid HTML.'; return; }
+      var next = tmp.firstElementChild;
+      if (!next) { err.textContent = 'HTML must contain one root element.'; return; }
+      err.textContent = '';
+      editEl.replaceWith(next);
+      // Re-target the edit entry to the new node while preserving `before`.
+      editRegistry.delete(editEl);
+      editEl = next;
+      editEl.classList.add(PREFIX + 'edited');
+      editRegistry.set(editEl, entry);
+      entry.anchor = anchorSnapshot(editEl);
+      entry.selector = cssPath(editEl);
+      entry.element_label = descOf(editEl);
+      refreshFooter(entry);
+      buildEditPanel(entry); // rebuild so tabs read the new node
+      showHint('HTML applied.', 1200);
+    });
+    body.appendChild(apply); body.appendChild(err);
+  }
+  function revertEdit(entry) {
+    if (!editEl) return;
+    var tmp = document.createElement('div');
+    tmp.innerHTML = entry.before.html.replace(new RegExp('\\s*' + PREFIX + 'edited', 'g'), '');
+    var orig = tmp.firstElementChild;
+    if (orig) {
+      editEl.replaceWith(orig);
+      editRegistry.delete(editEl);
+      editEl = orig;
+    }
+    // Drop the edit entry entirely — a full revert means "no change".
+    var i = state.edits.indexOf(entry);
+    if (i >= 0) state.edits.splice(i, 1);
+    closeEditPanel();
+    showHint('Reverted.', 1200);
+  }
+  function closeEditPanel() {
+    if (editEl) captureEdit(editRegistry.get(editEl) || {});
+    if (editPanel) { editPanel.remove(); editPanel = null; }
+    editEl = null;
+    render();
+  }
+  function wiretPanelDrag(bar) {
+    bar.addEventListener('pointerdown', function (e) {
+      if (e.button) return;
+      e.stopPropagation();
+      var sx = e.clientX, sy = e.clientY;
+      var r = editPanel.getBoundingClientRect();
+      var l0 = r.left, t0 = r.top;
+      try { bar.setPointerCapture(e.pointerId); } catch (err) {}
+      function mv(ev) {
+        var nl = Math.max(4, Math.min(window.innerWidth - 60, l0 + ev.clientX - sx));
+        var nt = Math.max(4, Math.min(window.innerHeight - 40, t0 + ev.clientY - sy));
+        editPanelPos = { left: nl, top: nt };
+        editPanel.style.left = nl + 'px'; editPanel.style.top = nt + 'px';
+      }
+      function up() { bar.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); }
+      bar.addEventListener('pointermove', mv);
+      document.addEventListener('pointerup', up);
+    });
+  }
+
+  // ---- Mode switching ----------------------------------------------------
+  function setMode(m) {
+    // Leaving edit mode captures & closes the open panel first.
+    if (state.mode === 'edit' && m !== 'edit' && editPanel) closeEditPanel();
+    state.mode = m;
+    drawSvg.style.pointerEvents = (m === 'draw') ? 'auto' : 'none';
+    drawSvg.style.cursor = (m === 'draw') ? 'crosshair' : '';
+    drawBar.style.display = (m === 'draw') ? 'flex' : 'none';
+    if (m !== 'pick' && m !== 'edit') { highlight.style.display = 'none'; tip.style.display = 'none'; }
+    [['pick', pickBtn], ['draw', drawBtn], ['edit', editBtn]].forEach(function (pair) {
+      var on = state.mode === pair[0];
+      var accent = pair[0] === 'edit' ? '#2ea3ff' : (pair[0] === 'draw' ? '#28c76f' : '#ff5b45');
+      pair[1].style.background = on ? accent : 'transparent';
+    });
+    syncDrawBar();
+  }
+  function toggleMode(m) { setMode(state.mode === m ? 'off' : m); }
+
   // ---- HUD actions -------------------------------------------------------
-  pickBtn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    closeEditor(); // toggling picking manually overrides any pending auto-resume
-    pickingBeforeEdit = null;
-    setPicking(!state.picking);
-  });
+  pickBtn.addEventListener('click', function (e) { e.stopPropagation(); closeNoteEditor(); toggleMode('pick'); });
+  drawBtn.addEventListener('click', function (e) { e.stopPropagation(); closeNoteEditor(); toggleMode('draw'); });
+  editBtn.addEventListener('click', function (e) { e.stopPropagation(); closeNoteEditor(); toggleMode('edit'); });
   listBtn.addEventListener('click', function (e) {
     e.stopPropagation();
-    showHint(state.notes.length
-      ? state.notes.map(function (n, i) { return (i + 1) + '. [' + n.severity + '] ' + (n.note || n.element_label); }).join('  |  ')
-      : 'No notes yet.', 3000);
+    var parts = [];
+    if (state.notes.length) parts.push(state.notes.map(function (n, i) { return (i + 1) + '. [' + n.severity + '] ' + (n.note || n.element_label); }).join('  |  '));
+    if (state.edits.length) parts.push(state.edits.length + ' live edit(s): ' + state.edits.map(function (ed) { return ed.element_label + ' (' + ed.changes.length + ')'; }).join(', '));
+    if (state.drawings.length) parts.push(state.drawings.length + ' drawing(s)');
+    showHint(parts.length ? parts.join('   ·   ') : 'Nothing captured yet.', 5000);
   });
   clearBtn.addEventListener('click', function (e) {
     e.stopPropagation();
-    if (clearBtn.__armed) { state.notes = []; state.seq = 0; render(); closeEditor(); showHint('Cleared.', 1500); clearBtn.__armed = false; return; }
+    if (clearBtn.__armed) {
+      state.notes = []; state.drawings = []; state.drawRedo = []; state.edits = [];
+      state.seq = 0; state.drawSeq = 0; state.editSeq = 0;
+      editRegistry = new WeakMap();
+      if (editPanel) { editPanel.remove(); editPanel = null; editEl = null; }
+      Array.prototype.forEach.call(document.querySelectorAll('.' + PREFIX + 'edited'), function (n) { n.classList.remove(PREFIX + 'edited'); });
+      render(); closeNoteEditor(); showHint('Cleared notes, drawings, and edit records (live DOM edits stay applied).', 2600); clearBtn.__armed = false; return;
+    }
     showHint('Click "Clear all" again within 3s to confirm.', 3000);
     clearBtn.__armed = true;
     setTimeout(function () { clearBtn.__armed = false; }, 3000);
@@ -473,52 +971,86 @@
   // ---- Public API --------------------------------------------------------
   var api = {
     __booted: true,
-    notes: state.notes,
     export: function () {
+      // Finalize the open edit before exporting so its diff is current.
+      if (editEl) captureEdit(editRegistry.get(editEl) || {});
       return {
         url: location.href,
         path: location.pathname,
         title: document.title,
         viewport: state.viewport || (window.innerWidth + 'x' + window.innerHeight),
         capturedAt: new Date().toISOString(),
+        counts: { notes: state.notes.length, drawings: state.drawings.length, edits: state.edits.length },
         notes: state.notes.map(function (n) {
-          var live = !!resolveAnchor(n.anchor);
-          return Object.assign({}, n, { anchorLive: live });
+          return Object.assign({}, n, { anchorLive: !!resolveAnchor(n.anchor) });
+        }),
+        drawings: state.drawings.map(function (d) {
+          return {
+            id: d.id, tool: d.tool, color: d.color, width: d.width, label: d.label || '',
+            viewport: d.viewport, url: d.url,
+            points: d.pts.map(function (p) { return [p.px, p.py]; }),
+            bbox: bboxOf(d),
+          };
+        }),
+        edits: state.edits.map(function (ed) {
+          return {
+            id: ed.id, element_label: ed.element_label, selector: ed.selector,
+            anchor: ed.anchor, anchorLive: !!resolveAnchor(ed.anchor), viewport: ed.viewport, url: ed.url,
+            authoredBy: ed.authoredBy, changes: ed.changes,
+            before: ed.before, after: ed.after,
+          };
         }),
       };
     },
     setViewport: function (name) { state.viewport = name; render(); return name; },
-    show: function () { root.style.display = ''; hud.style.display = ''; hint.style.display = ''; },
-    hide: function () { root.style.display = 'none'; hud.style.display = 'none'; hint.style.display = 'none'; },
-    clear: function () { state.notes.length = 0; state.seq = 0; render(); },
+    setMode: function (m) { setMode(m); return m; },
+    show: function () { [root, drawSvg, pinLayer, hud, hint, drawBar].forEach(function (n) { n.style.display = ''; }); setMode(state.mode); if (editPanel) editPanel.style.display = ''; },
+    hide: function () { [root, highlight, tip, drawSvg, pinLayer, hud, hint, drawBar].forEach(function (n) { n.style.display = 'none'; }); if (editPanel) editPanel.style.display = 'none'; },
+    clear: function () { state.notes.length = 0; state.drawings.length = 0; state.edits.length = 0; state.seq = 0; state.drawSeq = 0; state.editSeq = 0; render(); },
     destroy: function () {
       document.removeEventListener('mousemove', onMove, true);
       document.removeEventListener('click', onClick, true);
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition, true);
       document.removeEventListener('keydown', onKeydown, true);
-      [root, highlight, tip, pinLayer, hud, hint].forEach(function (n) { if (n && n.remove) n.remove(); });
+      drawSvg.removeEventListener('pointerdown', onDrawDown);
+      drawSvg.removeEventListener('pointermove', onDrawMove);
+      drawSvg.removeEventListener('pointerup', onDrawUp);
+      Array.prototype.forEach.call(document.querySelectorAll('.' + PREFIX + 'edited'), function (n) { n.classList.remove(PREFIX + 'edited'); });
+      [root, highlight, tip, drawSvg, pinLayer, hud, hint, drawBar, styleTag, editPanel].forEach(function (n) { if (n && n.remove) n.remove(); });
       try { delete window.__CRITIC__; } catch (e) { window.__CRITIC__ = undefined; }
     },
   };
+  // Live arrays for read-back convenience.
   Object.defineProperty(api, 'notes', { get: function () { return state.notes; } });
+  Object.defineProperty(api, 'drawings', { get: function () { return state.drawings; } });
+  Object.defineProperty(api, 'edits', { get: function () { return state.edits; } });
 
-  // Escape: close an open editor first, otherwise pause picking so the
-  // designer can move around the page without stamping notes.
+  function bboxOf(d) {
+    var xs = d.pts.map(function (p) { return p.px; }), ys = d.pts.map(function (p) { return p.py; });
+    return { x: Math.min.apply(null, xs), y: Math.min.apply(null, ys), w: Math.max.apply(null, xs) - Math.min.apply(null, xs), h: Math.max.apply(null, ys) - Math.min.apply(null, ys) };
+  }
+
+  // Escape: close an open note editor / edit panel first, else drop to 'off'.
   function onKeydown(e) {
     if (e.key !== 'Escape') return;
-    if (editingNoteId != null) { closeEditor(); return; }
-    if (state.picking) setPicking(false);
+    if (editingNoteId != null) { closeNoteEditor(); return; }
+    if (editPanel) { closeEditPanel(); return; }
+    if (state.mode !== 'off') setMode('off');
   }
 
   // ---- Boot --------------------------------------------------------------
-  [root, highlight, tip, pinLayer, hud, hint].forEach(function (n) { document.documentElement.appendChild(n); });
+  [root, highlight, tip, drawSvg, pinLayer, hud, hint, drawBar, styleTag].forEach(function (n) { document.documentElement.appendChild(n); });
   document.addEventListener('mousemove', onMove, true);
   document.addEventListener('click', onClick, true);
   document.addEventListener('keydown', onKeydown, true);
   window.addEventListener('scroll', reposition, true);
   window.addEventListener('resize', reposition, true);
+  drawSvg.addEventListener('pointerdown', onDrawDown);
+  drawSvg.addEventListener('pointermove', onDrawMove);
+  drawSvg.addEventListener('pointerup', onDrawUp);
   window.__CRITIC__ = api;
+  setMode('pick');
   render();
-  return 'Critic Layer injected. Click elements to pin notes; read via JSON.stringify(window.__CRITIC__.export())';
+  return 'Critic Layer injected. Pick = notes · Draw = markup · Edit = live edit+capture. Read via JSON.stringify(window.__CRITIC__.export())';
 })();

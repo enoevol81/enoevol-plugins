@@ -63,14 +63,22 @@ The designer drives the on-page HUD and pins; you only read and configure.
 
 | Call | Purpose |
 |------|---------|
-| `.export()` | Returns the manifest object (read this to collect notes). |
-| `.setViewport(name)` | Tag notes with a breakpoint after `resize_window`. |
-| `.notes` | Live array of raw note objects. |
+| `.export()` | Returns the manifest object — `{notes, drawings, edits, counts, …}`. |
+| `.setViewport(name)` | Tag notes/drawings/edits with a breakpoint after `resize_window`. |
+| `.setMode(name)` | `'pick'` / `'draw'` / `'edit'` / `'off'`. The designer normally drives this from the HUD; only call it if they ask. |
+| `.notes` / `.drawings` / `.edits` | Live arrays of raw captured objects. |
 | `.show()` / `.hide()` | Toggle overlay visibility (hide for a clean "before" shot). |
-| `.clear()` / `.destroy()` | Reset notes / remove the overlay entirely. |
+| `.clear()` / `.destroy()` | Reset all captures / remove the overlay entirely. Note: `.clear()` wipes note/drawing/edit *records* but does not roll back live DOM edits already applied — reload the page for that. |
 
-**Stay out of picking mode.** Do not synthesize clicks or invent notes during the
-live session — it's the human's real-time review.
+**Stay out of the designer's way.** Do not synthesize clicks, invent notes, or
+make edits during the live session — Pick/Draw/Edit are the human's real-time
+review. You only read and (if asked) `setViewport` / `setMode`.
+
+### Three capture types in `export()`
+
+`notes` are the sticky notes (unchanged, schema below). `drawings` are vector
+markup. `edits` are live element edits with an exact diff. All carry `viewport`
+so multi-breakpoint merges stay separable, and `id`s are unique per capture.
 
 ### The note object
 
@@ -96,8 +104,59 @@ live session — it's the human's real-time review.
 - **`anchorLive`** (on export) — `true` if the element was re-found. If `false`,
   location is approximate; lean on `element_label` + note text.
 
+### The drawing object
+
+```json
+{
+  "id": "draw_001", "tool": "ellipse", "color": "#ff5b45", "width": 3,
+  "label": "make this bigger", "viewport": "desktop", "url": "/",
+  "points": [[612, 470], [180, 540]],
+  "bbox": { "x": 60, "y": 470, "w": 120, "h": 70 }
+}
+```
+
+- **`tool`** — `pen` (freehand: `points` is the full polyline) · `line` / `arrow`
+  (`points` = [start, end]) · `rect` / `ellipse` (`points` = [corner, corner]).
+- **`points`** — absolute **page** coordinates `[pageX, pageY]` (scroll-independent),
+  so a drawing stays glued to content. `bbox` is the page-space bounding box —
+  use it to say *which region/element* the markup sits over (intersect with element
+  rects, or eyeball against the screenshot).
+- **`label`** — optional text the designer typed for that mark; treat like a note.
+- A drawing has no DOM anchor: localize it by `bbox` + the annotated screenshot.
+
+### The edit object (live edit + captured diff)
+
+```json
+{
+  "id": "edit_001", "element_label": "div.hero-card-title",
+  "selector": "div.hero-card:nth-of-type(1) > div.hero-card-title",
+  "anchor": { "tag": "div", "id": "", "classes": ["hero-card-title"], "text": "…", "selector": "…" },
+  "anchorLive": true, "viewport": "desktop", "url": "/", "authoredBy": "user",
+  "changes": [
+    { "kind": "style", "prop": "font-size", "from": "34px", "to": "40px" },
+    { "kind": "style", "prop": "color", "from": "rgb(17,17,17)", "to": "rgb(0,0,255)" },
+    { "kind": "text", "from": "Old copy", "to": "New copy" },
+    { "kind": "attr", "prop": "href", "from": "/old", "to": "/new" }
+  ],
+  "before": { "html": "…", "text": "…", "style": {…}, "attrs": {…} },
+  "after":  { "html": "…", "text": "…", "style": {…}, "attrs": {…} }
+}
+```
+
+- **`changes`** is the payload: an exact, minimal list of what the designer set.
+  `kind` ∈ `text` | `style` | `attr` | `html`. Style props report **computed**
+  `from`/`to` (readable, e.g. `rgb(...)`, `px`) but are only listed when the
+  designer actually authored that inline property — no cascade noise.
+- **`before`/`after`** are full snapshots for context/round-tripping; `changes` is
+  what you turn into a directive. Prefer `changes` verbatim — it's the highest-
+  fidelity signal Critic Layer produces.
+- The edit is **already applied to the live DOM** (visible in the screenshot);
+  your job at synthesis is to hand the coding agent the same diff to apply to
+  source. Anchor the target with `selector` + `element_label` + `anchor`.
+
 ### Re-anchoring
 
-Pins reposition on scroll/resize by resolving `anchor` each frame (id → selector
-→ tag+classes → tag+classes+text → first match). Notes survive sticky headers and
-lazy loads; heavy route re-renders can orphan a pin (`anchorLive` → false).
+Pins/edits reposition on scroll/resize by resolving `anchor` each frame (id →
+selector → tag+classes → tag+classes+text → first match). Notes survive sticky
+headers and lazy loads; heavy route re-renders can orphan a pin (`anchorLive` →
+false). Drawings reposition by page coordinates, independent of the DOM.
