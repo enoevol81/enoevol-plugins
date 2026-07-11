@@ -13,10 +13,18 @@ description: >-
 
 # Source Manager
 
-Read [../../references/operating-model.md](../../references/operating-model.md) first for the shared signal categories, priority scale, and storage conventions this skill's output feeds into.
+Read [../../references/operating-model.md](../../references/operating-model.md) first for the shared workspace, signal categories, and priority scale this skill's output feeds into.
 
 ## Objective
 Maintain a focused source network for design, technology, inspiration, and market signals.
+
+## Reads / Writes (workspace)
+- **Reads:** `sources.md` (the existing network), `preferences.md` (source weights
+  learned by `signal-feedback-loop`).
+- **Writes:** `sources.md` — this skill owns the file. Every add, remove,
+  re-prioritization, and health update lands there as a source record.
+- If the workspace doesn't exist, offer to create it; if declined, manage the list
+  in-session only and say the network won't persist.
 
 ## Inputs
 - source URL
@@ -133,3 +141,11 @@ Return:
 - sources to downgrade
 - sources to add
 - sources with unusual activity
+
+## Rules
+- Evaluating a live source needs web access. Without it, still manage the list —
+  add/remove/re-prioritize from what the user says — but mark quality ratings and
+  health fields `unverified` rather than guessing.
+- When auditing, check `last_checked` dates in `sources.md`; a source untouched for
+  a month is stale until re-verified, not automatically dead.
+- Keep the network small and high-signal — prune before adding.

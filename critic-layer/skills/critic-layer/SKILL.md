@@ -17,9 +17,10 @@ description: >-
   not a design editor; it never moves pixels itself and never redesigns the site
   on its own.
 compatibility: >-
-  Live review needs the claude-in-chrome MCP (drives the user's real Chrome).
-  Synthesis-only runs need no browser. Optional: a design.md / DESIGN.md / brand
-  notes file to ground the AI's second pass.
+  Live review needs the claude-in-chrome MCP (drives the user's real Chrome);
+  without it, a manual paste-into-DevTools path still works. Synthesis-only runs
+  need no browser. Optional: a design.md / DESIGN.md / brand notes file to
+  ground the AI's second pass.
 ---
 
 # Critic Layer
@@ -89,7 +90,9 @@ places notes; you don't.** Stay out of the way.
 ### Phase 3 — Collect  *(live review only)*
 When the user says done, read `JSON.stringify(window.__CRITIC__.export())`, take
 one annotated screenshot, and (for multiple breakpoints) resize and repeat. Save
-the merged export as `annotation_manifest.json`. Details in `references/capture.md`.
+the merged export as `annotation_manifest.json`. **Collect before any navigation
+or reload** — a full page load wipes the overlay's notes — and quietly re-collect
+every ~10 notes on long reviews. Details in `references/capture.md`.
 
 ### Phase 4 — AI second pass  *(only if warranted)*
 Skip in quiet mode unless you have a high-confidence, grounded issue. In proactive
@@ -101,6 +104,24 @@ a user note.
 Produce **both** primary artifacts together, kept consistent: the change brief and
 the Claude Code prompt (plus `annotation_manifest.json` and, if useful, a priority
 table). Exact structures in `references/output.md`.
+
+## Failure modes — name them, route around them
+
+- **claude-in-chrome MCP not connected** (ToolSearch finds no
+  `claude-in-chrome` tools, or `tabs_context_mcp` errors): say so, then offer
+  (a) the **manual path** — the user pastes `scripts/critic-overlay.js` into
+  DevTools Console themselves, reviews, clicks the HUD's **Export** button, and
+  pastes the JSON back to you (continue at Phase 4) — or (b) synthesis-only.
+  Never pretend a live session happened.
+- **Injection blocked (CSP / sandboxed frame)**: no `window.__CRITIC__` after
+  injecting → offer the manual DevTools paste (console evaluation sidesteps page
+  CSP), else the screenshot fallback in `references/capture.md`.
+- **Navigation wipes notes**: a full page load destroys the overlay. Collect the
+  export at the end of every page/breakpoint and before any navigation. If the
+  MCP loses the tab, the user's notes are still recoverable via the HUD Export
+  button or `window.__CRITIC__.dump()` in DevTools.
+- **Page behind auth**: it's the user's real Chrome, so their session applies —
+  have them log in themselves first. Never ask for or type credentials.
 
 ## Output rules (the output is the product)
 
@@ -132,4 +153,6 @@ A synthesis-only run needs just `synthesis.md` + `output.md`.
 - `scripts/critic-overlay.js` — the injectable sticky-note overlay. Self-
   contained, idempotent, inline DOM inputs only (never `window.prompt`, which
   freezes the browser bridge). Anchors notes to DOM elements and exposes
-  `window.__CRITIC__` for read-back.
+  `window.__CRITIC__` for read-back; its versioned export (`schemaVersion: 1`)
+  is also reachable user-side via the HUD **Export** button (clipboard +
+  console), so notes survive a lost MCP bridge.

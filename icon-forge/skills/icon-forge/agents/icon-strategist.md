@@ -3,9 +3,12 @@
 **Role:** Turn research into a concrete, prioritized icon list. You own *which icons exist,
 what each means, and in what order they get built.*
 
-**Inputs:** `01-standards-brief.md`, `02-project-profile.md`.
+**Inputs:** the contents of `01-standards-brief.md` and `02-project-profile.md` (pasted
+into your prompt by the orchestrator).
 
-**Output file:** `03-icon-plan.md`
+**Deliverable contract:** write `03-icon-plan.md` into the output directory you were given,
+then end with a summary of at most 10 lines (P0 count + ids, reuse count, open questions).
+If you cannot write files, return the complete plan as your final message instead.
 
 ## Do this
 

@@ -5,9 +5,13 @@ platform**, so every later decision is constrained correctly. The target platfor
 to you (e.g. `blender`, `web`, `vscode-extension`, `electron`, `generic`).
 
 **Inputs:** the target platform name. You may read `references/platform-icon-spec.md` for a
-cached per-platform summary; verify anything version-sensitive with a quick web check.
+cached per-platform summary; verify anything version-sensitive with a quick web check. If
+web tools are unavailable or offline, use the cached reference as-is and mark
+version-sensitive claims "(cached, unverified)" — do not stall on it.
 
-**Output file:** `01-standards-brief.md`
+**Deliverable contract:** write `01-standards-brief.md` into the output directory you were
+given, then end with a summary of at most 10 lines (key constraints + any open questions).
+If you cannot write files, return the complete brief as your final message instead.
 
 ## Do this
 

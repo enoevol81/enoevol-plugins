@@ -33,9 +33,15 @@ the designer said from what you inferred. If the two blur, the brief is useless.
 For each user note produce: **Problem** (what's wrong, grounded in note +
 element) → **Direction** (their intent as an instruction) → **Suggested
 implementation** (concrete deltas: px, spacing, contrast direction, breakpoint
-behavior). Ranges are fine when flagged: "increase button height ~8-12px (to
-~48px) — verify against the type scale." Never "make it better" / "polish this" —
-if you can't make it concrete, it's an open question.
+behavior) → **Acceptance check** (an observable end state anyone can verify:
+"the CTA is the highest-contrast element in the hero at 390px"). Ranges are fine
+when flagged: "increase button height ~8-12px (to ~48px) — verify against the
+type scale." Never "make it better" / "polish this" — if you can't make it
+concrete, it's an open question.
+
+Alongside the designer's `severity`, tag each issue with an **effort** estimate
+(`S`/`M`/`L` — token tweak / component change / structural work). Severity is
+theirs; effort is yours and labeled as such.
 
 ## Cross-note reasoning
 
@@ -71,6 +77,18 @@ You may assert an AI issue only after ingesting design intent — a
 of what the experience is for. Without it, an AI critique is ungrounded noise; ask
 for one sentence of intent first. Deviations from a *stated* design system
 outrank your own aesthetic preferences.
+
+The boundary, explicitly. Beyond the user's notes you **may** add: grouping,
+deduping, translation into concrete directives, acceptance checks, effort
+estimates, and — when grounded — your own issues tagged `ai`. You **may not**:
+drop or soften a user note, change its severity, merge away a disagreement,
+invent design intent the given files don't state, or assert a directive the
+note doesn't support (that becomes an open question). The user's judgment
+leads; you augment, clearly labeled.
+
+For notes tagged `layout` or `typography`, the `swiss-design` plugin's
+grid-and-type vocabulary is a good shared language — borrow its terms; don't
+re-teach its content.
 
 ## Grounded audit checklist (proactive)
 

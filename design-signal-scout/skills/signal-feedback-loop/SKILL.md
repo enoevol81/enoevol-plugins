@@ -20,6 +20,17 @@ Read [../../references/operating-model.md](../../references/operating-model.md) 
 ## Objective
 Learn from Matt's reactions so the scout becomes more relevant over time.
 
+## Reads / Writes (workspace)
+- **Reads:** `preferences.md` (current weights and feedback history), the signals
+  or brief being reacted to (`signals/`, `briefs/`).
+- **Writes:** `preferences.md` — this skill owns the file. Append each feedback
+  record (dated) to the log section, and update the weights section only when the
+  learning rules below are met. `signal-scout` and `source-manager` read this file
+  at the start of every run, so keep the weights section short and declarative
+  (e.g. "weight up: geometry-nodes workflows; weight down: generic AI-news").
+- Without a persistent workspace, feedback lasts one session — say so and suggest
+  creating the workspace, since this skill is pointless without memory.
+
 ## Supported Feedback
 Interpret:
 

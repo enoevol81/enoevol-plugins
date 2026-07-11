@@ -10,10 +10,10 @@ A persistent Claude plugin marketplace for Matthew Cohen / Enoevol. Each plugin 
 | **portfolio-story-builder** | Audit and organize a folder of design/creative work, then turn it into ranked, documented portfolio stories and a slide deck. |
 | **vanish-brand-discovery** | Editorial discovery research for Vanish magazine — brand profiles and feature Q&A at the convergence of fashion and outdoor design. |
 | **weavy-pipeline-director** | Expert guidance for Weavy / Figma Weave — model selection, node architecture, and scalable AI image/video pipelines. |
-| **loadout** | Audit and optimize your active Claude Code loadout — inventory of plugins, MCP servers, skills, agents, and hooks, with tuning recommendations for any goal. |
+| **loadout** | Audit and optimize your active Claude Code loadout — inventory of installed vs enabled plugins, MCP servers, skills, agents, commands, and hooks, with context-cost estimates and tuning recommendations for any goal. |
 | **hands-free** | Turn a plain-language desired end result into a meticulously crafted `/goal` command that launches a Lead-orchestrated, parallelized multi-agent workflow. |
 | **icon-forge** | Research a project's platform, run a parallel multi-agent pipeline to design a cohesive icon set, then install the icons into your live environment (Blender, web, VS Code, Electron) via a bundled MCP server. |
-| **swiss-design** | Apply Swiss / International Typographic Style discipline to any visual work — grid construction, typographic hierarchy, layout critique, and ruthless reduction, with canonical visual references and a nine-point approval gate. |
+| **swiss-design** | Apply Swiss / International Typographic Style discipline to any visual work — grid construction with real numbers, typographic hierarchy, layout critique, and ruthless reduction. Two modes (make layout specs/CSS, or review a layout against a nine-point approval gate) plus an annotated canon of Swiss reference works. |
 | **design-signal-scout** | A design/tech/cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, and creative-AI signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities. |
 | **cut-weight** | Reachability-first repo cleanup — traces execution entry points to find what's actually needed to run, then an interactive review loop (findings file, multiple-choice decision gate, post-mortem) cuts, quarantines, untracks, or deletes the rest with full rollback. Includes a Claude/agent-artifact gate. |
 | **critic-layer** | Real-time, in-browser UX/UI design review — place sticky notes directly on a live web page, then synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt. A review-to-instruction layer, not a design editor. |
@@ -51,11 +51,13 @@ enoevol-plugins/
 ├── loadout/
 │   ├── .claude-plugin/plugin.json
 │   ├── scripts/collect-inventory.py
+│   ├── references/inventory-sources.md
 │   └── skills/{audit,optimize}/SKILL.md
 ├── hands-free/
 │   ├── .claude-plugin/plugin.json
 │   ├── commands/hands-free.md
-│   └── skills/hands-free/{SKILL.md, references/, examples/}
+│   ├── hooks/                         # Stop-hook /goal budget enforcement
+│   └── skills/hands-free/{SKILL.md, references/, examples/, scripts/}
 ├── icon-forge/
 │   ├── .claude-plugin/plugin.json
 │   ├── .mcp.json
@@ -66,7 +68,7 @@ enoevol-plugins/
 │   └── skills/swiss-design/{SKILL.md, references/, assets/references/}
 ├── design-signal-scout/
 │   ├── .claude-plugin/plugin.json
-│   ├── references/operating-model.md          # shared by all 9 skills below
+│   ├── references/operating-model.md          # shared by all 10 skills below
 │   └── skills/{source-manager,signal-scout,visual-trend-analyzer,
 │       technology-radar,pain-point-miner,trend-clusterer,
 │       inspiration-curator,content-opportunity-generator,

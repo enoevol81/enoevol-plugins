@@ -43,9 +43,19 @@ direction — so it needs both sides.
    if it postdates the significant recent work; if it's stale or missing,
    run the **canon-check** audit first (tell the user that's happening and
    why — the update is only as good as the picture of the status quo).
-2. Read the report with special attention to the **Conflicts** and
-   **Fragile / Single-Mention Canon** sections — those are the items most
-   likely to need a ruling, not just a rewrite.
+2. The report's sections map directly onto this skill's work — read them
+   in this order:
+   - **Summary → Scope & limits**: if the audit was bounded (scan cap hit,
+     shallow git history), say so up front — rulings made on a partial
+     picture should be made knowingly.
+   - **Conflicts** → the **Rule** bucket (every entry needs a decision).
+   - **Fragile / Single-Mention Canon** → **Ratify-or-Retire** candidates.
+   - Category tables: rows rated **Established by repetition** are implicit
+     canon to offer for ratification; rows rated **Explicit** are the
+     status quo baseline and usually need no ruling unless conflicted.
+   - **Document Relevance** → the per-document disposition walk.
+   If the report predates this format and lacks a section, work from what
+   it has and note the gap — don't infer findings the audit never made.
 
 ## Phase 1 — Direction interview
 
@@ -99,12 +109,27 @@ propose creating it — as a proposal, not a fait accompli.
 
 For each document, present a concise change plan before touching it:
 what sections change, what gets added, what gets removed, and which
-interview ruling each change traces back to. `references/doc-playbook.md`
-has per-document guidance — what belongs in CLAUDE.md vs design.md vs
-AGENTS.md, and how to edit surgically instead of regenerating whole files.
+interview ruling each change traces back to. **Show the change, not a
+description of the change**: for each edit, quote the current text and the
+proposed replacement (a before → after pair, or a small diff block) — the
+user approves words on the page, not a summary they have to trust.
+`references/doc-playbook.md` has per-document guidance — what belongs in
+CLAUDE.md vs design.md vs AGENTS.md, and how to edit surgically instead of
+regenerating whole files.
 
-Get approval per document. The user may approve some, reject some, and
-amend others — that's the loop working, not friction to route around.
+Get approval per document — or per decision, if the user wants finer
+grain; offer that when a document's plan mixes rulings they hesitated on.
+The user may approve some, reject some, and amend others — that's the loop
+working, not friction to route around. Three hard rules on the gate:
+
+- **No approval, no edit.** An ambiguous reply ("sure, whatever," silence,
+  a topic change) is not approval — re-ask narrowly or skip the document.
+- **Approval covers exactly the shown diff.** If drafting reveals the edit
+  needs to differ from what was approved, come back with the revised
+  before → after instead of improvising.
+- **Never a wholesale rewrite.** Even with enthusiastic blanket consent
+  ("just fix all the docs"), still show each document's diff and confirm —
+  the blanket consent covers the *goal*, not unseen edits.
 
 ## Phase 3 — Apply and verify
 

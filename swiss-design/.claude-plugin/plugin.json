@@ -1,7 +1,7 @@
 {
   "name": "swiss-design",
-  "version": "0.1.0",
-  "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction. A nine-tenet operating system with an approval-gate checklist and canonical visual references.",
+  "version": "0.2.0",
+  "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction with real numbers, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction. Two modes (make layout specs/CSS, or review a layout against a nine-point approval gate) plus an annotated canon of Swiss reference works.",
   "author": {
     "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"

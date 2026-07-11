@@ -9,7 +9,11 @@ Stdio MCP server that installs a generated icon set into a live project. Bundled
 npm install        # installs @modelcontextprotocol/sdk + zod
 ```
 
-Requires Node ≥ 18. The plugin launches it as `node mcp/server.mjs`.
+Requires Node ≥ 18. The plugin launches it as `node ${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs`
+at session start — restart the Claude Code session after `npm install`. If deps are
+missing, the server exits immediately with an actionable "[icon-forge] MCP server
+dependencies are not installed" message in the MCP logs instead of a raw module-not-found
+stack.
 
 ## Tools
 

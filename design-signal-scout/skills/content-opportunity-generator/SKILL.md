@@ -15,6 +15,15 @@ description: >-
 
 Read [../../references/operating-model.md](../../references/operating-model.md) first for the shared decision filter — content ideas here should still pass the revenue/leverage/goal/momentum test before being surfaced.
 
+## Reads / Writes (workspace)
+- **Reads:** `signals/` records and `clusters.md` entries being converted (work
+  from the stored record when one exists, not from memory of it).
+- **Writes:** a signal record (category `content_opportunity`, linking the source
+  signal's `id`) appended to `signals/YYYY-MM-DD.md` for each idea scoring well.
+- This skill produces the idea, not the copy. When the user moves to actually
+  drafting the post, use the `personal-voice` plugin (if installed) so the final
+  writing lands in Matt's voice.
+
 ## Objective
 Translate design and technology signals into useful, timely content ideas.
 

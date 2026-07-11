@@ -7,6 +7,11 @@ success criterion. Otherwise pick a default and record it as an assumption.
 Batch the chosen questions into a single `AskUserQuestion` call. Phrase each with
 concrete, selectable options plus room for the user's own answer.
 
+**Hard stop: one round only.** Once the batch is answered (or declined), do not
+ask again — turn every remaining or still-vague gap into a conservative default
+recorded under ASSUMPTIONS. A second round happens only if the *user* comes back
+with questions or corrections of their own.
+
 ## The seven dimensions
 
 1. **Definition of done** — What does "finished" look like, observably? What
@@ -19,9 +24,10 @@ concrete, selectable options plus room for the user's own answer.
    compliance, things to avoid.
 5. **Existing assets** — What already exists to build on (drafts, data, code,
    research)? Prevents redundant subtasks.
-6. **Approval & risk** — What is outward-facing and therefore needs a human gate
-   (publishing, sending, deploying, spending)? What is the cost of getting it
-   wrong?
+6. **Approval & risk** — What is outward-facing (publishing, sending, deploying)
+   or destructive/irreversible (bulk deletes, live-data migrations, overwrites,
+   spending) and therefore needs a HUMAN APPROVAL gate? What is the cost of
+   getting it wrong?
 7. **Autonomy level** — How hands-free? Full auto with one final approval, or
    check-in at each milestone gate?
 

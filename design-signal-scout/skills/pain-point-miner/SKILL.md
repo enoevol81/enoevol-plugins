@@ -16,6 +16,15 @@ description: >-
 
 Read [../../references/operating-model.md](../../references/operating-model.md) first for shared scoring conventions and the `product_opportunity` / `pain_point` signal categories this skill writes into.
 
+## Reads / Writes (workspace)
+- **Reads:** recent `signals/` files (was this complaint already logged? bump its
+  `evidence_count` instead of duplicating).
+- **Writes:** a signal record (category `pain_point`, or `product_opportunity`
+  when the mapping is strong) appended to `signals/YYYY-MM-DD.md`, with the
+  pain-point record below embedded in `evidence`.
+- Without web access, mine only threads/screenshots the user provides and say the
+  evidence count reflects that sample, not the community at large.
+
 ## Objective
 Find repeated frustrations, unmet needs, and workflow bottlenecks in design and technology communities.
 
@@ -135,3 +144,7 @@ Subtract for:
 - Look for users already spending money or time on workarounds.
 - Prefer recurring workflow pain over one-off bugs.
 - Flag support-heavy opportunities.
+- Date every complaint cited — a 2019 thread is history, not a current pain point,
+  unless recent posts confirm it persists.
+- Hand strong opportunities onward: `content-opportunity-generator` for content
+  responses, or note the product/plugin idea for the weekly brief.
