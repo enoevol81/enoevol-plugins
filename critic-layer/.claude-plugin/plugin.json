@@ -1,7 +1,7 @@
 {
   "name": "critic-layer",
   "version": "0.2.0",
-  "description": "Real-time, in-browser UX/UI design review in three modes — pin sticky notes, draw freehand/arrow/shape markup, and make live element edits captured as exact before→after diffs — then synthesize it all into an agent-ready change brief plus a paste-ready Claude Code prompt.",
+  "description": "Real-time, in-browser UX/UI design review in three modes — pin sticky notes, draw freehand/arrow/shape markup, and make live element edits captured as exact before→after diffs. Place sticky notes directly on a live web page and synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt; a review-to-instruction layer, not a design editor.",
   "author": {
     "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"

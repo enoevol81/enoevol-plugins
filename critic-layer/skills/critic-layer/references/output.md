@@ -18,8 +18,16 @@ order** — a human reads the brief, an agent runs the prompt, they never disagr
 The overlay export, optionally merged across breakpoints and enriched with AI
 issues. Save it so a future round-trip pass can diff resolved vs unresolved.
 
+**This file is a contract, not a scratch file.** Downstream tools — notably the
+`canon-check` plugin, which consumes Critic Layer manifests as prior
+design-review artifacts — key on `schemaVersion`, field names, and the enums
+below. Changes at version 1 must be additive; anything breaking bumps
+`schemaVersion`.
+
 ```json
 {
+  "schemaVersion": 1,
+  "tool": "critic-layer",
   "project": {
     "site_name": "…", "base_url": "https://…", "review_goal": "…",
     "assertiveness": "quiet", "design_intent_source": "PRODUCT.md",
@@ -27,6 +35,7 @@ issues. Save it so a future round-trip pass can diff resolved vs unresolved.
   },
   "captures": [
     { "url": "https://…/", "path": "/", "title": "Homepage", "viewport": "desktop",
+      "viewportSize": { "width": 1440, "height": 1200 },
       "screenshot": "screenshots/home_desktop.png", "capturedAt": "…",
       "notes":    [ /* note objects    — see capture.md */ ],
       "drawings": [ /* drawing objects — see capture.md */ ],
@@ -35,26 +44,11 @@ issues. Save it so a future round-trip pass can diff resolved vs unresolved.
 }
 ```
 
-- One `export()` = one capture; collect one per (url, viewport) into `captures`.
-  A capture carries `notes`, `drawings`, and `edits`. Keep ids unique across
-  merges (prefix with viewport on collision).
-- **Notes** are intent. **Drawings** localize/emphasize (their `bbox` + the
-  screenshot say *where*; fold a labeled drawing in like a note, an unlabeled one
-  as visual support for a nearby note/edit). **Edits** are the highest-fidelity
-  input: each carries an exact `changes` diff the designer authored live —
-  translate those into tasks with the concrete values **verbatim**, don't
-  re-derive or soften them. An edit with a `text` change is a copy directive; a
-  `style` change is a precise value directive (`font-size 34px→40px`); an `html`
-  change is a structural directive.
-- AI issues use the note shape with `authoredBy: "ai"` (no `x/y/anchor`
-  required), dismissible, never mutating a user note/drawing/edit. `uncertain`
-  items also surface as an open question.
-- `category` ∈ layout|typography|spacing|color|hierarchy|interaction|copy|
-  performance|bug|accessibility. `severity` ∈ low|medium|high|blocker.
-  `status` ∈ open|resolved|dismissed.
-- Preserve the user's raw input verbatim — `note` text, drawing `label`, and edit
-  `changes`/`before`/`after` — even after rewriting into a directive. The manifest
-  is the source of record.
+- One `export()` = one capture; collect one per (url, viewport) into `captures`, carrying the export's fields through (`viewportSize`, `capturedAt`, …). Keep ids unique across merges (prefix with viewport on collision).
+- **Notes** are intent. **Drawings** localize/emphasize (their `bbox` + the screenshot say *where*; fold a labeled drawing in like a note, an unlabeled one as visual support for a nearby note/edit). **Edits** are the highest-fidelity input: each carries an exact `changes` diff the designer authored live — translate those into tasks with the concrete values **verbatim**, don't re-derive or soften them. An edit with a `text` change is a copy directive; a `style` change is a precise value directive (`font-size 34px→40px`); an `html` change is a structural directive.
+- AI issues use the note shape with `authoredBy: "ai"` (no `x/y/anchor` required), dismissible, never mutating a user note/drawing/edit. `uncertain` items also surface as an open question.
+- `category` ∈ layout|typography|spacing|color|hierarchy|interaction|copy| performance|bug|accessibility. `severity` ∈ low|medium|high|blocker. `status` ∈ open|resolved|dismissed. `effort` ∈ S|M|L (optional, added at synthesis — see `synthesis.md`).
+- Preserve the user's raw input verbatim — `note` text, drawing `label`, and edit `changes`/`before`/`after` — even after rewriting into a directive. The manifest is the source of record.
 
 ---
 
@@ -78,7 +72,7 @@ Assertiveness: {quiet|proactive} · Design intent: {source or "verbal"}
 # Page: {Homepage}
 
 ## Issue {n}: {short title}
-Severity: {…} · Category: {…} · Location: {section / element_label}
+Severity: {…} · Effort: {S|M|L} · Category: {…} · Location: {section / element_label}
 Viewport: {…} · Author: {user|ai|uncertain} · Source: {note_001, note_004}
 
 ### Problem
@@ -89,6 +83,9 @@ Viewport: {…} · Author: {user|ai|uncertain} · Source: {note_001, note_004}
 
 ### Suggested implementation
 - {concrete delta — px, spacing, contrast direction, breakpoint behavior}
+
+### Acceptance check
+{Observable end state — same check the implementation prompt uses.}
 
 ---
 
@@ -120,7 +117,7 @@ the codebase and confirm before diverging".}
 
 ## Tasks (priority order)
 
-### 1. {title} · {severity} · {page} / {viewport}
+### 1. {title} · {severity} · effort {S|M|L} · {page} / {viewport}
 Target: {element_label / anchor.selector as a hint}
 Change: {precise directive}
 Details:
@@ -152,7 +149,7 @@ say which token, don't silently swap).
 ## `issue_priority_table.md` (optional)
 
 ```md
-| # | Issue | Sev | Page | Author | Source |
-|---|-------|-----|------|--------|--------|
-| 1 | Hero CTA lacks emphasis | high | Home | user | note_001 |
+| # | Issue | Sev | Effort | Page | Author | Source |
+|---|-------|-----|--------|------|--------|--------|
+| 1 | Hero CTA lacks emphasis | high | S | Home | user | note_001 |
 ```

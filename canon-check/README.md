@@ -49,20 +49,27 @@ document still true?" — but they hand off cleanly where they meet.
 
 ## Confidence levels
 
-Every finding is rated **Explicit** (written down on purpose), **Established
-by repetition** (no doc, but consistent everywhere), **Single-mention**
-(said once, possibly an accident that stuck), or **Conflicting** (sources
-disagree) — usually the most useful thing the report surfaces.
+Every finding is rated by evidence rules, not adjectives: **Explicit**
+(declared in a standards artifact — tokens file, style guide, CLAUDE.md
+Design Standards), **Established by repetition** (no doc, but the same
+value in 3+ independent files), **Single-mention** (exactly one source
+anywhere — possibly an accident that stuck), or **Conflicting** (sources
+disagree — usually the most useful thing the report surfaces). And every
+finding must carry a real citation (`file:line`, commit, or artifact +
+date) — anything the auditor can't cite gets dropped, never guessed.
 
 ## Bundled script
 
-`skills/canon-check/scripts/scan_tokens.py` — a zero-dependency Python
-script that greps colors, spacing values, and font stacks across the repo
-and tallies frequency with file locations, so the tedious counting doesn't
-have to be done by eye:
+`skills/canon-check/scripts/scan_tokens.py` — a zero-dependency,
+cross-platform Python script that greps colors, spacing values, and font
+stacks across the repo and tallies frequency with file locations, ranked
+by file spread, so the tedious counting doesn't have to be done by eye.
+The scan is bounded (file-size and file-count caps) and reports every
+skip plus a `scan_complete` flag — it never silently truncates. The skill
+invokes it via `${CLAUDE_PLUGIN_ROOT}`; by hand:
 
 ```
-python skills/canon-check/scripts/scan_tokens.py <repo-root>
+python "<plugin-root>/skills/canon-check/scripts/scan_tokens.py" <repo-root>
 ```
 
 ## Install

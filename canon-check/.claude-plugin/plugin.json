@@ -1,6 +1,6 @@
 {
   "name": "canon-check",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Two-part design-canon workflow. Audit: scans a repo's durable artifacts — design tokens, CLAUDE.md and style docs, hardcoded component defaults, session/git history, and prior design-review outputs — to surface design decisions that quietly became permanent canon, flag ones only ever said once, and catch where sources contradict each other. Update: an interactive follow-up that realigns the cornerstone documents (CLAUDE.md, design.md, AGENTS.md, style guides) to where the product is actually headed.",
   "author": {
     "name": "Matthew Cohen",

@@ -16,6 +16,15 @@ description: >-
 
 Read [../../references/operating-model.md](../../references/operating-model.md) first — collections built here should carry the `inspiration` signal category and cite sources per the shared conventions.
 
+## Reads / Writes (workspace)
+- **Reads:** references the user provides, plus recent `signals/` files for
+  already-captured `visual_trend` / `inspiration` records worth including.
+- **Writes:** the finished set to `collections/<theme-slug>.md`, with every
+  reference carrying a source URL and date.
+- Session-only mode: build the same set in the conversation and note it won't
+  persist. If a linked reference can't be fetched, include it only with the
+  user's own description, marked as unviewed.
+
 ## Objective
 Turn scattered references into focused, useful inspiration collections tied to a project, theme, or question.
 

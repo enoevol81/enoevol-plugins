@@ -30,9 +30,13 @@ MAX_RETRIES=4
 
 input="$(cat)"
 
-# jq is required to parse the hook payload + transcript; without it, don't block.
-command -v jq >/dev/null 2>&1 || exit 0
-[ -x "$CHECKER" ] || [ -f "$CHECKER" ] || exit 0
+# jq is required to parse the hook payload + transcript; without it, warn once
+# on stderr and no-op cleanly (never block the user's Stop on a missing dep).
+if ! command -v jq >/dev/null 2>&1; then
+  echo "hands-free: jq not found on PATH — skipping /goal budget enforcement (install jq to enable it)" >&2
+  exit 0
+fi
+[ -f "$CHECKER" ] || exit 0
 
 transcript="$(printf '%s' "$input" | jq -r '.transcript_path // empty' 2>/dev/null)"
 { [ -n "$transcript" ] && [ -f "$transcript" ]; } || exit 0

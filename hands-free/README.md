@@ -11,7 +11,9 @@ step-by-step while fanning out independent subtasks to skilled sub-agents.
 
 Core design rule: **linear spine, parallel ribs** — milestones run in dependency
 order, only genuinely-independent subtasks run in parallel, and every
-outward-facing action sits behind an explicit approval gate.
+outward-facing or destructive/irreversible action sits behind an explicit
+approval gate. Goals too small to orchestrate get "just do it directly"
+instead of a `/goal`.
 
 Each emitted goal also ships with:
 
@@ -31,9 +33,9 @@ Each emitted goal also ships with:
   (`hooks/enforce-goal-budget.sh`) to parse the hook payload/transcript and to
   build its JSON response. Install it via `brew install jq` (macOS),
   `apt install jq` (Debian/Ubuntu), or `choco install jq` (Windows). If `jq`
-  isn't found on `PATH`, the hook no-ops (fails open) and the rest of the
-  plugin works normally — you just lose the automatic budget-enforcement
-  retries described below.
+  isn't found on `PATH`, the hook prints a one-line warning to stderr and
+  no-ops (fails open) — the rest of the plugin works normally; you just lose
+  the automatic budget-enforcement retries described below.
 
 ## Install
 

@@ -16,10 +16,15 @@ description: >-
 
 # Design Signal Scout
 
-Read [../../references/operating-model.md](../../references/operating-model.md) first for shared signal categories, the required signal record, and scoring dimensions.
+Read [../../references/operating-model.md](../../references/operating-model.md) first for the shared workspace, signal categories, the required signal record, the canonical scoring rubric, and web/freshness discipline.
 
 ## Objective
 Discover high-value design and technology signals relevant to footwear, product design, 3D, visualization, architecture, games, and creative tools.
+
+## Reads / Writes (workspace)
+- **Reads:** `sources.md` (what to search), `preferences.md` (topic/source weights), recent `signals/` files (to deduplicate against prior finds).
+- **Writes:** new signal records appended to `signals/YYYY-MM-DD.md`, each with `status: new` (or `routed` if handed to another skill).
+- If the workspace doesn't exist, offer to create it; if declined, run session-only and say so.
 
 ## Trigger
 Use this skill when:
@@ -77,16 +82,18 @@ Monitor:
 - digital fabrication
 
 ## Process
-1. Generate broad and narrow searches.
-2. Search primary and specialist sources.
-3. Collect candidate signals.
-4. Deduplicate.
-5. Verify material claims.
-6. Classify.
-7. Score.
-8. Route to another skill if deeper analysis is needed — `visual-trend-analyzer`
+1. Load `sources.md` and `preferences.md`; weight search themes accordingly.
+2. Generate broad and narrow searches, preferring recent windows (past 7–30 days).
+3. Search primary and specialist sources.
+4. Collect candidate signals with `published_at` and `discovered_at` dates.
+5. Deduplicate — against this run and against recent `signals/` files.
+6. Verify material claims against a second independent source.
+7. Classify and score per the operating model's canonical rubric.
+8. Append surviving records to `signals/YYYY-MM-DD.md`.
+9. Suggest routing where deeper analysis is warranted — `visual-trend-analyzer`
    for imagery/motifs, `technology-radar` for tools, `pain-point-miner` for
-   community complaints, `trend-clusterer` once several related signals exist.
+   community complaints, `trend-clusterer` once several related signals exist,
+   `content-opportunity-generator` when something is clearly postable.
 
 ## Discovery Queries
 Use query patterns such as:
@@ -116,29 +123,9 @@ Surface a candidate only when at least one is true:
 - likely to create a product or service opportunity
 
 ## Scoring
-Calculate:
-
-```text
-signal_score =
-relevance
-+ novelty
-+ evidence
-+ momentum
-+ actionability
-+ commercial_value
-+ creative_value
-- duplication_penalty
-- hype_penalty
-- access_risk
-```
-
-Use a 0–40 range.
-
-- `0–12`: archive
-- `13–20`: monitor
-- `21–28`: include in digest
-- `29–34`: recommend action
-- `35–40`: immediate alert
+Use the canonical rubric in the operating model — eight dimensions scored 0–5,
+summed to a 0–40 composite, minus penalties, mapped to the archive → immediate-alert
+bands defined there. Do not invent a local variant.
 
 ## Output
 For each selected signal:
@@ -164,3 +151,5 @@ For each selected signal:
 - Prefer original projects, repositories, papers, demos, and creator posts.
 - Surface counter-signals when evidence conflicts.
 - Mark speculative conclusions clearly.
+- No web access: scout only what the user provides, and say the run was offline.
+- Thin week: report the thinness honestly instead of padding to a quota.

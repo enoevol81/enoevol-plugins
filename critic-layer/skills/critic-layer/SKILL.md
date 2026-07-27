@@ -21,9 +21,10 @@ description: >-
   applies the captured change to source; Critic Layer is not an autonomous
   redesign agent.
 compatibility: >-
-  Live review needs the claude-in-chrome MCP (drives the user's real Chrome).
-  Synthesis-only runs need no browser. Optional: a design.md / DESIGN.md / brand
-  notes file to ground the AI's second pass.
+  Live review needs the claude-in-chrome MCP (drives the user's real Chrome);
+  without it, a manual paste-into-DevTools path still works. Synthesis-only runs
+  need no browser. Optional: a design.md / DESIGN.md / brand notes file to
+  ground the AI's second pass.
 ---
 
 # Critic Layer
@@ -109,11 +110,7 @@ tell me when you're done (or say 'next breakpoint')."* **The designer drives all
 three modes; you don't.** Stay out of the way.
 
 ### Phase 3 — Collect  *(live review only)*
-When the user says done, read `JSON.stringify(window.__CRITIC__.export())` — it
-returns `notes`, `drawings`, and `edits` together. Take one annotated screenshot
-(drawings and edited elements show in it), and (for multiple breakpoints) resize
-and repeat. Save the merged export as `annotation_manifest.json`. Details in
-`references/capture.md`.
+When the user says done, read `JSON.stringify(window.__CRITIC__.export())`, take one annotated screenshot, and (for multiple breakpoints) resize and repeat. Save the merged export as `annotation_manifest.json`. **Collect before any navigation or reload** — a full page load wipes the overlay's notes — and quietly re-collect every ~10 notes on long reviews. Details in `references/capture.md`.
 
 ### Phase 4 — AI second pass  *(only if warranted)*
 Skip in quiet mode unless you have a high-confidence, grounded issue. In proactive
@@ -128,6 +125,24 @@ table). Fold **all three** capture types in: notes are intent, drawings localize
 it, and **edits carry an exact before→after diff** — treat a captured edit as the
 highest-fidelity directive (use its concrete values verbatim; the agent applies
 the diff to source). Exact structures in `references/output.md`.
+
+## Failure modes — name them, route around them
+
+- **claude-in-chrome MCP not connected** (ToolSearch finds no
+  `claude-in-chrome` tools, or `tabs_context_mcp` errors): say so, then offer
+  (a) the **manual path** — the user pastes `scripts/critic-overlay.js` into
+  DevTools Console themselves, reviews, clicks the HUD's **Export** button, and
+  pastes the JSON back to you (continue at Phase 4) — or (b) synthesis-only.
+  Never pretend a live session happened.
+- **Injection blocked (CSP / sandboxed frame)**: no `window.__CRITIC__` after
+  injecting → offer the manual DevTools paste (console evaluation sidesteps page
+  CSP), else the screenshot fallback in `references/capture.md`.
+- **Navigation wipes notes**: a full page load destroys the overlay. Collect the
+  export at the end of every page/breakpoint and before any navigation. If the
+  MCP loses the tab, the user's notes are still recoverable via the HUD Export
+  button or `window.__CRITIC__.dump()` in DevTools.
+- **Page behind auth**: it's the user's real Chrome, so their session applies —
+  have them log in themselves first. Never ask for or type credentials.
 
 ## Output rules (the output is the product)
 
@@ -156,9 +171,4 @@ A synthesis-only run needs just `synthesis.md` + `output.md`.
 
 ## Bundled scripts
 
-- `scripts/critic-overlay.js` — the injectable review + markup + live-edit
-  overlay. Self-contained, idempotent, inline DOM inputs only (never
-  `window.prompt`, which freezes the browser bridge). Three HUD modes (Pick /
-  Draw / Edit); anchors notes and edits to DOM elements, stores drawings as page-
-  space vectors, and exposes `window.__CRITIC__` (`.export()` → `{notes, drawings,
-  edits}`, plus `.setMode()`, `.setViewport()`, `.show/.hide/.clear/.destroy`).
+- `scripts/critic-overlay.js` — the injectable review + markup + live-edit overlay. Self-contained, idempotent, inline DOM inputs only (never `window.prompt`, which freezes the browser bridge). Three HUD modes (Pick / Draw / Edit); anchors notes and edits to DOM elements, stores drawings as page-space vectors, and exposes `window.__CRITIC__` for read-back. Its versioned export (`schemaVersion: 1`) is reachable via the API and the HUD **Export** button (clipboard + console), so notes survive a lost MCP bridge.

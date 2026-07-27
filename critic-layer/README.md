@@ -36,12 +36,9 @@ the product.
 
 1. **Open** a live page — Critic Layer drives your real Chrome via the
    claude-in-chrome MCP.
-2. **Inject** the overlay. A small HUD appears with **Pick / Draw / Edit** modes;
-   pin notes, draw markup, or live-edit elements at will.
-3. **Review** at your own pace across breakpoints. Notes and edits anchor to real
-   DOM nodes and survive scroll and re-render; drawings ride page coordinates.
-4. **Synthesize.** Critic Layer reads your notes, drawings, and edits back and
-   produces:
+2. **Inject** the overlay. A small HUD appears with **Pick / Draw / Edit** modes; pin notes, draw markup, or live-edit elements at will. Click any element to pin a note, type your comment, and optionally set a category and severity.
+3. **Review** at your own pace across breakpoints. Notes and edits anchor to real DOM nodes and survive scroll and re-render; drawings ride page coordinates. The HUD's **Export** button copies all notes as versioned JSON (and logs them to the console) at any time — your review survives even if the browser bridge doesn't.
+4. **Synthesize.** Critic Layer reads your notes, drawings, and edits back and produces:
    - `ux_ui_change_brief.md` — the human-readable brief
    - `implementation_prompt.md` — a paste-ready Claude Code prompt
    - `annotation_manifest.json` — the record of raw notes, drawings, and edits
@@ -67,10 +64,15 @@ blurred.
 
 - **Live review:** the [claude-in-chrome](https://www.anthropic.com) MCP
   (controls your real Chrome). The overlay uses inline DOM inputs only and never
-  triggers native dialogs.
+  triggers native dialogs. No MCP? Paste `critic-overlay.js` into DevTools
+  yourself, review, hit Export, and hand Claude the JSON.
 - **Synthesis-only:** no browser required.
 - **Optional:** a `design.md` / `DESIGN.md` / brand-notes file to ground the AI's
   second pass.
+
+The exported manifest is versioned and self-describing (`schemaVersion: 1` —
+URL, viewport, timestamp, note array), so downstream tools like `canon-check`
+can consume it as a prior design-review artifact.
 
 ## Triggering
 
