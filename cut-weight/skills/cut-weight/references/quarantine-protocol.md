@@ -52,6 +52,30 @@ new removal commits do not erase copies already in older commits.
    staged diff and ignored state to ensure recovery material cannot be published.
    Commit only when requested, using exact scoped paths and preserving other work.
 
+## Required manifest and completion check
+
+Use JSON, not a reduced TSV. The manifest records `project_root`, `run_directory`,
+`baseline_head` (null without Git), and a `changes` list. Each change contains
+`source` (project-relative), `action`, `tracked`, `reason`, `bytes`, `sha256`
+(the pre-change content), `backup` (run-relative files/ or before/ path, or null
+for a newly created file/proven disposable delete), `metadata`, and `status`.
+Record `regeneration` or the explicit discard decision for deletes without a
+backup. Record post-edit hashes for new/edited files to detect later changes
+during restore. Manifest status must reflect actual applied/failed operations,
+not leave removed sources labeled only `copied`.
+
+Before an edit, including a tracked AGENTS.md/CLAUDE.md/ignore-file edit, require
+its verified before/ copy. A Git blob may differ from the pre-edit working tree;
+"tracked in Git" is never a backup waiver. Before final reporting, compare every
+actual changed path with the manifest, re-hash recovery copies, and confirm exact
+restore paths/commands are recorded. Disclose any gap as incomplete recovery.
+Never fabricate a pre-edit backup after the fact. A recovered baseline copy must
+be labeled as such and checked against evidence of the pre-edit state.
+
+Do not auto-stash to create an A/B test baseline. For document-only cleanup,
+reference/currentness checks normally suffice. If runtime comparison is needed,
+use an isolated baseline checkout without disturbing the user's staging/worktree.
+
 ## Restoration
 
 Recovery comes from verified local copies, not an assumed commit. Provide actual

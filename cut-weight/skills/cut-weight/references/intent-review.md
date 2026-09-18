@@ -55,3 +55,19 @@ same cleanup. Separate what is implemented from what is proposed. Keep valid
 commands, architectural constraints, deployment facts, and design rules intact.
 If deciding a new architectural or aesthetic direction is necessary, surface that
 as separate work rather than silently choosing it during sanitation.
+
+## Currentness is more than link validity
+
+Explicitly compare surviving PRODUCT/STRATEGY documents with the user-approved
+direction and current baseline. Replacing a removed product-vision link with a
+duplicate old PRODUCT.md is not reconciliation. Preserve valid operating facts,
+but correct obsolete prioritization or mark historical narrative as superseded.
+If the sources conflict and the user has not resolved them, ask one grouped
+question and record the conflict rather than promoting either source silently.
+
+Read TODOS and backlogs by section. An open item can remain useful while hundreds
+of lines of Done entries belong in the graveyard. Preserve unresolved findings
+and any unique operating rationale before archiving completion history. Do not
+infer that an open item was implemented without checking evidence; separately
+scope code investigation when necessary. A recent file edit does not make every
+old entry current. Match historical reports with their screenshot evidence.

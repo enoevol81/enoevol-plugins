@@ -31,6 +31,22 @@ Modes: **audit** changes no project files; **cleanup** executes authorized group
 **aggressive** is decisive about residue but does not expand into operational code
 or permanent graveyard purge. The former `standard` mode maps to cleanup.
 
+## Review completeness
+
+Every discovered Markdown document and recognized tooling group gets an explicit
+review item, including ignored and untracked material. Each must receive an
+evidence-backed disposition or remain visibly ASK/UNREVIEWED; unresolved coverage
+is reported as partial cleanup. Being gitignored is not a reason to keep clutter.
+
+The default age review trigger is **60 days** on either mtime or Git last-touch,
+configurable with `--review-age-days N`. This requires inspection, never automatic
+deletion. Completion history and superseded content are reviewed even when a file
+was recently edited. Current source and operational configuration stay protected.
+Surviving product/strategy guidance must agree with the established direction;
+valid links alone are insufficient. Done-heavy backlogs can be consolidated while
+preserving unresolved work. Recovery requires manifest.json and verified pre-edit
+copies even for tracked documents.
+
 ## Local-only recovery
 
 The default graveyard is outside the repository, with verified copies, original
@@ -70,5 +86,5 @@ python cut-weight/skills/cut-weight/scripts/test_inventory.py
 ```
 
 For an existing local marketplace installation, refresh the marketplace and update
-`cut-weight@enoevol-plugins`, then restart the session. Version 0.4.0 contains this
+`cut-weight@enoevol-plugins`, then restart the session. Version 0.4.1 contains this
 workflow; editing the marketplace source alone does not reload a cached session.

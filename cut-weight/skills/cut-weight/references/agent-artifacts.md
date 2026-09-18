@@ -31,3 +31,12 @@ are product assets, not cleanup residue.
 No separate mandatory plugin questionnaire. Include meaningful tooling questions
 in the same brief intent conversation. Existing answers apply across matching
 groups; new evidence of an active consumer changes the disposition to KEEP.
+
+Every detected tooling group must appear in the review, including ignored files
+and tracked example configs. Split reports/captures from active settings and
+scripts; do not use a single cache-file mention to account for a mixed folder.
+State the evidence for keeping each subgroup. "Already gitignored; no action
+needed" is invalid for a local-folder sanitation request. If no current use is
+established, propose archiving completed output and ask whether unused setup
+material should remain. Registry misses discovered during reading must be added
+to the checklist; an unrecognized tool name does not exclude it from scope.

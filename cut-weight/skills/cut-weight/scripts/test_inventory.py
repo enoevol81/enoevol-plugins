@@ -1,9 +1,12 @@
 """Isolated regression tests for inventory coverage and non-destructive behavior."""
 import json
+import os
 from pathlib import Path
+import runpy
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 SCRIPT = Path(__file__).with_name("inventory.py")
@@ -114,6 +117,43 @@ class InventoryTests(unittest.TestCase):
         report = self.scan()
         self.assertEqual(report["files"], [])
         self.assertEqual(report["omitted_dirs"][0]["reason"], "nested-repository")
+
+    def test_ignored_old_reports_and_recent_done_backlog_require_review(self):
+        self.git("init")
+        self.put(".gitignore", ".gstack/\n")
+        old = self.put(".gstack/qa-reports/report.md", "# Completed audit")
+        os.utime(old, (time.time() - 71 * 86400,) * 2)
+        self.put(".compound-engineering/config.local.example.yaml", "# Example only")
+        self.put("TODOS.md", "# Tasks\n## Open\nOne item\n## Done\nHistory")
+        self.put("STRATEGY.md", "# Strategy")
+        report = self.scan()
+        items = {i["id"]: i for i in report["review_items"]}
+        self.assertIn(".gstack/qa-reports/report.md", items["tool:.gstack/"]["age_flagged_members"])
+        self.assertIn("tool:.compound-engineering/", items)
+        self.assertIn("doc:STRATEGY.md", items)
+        self.assertTrue(any("completion-history" in r for r in items["doc:TODOS.md"]["reasons"]))
+        self.assertTrue(all(i["status"] == "UNREVIEWED" for i in items.values()))
+        old_entry = next(f for f in report["files"] if f["path"] == ".gstack/qa-reports/report.md")
+        self.assertTrue(old_entry["matches_ignore_rule"])
+        self.assertFalse(old_entry["tracked"])
+        self.assertIsNone(old_entry["git_last_touch_days"])
+
+    def test_age_threshold_is_configurable(self):
+        old = self.put("notes.md", "# Notes")
+        os.utime(old, (time.time() - 71 * 86400,) * 2)
+        report = self.scan("--review-age-days", "90")
+        self.assertEqual(report["review_policy"]["age_days"], 90)
+        self.assertEqual(report["files"][0]["age_review_reasons"], [])
+        self.assertEqual(len(report["review_items"]), 1)  # Still needs purpose review.
+
+    def test_either_age_clock_triggers_at_boundary_without_deletion_verdict(self):
+        review = runpy.run_path(str(SCRIPT))["review_items"]
+        files = [{"path": "strategy.md", "mtime_days": 1, "git_last_touch_days": 60},
+                 {"path": "recent.md", "mtime_days": 59, "git_last_touch_days": None}]
+        items = review(files, [{"path": f["path"]} for f in files], 60)
+        self.assertEqual(files[0]["age_review_reasons"], ["git_last_touch_days>=60"])
+        self.assertEqual(files[1]["age_review_reasons"], [])
+        self.assertTrue(all("disposition" not in item for item in items))
 
     def test_links_do_not_read_external_documents(self):
         external = self.base / "external.md"

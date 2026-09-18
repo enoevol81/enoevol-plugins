@@ -17,7 +17,27 @@ Apply this order, explaining exceptions in the review:
    location and that shared consumers do not depend on tracked copies.
 6. **Consequential uncertainty -> ASK.** Only the affected group waits.
 
-## Supporting signals
+## Mandatory review triggers
+
+Default to 60 days, configurable through `--review-age-days`. If either mtime or
+Git last-touch reaches the threshold, review purpose, recent activity, current
+consumer, and supersession evidence. Record both clocks when they disagree; a
+fresh checkout or minor edit does not refresh the meaning of old content. Null
+Git history is unknown, not recent activity and not a reason to skip local files.
+Record dated content/status evidence separately from filesystem/Git clocks.
+
+Also review completed-pass output, superseded narrative, example configuration,
+and Done-heavy backlogs even below the threshold. These are review obligations,
+not automatic archive/delete rules. Operational files remain protected.
+
+Ignored/untracked state affects sharing and recovery, never relevance. Evaluate
+local clutter and tracked clutter equally. Current activity means evidence of
+use or unfinished work, not merely a modified timestamp. An old QA report and
+its screenshots can be one archive proposal while an active hook in the same
+tool family remains untouched. If usefulness cannot be established, ask the
+user about the group rather than quietly keeping it.
+
+## Additional evidence
 
 - **References:** trace imports, instruction imports, scripts, links, manifests,
   CI and hook commands. Search both path and basename, excluding archive internals.

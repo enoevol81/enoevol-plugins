@@ -120,6 +120,44 @@ def positive(value):
     return number
 
 
+def review_items(files, documents, threshold):
+    """Discovery checklist, not deletion verdicts. Ignore state never exempts."""
+    groups = {}
+    for entry in files:
+        age_reasons = []
+        for clock in ("mtime_days", "git_last_touch_days"):
+            if entry.get(clock) is not None and entry[clock] >= threshold:
+                age_reasons.append(clock + ">=" + str(threshold))
+        entry["age_review_reasons"] = age_reasons
+        if not entry.get("agent_artifact"):
+            continue
+        parts = entry["path"].split("/")
+        group = next(("/".join(parts[:i + 1]) + "/"
+                      for i, part in enumerate(parts[:-1])
+                      if part.lower() in TOOL_DIRS | {".claude", ".cursor"}),
+                     entry["path"])
+        item = groups.setdefault(group, {"id": "tool:" + group, "kind": "tooling",
+                                        "members": [], "age_flagged_members": [],
+                                        "status": "UNREVIEWED"})
+        item["members"].append(entry["path"])
+        if age_reasons:
+            item["age_flagged_members"].append(entry["path"])
+    by_path = {f["path"]: f for f in files}
+    items = list(groups.values())
+    # All discovered Markdown needs accounting, not only recognized root names.
+    # A tool group can cover its document items explicitly in the final review.
+    for doc in documents:
+        reasons = ["document-purpose-and-currentness"]
+        reasons.extend(by_path[doc["path"]]["age_review_reasons"])
+        headings = " ".join(doc.get("headings", [])).lower()
+        if re.search(r"\b(done|completed|resolved)\b", headings):
+            reasons.append("completion-history-heading; inspect unresolved knowledge")
+        items.append({"id": "doc:" + doc["path"], "kind": "document",
+                      "members": [doc["path"]], "reasons": reasons,
+                      "status": "UNREVIEWED"})
+    return sorted(items, key=lambda item: item["id"])
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("root", nargs="?", default=".")
@@ -127,6 +165,8 @@ def main():
     ap.add_argument("--max-files", type=positive, default=200000)
     ap.add_argument("--max-commits", type=positive, default=500)
     ap.add_argument("--document-bytes", type=positive, default=16384)
+    ap.add_argument("--review-age-days", type=positive, default=60,
+                    help="mandatory review trigger on either age clock; never a delete threshold")
     args = ap.parse_args()
     root = os.path.abspath(args.root)
     if not os.path.isdir(root):
@@ -207,6 +247,7 @@ def main():
     for entry in files:
         entry["matches_ignore_rule"] = entry["path"] in ignored_paths if ignored_paths is not None else None
     files.sort(key=lambda f: f["path"])
+    checklist = review_items(files, documents, args.review_age_days)
     report = {
         "schema_version": 2, "root": root,
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
@@ -217,6 +258,9 @@ def main():
                      "note": "No total-tree claim; omitted directories and protected paths are not counted. Names are hints, never removal verdicts."},
         "agent_artifacts": {category: [f["path"] for f in files if f.get("agent_artifact") == category]
                             for category in ("canonical", "agent-config", "tool-material")},
+        "review_policy": {"age_days": args.review_age_days,
+                          "note": "Review triggers only. Ignored/untracked is not a KEEP reason. Missing history is unknown. Recent modification does not prove current relevance."},
+        "review_items": checklist,
         "documents": documents, "files": files,
     }
     Path(out).parent.mkdir(parents=True, exist_ok=True)
@@ -226,6 +270,7 @@ def main():
     print("cut-weight: %d files; %d Markdown documents; %d omitted directories; %d errors%s" %
           (len(files), len(documents), len(omitted), len(errors), "; FILE CAP REACHED" if capped else ""))
     print("Metadata only, no cleanup decisions. Inventory: %s" % out)
+    print("Review checklist: %d items; age trigger: %d days" % (len(checklist), args.review_age_days))
     return 0
 
 

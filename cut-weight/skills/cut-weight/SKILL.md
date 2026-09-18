@@ -67,6 +67,13 @@ Use [entry-points.md](references/entry-points.md) to identify runtime and tool
 consumers near candidates. The operational keep-set is a protective boundary,
 not the main cleanup target. Follow repository-specific discovery tools first.
 
+The inventory includes `review_items`, an explicit checklist for every discovered
+Markdown document and recognized tooling group. Use `--review-age-days N` to
+override the default **60-day review trigger**. Either age clock crossing the
+threshold requires review; missing Git history does not exempt an untracked file.
+Age flags never authorize removal of operational files. Read completion history
+and supersession evidence even for recently modified documents.
+
 ## 2. Establish the shared filter
 
 Present a short, cited interpretation of what the project was, what exists,
@@ -99,6 +106,15 @@ Group by initiative, improvement pass, tool, or shared purpose, with exact paths
 Separate current guidance, reusable decisions, superseded narrative, finished
 review output, active configuration, and disposable output even within one folder.
 
+Account for every `review_items` ID in the review, including ignored/untracked
+material. Group IDs together when appropriate, but enumerate all covered IDs
+and paths. Add tool families or major documents discovered outside the script's
+registry. Assign a disposition with evidence, or explicitly mark UNREVIEWED.
+Report resolved, ASK, and UNREVIEWED counts; gaps mean a partial pass, not complete
+sanitation. KEEP requires a current consumer, retained knowledge, or explicit user
+decision. "Already ignored", "canonical filename", and "another old doc links
+here" are not sufficient reasons. Uncertain usefulness is ASK, not an invented KEEP.
+
 | Disposition | Meaning |
 |---|---|
 | KEEP | Current useful material or protected operating files |
@@ -129,6 +145,12 @@ Cleanup includes bounded edits to surviving guidance:
 - Product/strategy/intent docs: retain one authoritative home for each fact;
   link instead of copying narratives across every instruction file.
 
+Read the destinations of guidance links before calling them repaired. Check
+PRODUCT, STRATEGY, TODOS/backlogs, and current baseline documents against the agreed
+direction. A valid link to a superseded product narrative is still stale guidance.
+Separate genuinely open backlog items from lengthy Done/history sections; retain
+useful unresolved knowledge and propose archiving completed history as a group.
+
 Preserve accurate documentation of existing features even when they are not
 current priorities. Never rewrite a historical audit to pretend a later result
 was known then; update the current index or add a dated supersession note.
@@ -138,6 +160,11 @@ Broader product, architecture, or aesthetic decisions become follow-ups.
 
 Check surviving links and instruction imports, tool/hook references, Git status,
 and the staged diff. Confirm no archive contents or private artifacts are staged.
+Reconcile the review checklist and recovery manifest before claiming completion.
+Verify archived hashes and pre-edit backups, including tracked guidance files.
+Use `manifest.json` with the fields in the recovery protocol; a path/hash TSV is
+not a replacement. Missing records/backups must be disclosed and repaired where
+possible, never described as unnecessary because Git exists.
 Re-run relevant baseline checks for any affected consumers; documentation-only
 cleanup normally needs reference/content checks, not the entire application suite.
 If a regression appears, restore implicated files and record the reason.
