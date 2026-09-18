@@ -1,7 +1,7 @@
 {
   "name": "cut-weight",
-  "version": "0.3.0",
-  "description": "Reachability-first repo weight cutting — traces execution entry points to find the files actually needed to run, then cuts, quarantines, or escalates everything else with full rollback.",
+  "version": "0.4.0",
+  "description": "Intent-informed repository sanitation: a brief grouped conversation, development-residue cleanup, local-only archiving, and reconciliation of surviving guidance while protecting operational files.",
   "author": {
     "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"
@@ -11,12 +11,11 @@
   "license": "MIT",
   "keywords": [
     "cleanup",
-    "dead-code",
     "repo-hygiene",
-    "quarantine",
-    "reachability",
-    "maintenance",
-    "refactoring",
+    "development-residue",
+    "local-archive",
+    "documentation",
+    "intent-review",
     "agent-artifacts"
   ]
 }

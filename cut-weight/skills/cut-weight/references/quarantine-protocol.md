@@ -1,127 +1,74 @@
-# Quarantine protocol: reversible by construction
+# Local graveyard and recovery
 
-The promise this skill makes: nothing the user might want is more than one
-command away from being back. That only holds if the mechanics below are
-followed exactly.
+## Location and Git boundary
 
-## Layout
+Default to a sibling `<project>-graveyard/<UTC-timestamp>-<unique-id>/` outside
+**every containing Git worktree**, not merely outside the selected subfolder.
+Resolve the repository root before choosing it. Record the absolute project and
+archive paths; never reuse a run directory or overwrite an existing backup.
+Use `files/<original-relative-path>` for archived originals and
+`before/<original-relative-path>` for files edited in place. Reports sit beside
+those folders so source filenames cannot collide with `manifest.json`.
 
-Quarantined files move to a dated folder at the project root, preserving
-their relative paths so restoration is mechanical:
+If the user chooses an in-repo graveyard, add its anchored path to `.gitignore`
+(or `.git/info/exclude` for a machine-local rule), verify the rule and that no
+archive contents are tracked/staged before copying. An already tracked archive
+requires an explicit local-only migration; ignoring alone does not untrack it.
+Protect old `_quarantine` and `_graveyard` directories from candidate selection.
+Never commit archived payloads, cleanup reports, or previously untracked private
+files by default. Do not automatically rewrite history: ignoring/untracking and
+new removal commits do not erase copies already in older commits.
 
-```
-_quarantine/
-  2026-07-02/
-    manifest.json
-    lib/old-parser.js        <- was lib/old-parser.js
-    debug-fetch.js           <- was debug-fetch.js
-    notes/PLAN-2024.md       <- was notes/PLAN-2024.md
-```
+## Recovery before mutation
 
-`manifest.json` records enough to restore and enough to justify:
+1. Capture HEAD if available, index/worktree status, and existing changes.
+   Leave unrelated staging and edits alone. No automatic checkpoint commit, Git
+   initialization, stash, hard reset, or broad `git add`.
+2. For every ARCHIVE/CONSOLIDATE removal and edited guidance/config file, record
+   exact source/destination, original tracked status, action, reason, byte size,
+   SHA-256, and relevant metadata in `manifest.json`. Include newly created files
+   so undo can distinguish creation from modification. Preserve permissions and
+   timestamps when copying; report metadata limitations.
+3. Copy to the resolved archive and verify the copy's size and SHA-256 before
+   removing or editing the source. Write the manifest incrementally with states
+   `planned`, `copied`, `applied`, or `failed`; retain partial recovery on failure.
+   Re-check the source hash immediately before mutation. If it changed, stop that
+   item and re-evaluate instead of overwriting concurrent work.
+4. Use native filesystem operations with literal paths. Resolve source and target
+   containment before any move/delete. Reject traversal, collisions, symlinks,
+   junctions, and nested repositories for automatic mutation; inspect separately.
+   Never follow a link out of the project or recurse through archive contents.
+5. ARCHIVE: remove originals only after verified copies. Tracked removals appear
+   in Git as deletions; archived payloads never enter Git. CONSOLIDATE: verify
+   useful knowledge has a surviving home before removing its original.
+6. LOCAL_ONLY: keep contents at their existing path, add a narrow ignore rule,
+   and use `git rm --cached -- <exact-path>` only if tracked and authorized.
+   If staged content differs from disk/HEAD, leave it unresolved rather than
+   using force. Record the index change; never untrack unrelated files.
+7. DELETE: record the exact regeneration command or explicit discard decision.
+   Irreplaceable output with uncertain value goes to ARCHIVE. In a non-Git
+   project the same verified local recovery protocol applies.
+8. Verify links/consumers and compare relevant checks with baseline. Inspect the
+   staged diff and ignored state to ensure recovery material cannot be published.
+   Commit only when requested, using exact scoped paths and preserving other work.
 
-```json
-{
-  "date": "2026-07-02",
-  "checkpoint_commit": "<sha of the pre-cut-weight checkpoint>",
-  "moves": [
-    {
-      "from": "lib/old-parser.js",
-      "tracked": true,
-      "reason": "unreachable from server.js; 0 references; mtime 14mo, last commit 16mo"
-    }
-  ]
-}
-```
+## Restoration
 
-Record `tracked` for every move -- restoration differs for tracked vs
-untracked files (see Restoring), and after the move the manifest is the only
-place that remembers which was which.
+Recovery comes from verified local copies, not an assumed commit. Provide actual
+shell-appropriate commands using the real recorded paths, never placeholders.
+Before restoring, verify the archived hash and check for destination collisions.
+Do not overwrite newer work; restore to a separate path or resolve the conflict.
+Restore original relative locations and recorded metadata where supported.
 
-## Order of operations
+For edited files, use the `before/` copy. For removed files, use `files/`.
+For LOCAL_ONLY, remove only the ignore rule added by this run and restore tracking
+with `git add -- <path>` when appropriate. Preserve pre-existing ignore rules and
+index state; do not offer a broad `git revert` or `reset --hard` as blanket undo.
+For newly created files, remove only if unchanged since this run. Re-run the
+relevant verification after restore. Local recovery is not a remote backup;
+archive loss loses recovery for material that was never committed.
 
-1. **Checkpoint first.** Confirm the pre-cut-weight checkpoint commit from
-   Phase 0 exists. No checkpoint, no moves.
-2. **Cuts (regenerable deletes).** Delete artifact dirs/files, update
-   `.gitignore` in the same change. Record bytes freed.
-3. **Quarantine moves, one commit.** For git-tracked files use `git mv` so
-   history follows the file; plain `mv` for untracked ones. Write the
-   manifest, add `_quarantine/` to `.gitignore` ONLY if the user prefers the
-   quarantine untracked -- default is to commit it (including the moved-in
-   copies of previously untracked files), because a committed quarantine is
-   what keeps everything recoverable from history. Single commit:
-   `chore: quarantine dead weight (see _quarantine/<date>/manifest.json)`.
-4. **Untrack + gitignore dispositions, their own commit**
-   (`chore: untrack agent artifacts`): the `git rm --cached` calls plus the
-   `.gitignore` edits. Never mix these into the quarantine commit -- their
-   undo is different (see Restoring), and `git revert` on a commit that
-   removed a still-on-disk file from the index fails with "untracked working
-   tree files would be overwritten".
-5. **Verify** (Phase 7 of SKILL.md) before reporting anything as done.
-
-Keep cuts, quarantine, and untracks in separate commits: reverting the
-quarantine must not resurrect `dist/` or re-track a file the user chose to
-untrack.
-
-## Restoring
-
-Each disposition has its own undo -- state the applicable ones, with real
-SHAs and paths, in the report's Restore section. The user should not have to
-figure out how to undo this.
-
-- **Everything quarantined, manifest-driven (always correct)**: for each
-  manifest entry, `git mv _quarantine/<date>/<path> <path>` if `tracked`,
-  plain `mv` if not; then one restore commit. This works regardless of what
-  was tracked.
-- **Everything quarantined, via revert**: `git revert <quarantine-commit>`
-  is the one-command shortcut, but it is only equivalent when **every**
-  manifest entry has `tracked: true`. For an untracked-origin file the revert
-  merely deletes its quarantine copy without recreating the original path --
-  check the manifest before offering this command, and prefer the
-  manifest-driven restore when any entry is untracked.
-- **One file**: `git mv _quarantine/<date>/<path> <path>` (or plain `mv` if
-  the manifest says untracked), then remove its manifest entry.
-- **An untrack**: `git add <path>` plus deleting its `.gitignore` line, then
-  commit. Do NOT `git revert` the untrack commit -- git refuses to overwrite
-  the untracked working-tree copy ("untracked working tree files would be
-  overwritten") even when the content is identical.
-- **A gitignore**: delete the added line(s) from `.gitignore` and commit.
-- **Nuclear**: `git reset --hard <checkpoint>` -- mention it in the report
-  but never run it yourself; it destroys any work done since.
-
-## Non-git projects
-
-If the user declined `git init`, quarantine is the only removal mechanism --
-including for regenerable artifacts (they move to
-`_quarantine/<date>/_artifacts/` instead of being deleted). The manifest
-carries the whole restore story; there is no revert to lean on, so
-double-check the manifest is complete before moving anything.
-
-## Expiry
-
-Quarantine is a decision buffer, not a landfill. It clears one of two ways:
-
-- **Now, on confirmation** -- the post-mortem teardown (Stage 6 of
-  [review-loop.md](review-loop.md)). After the user has reviewed everything
-  through the decision gate, an explicit "delete everything" empties the
-  buffer; in a git repo the **committed** moves keep it recoverable. If the
-  user chose an untracked (gitignored) quarantine, deleting the buffer is as
-  irreversible as in a non-git project -- give the same warning.
-- **Later, by default** -- if the user does not tear down now, end the report
-  with: "Review `_quarantine/<date>/` after ~30 days; if nothing broke and
-  nothing was missed, delete it (or `git rm -r` it) in one commit." Deleting a
-  quarantine folder that has sat quietly for a month is the one deletion this
-  skill endorses without further analysis.
-
-## Verification gate details
-
-- Re-run exactly the baseline commands from Phase 0 -- same commands, same
-  cwd. New failure = restore the implicated files, reclassify KEEP, rerun.
-  Bisect by restoring half the quarantine at a time if the culprit is not
-  obvious.
-- If the project has no runnable check at all (no tests, no build, not
-  startable), say so in the report and downgrade every QUARANTINE
-  justification from "verified" to "static analysis only". Do not invent a
-  verification that did not happen.
-- A dirty `git status` after you finish (beyond the intended commits) means
-  something leaked -- resolve it before reporting.
+Keep the graveyard until explicitly asked to purge a specified run. There is no
+automatic expiry or "delete everything" closing step. Moving to a local archive
+reduces working-tree clutter and future sharing, not bytes on the same disk or
+old Git history.

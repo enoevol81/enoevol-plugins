@@ -1,4 +1,8 @@
-# Finding true north: execution entry points
+# Protecting operational consumers
+
+Use this trace to protect files near cleanup candidates. It does not authorize
+feature retirement, dependency pruning, or source removal. Ordinary Cut Weight
+work targets development residue even when operational code is unreachable.
 
 An entry point is a file the outside world invokes directly -- an OS, a
 runtime, a platform, a CI system, or a human following the README. The
@@ -60,21 +64,21 @@ Ask three questions of every project:
 - Every `SKILL.md` (frontmatter makes it platform-loaded), plus every file
   it links: `references/`, `scripts/`, `assets/`, `agents/`.
 - `hooks/hooks.json` commands, `.mcp.json` server entries, `commands/*.md`.
-- A reference file linked from nowhere is a candidate; a script mentioned in
-  SKILL.md is keep-set even if no code imports it.
+- An unlinked reference document needs a purpose review; executable scripts stay
+  protected. A script mentioned in SKILL.md is keep-set even if no code imports it.
 
 This section is for a project that **is** a Claude plugin -- trace it like any
 other. Do not confuse it with agent artifacts (`CLAUDE.md`, `.claude/`, plugin
-droppings) left inside an *unrelated* app; those are not entry points and are
-handled by the Phase 2.5 gate -- see
+material) left inside an *unrelated* app; active hooks and skills are operational
+consumers there too. Review each by role -- see
 [agent-artifacts.md](agent-artifacts.md).
 
 ### Monorepos
 
-Run the whole process per package/app. A package nothing depends on and no
-deploy target ships is itself a candidate -- check the workspace graph
-(`pnpm why`, workspace globs, internal `dependencies`) before concluding
-that.
+Identify consumers per package/app. A package nothing depends on and no deploy
+target ships may warrant separately scoped maintenance; do not archive it as
+development residue. Check workspace globs and internal dependencies before
+making that recommendation.
 
 ## Tracing rules
 
@@ -96,12 +100,12 @@ that.
   migration folders, seed data the code opens by convention. When code reads
   a directory rather than a file, keep the directory. The same goes for
   platform-consumed files nothing in the repo references (CI workflows,
-  `dependabot.yml`, hosting configs, toolchain dotfiles) -- see signal 7 in
+  `dependabot.yml`, hosting configs, toolchain dotfiles) -- see
   [evidence-signals.md](evidence-signals.md).
 - **Tests are entry points too** (via the test command), which is what makes
   a test for a *deleted* feature detectable: it is reachable from the test
   runner but its subject import is broken or gone -- flag those as
-  candidates in the evidence phase, not here.
+  follow-ups for separately scoped maintenance, not automatic cleanup targets.
 - **Ties go to KEEP.** The failure mode of a too-large keep-set is a few
   dead files surviving; the failure mode of a too-small one is a broken
   application. These are not symmetric.

@@ -520,8 +520,8 @@
   }
   // Editing a note suppresses element picking/editing (via the editingNoteId gate
   // in onMove/onClick) so reading context around the page doesn't stamp/select.
-  function closeEditor() { var was = editingNoteId != null; closeNoteEditor(); }
-  function closeNoteEditor() { editingNoteId = null; render(); }
+  function closeEditor() { closeNoteEditor(); }
+  function closeNoteEditor() {
     editingNoteId = null;
     render();
   }

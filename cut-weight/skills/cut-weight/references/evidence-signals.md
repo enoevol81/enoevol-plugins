@@ -1,136 +1,39 @@
-# Evidence signals: deciding a candidate's fate
+# Evidence and disposition
 
-Every file outside the keep-set gets a verdict backed by evidence, not vibes.
-Collect the signals below (the bundled `scripts/inventory.py` produces most
-of them mechanically), then apply the precedence rules.
+Apply this order, explaining exceptions in the review:
 
-## The signals
+1. **Operational consumer or protected role -> KEEP.** Source, tests, lockfiles,
+   migrations, runtime assets, CI/deploy, credentials/data, active skills/hooks,
+   and configuration are protected. Zero text references does not make a
+   platform-consumed file dead. Dynamic loading preserves the relevant directory.
+2. **Current guidance or unique knowledge -> KEEP or CONSOLIDATE.** Read content.
+   Unresolved findings, rationale, and working procedures need a surviving home.
+3. **Superseded/completed residue -> ARCHIVE.** Establish what replaced it or
+   why the pass is finished. Resolve any useful remaining knowledge first.
+4. **Proven disposable output -> DELETE.** Confirm an applicable regeneration
+   command or explicit discard authorization. `build`, `dist`, `out`, screenshots,
+   logs, JSON, and databases are not inherently disposable.
+5. **Useful personal/tool state -> LOCAL_ONLY.** Verify the tool still needs its
+   location and that shared consumers do not depend on tracked copies.
+6. **Consequential uncertainty -> ASK.** Only the affected group waits.
 
-### 1. Reachability (already established -- strongest signal)
+## Supporting signals
 
-If the trace reached it, it is KEEP and none of the rest applies. Everything
-in this file concerns unreachable files only.
+- **References:** trace imports, instruction imports, scripts, links, manifests,
+  CI and hook commands. Search both path and basename, excluding archive internals.
+  A live dependency protects; a reference in superseded narrative can be repaired.
+  Documents that only reference one another can form a historical cluster.
+- **Age:** use mtime and Git last-touch as supporting evidence. Null history is
+  unknown, never proof of age. New reports can already be redundant; old specs
+  can still be authoritative. State scan limits.
+- **Names:** `old`, `scratch`, plugin names, and dated filenames are discovery
+  hints. Never let names alone authorize a move or deletion.
+- **Content:** identify unique knowledge, replacement documents, unfinished work,
+  duplicated passages, and the original purpose of an output. Preserve provenance
+  when consolidating. Semantic judgments must cite inspected content.
+- **Size:** helps prioritize and report impact; it does not determine relevance.
 
-### 2. Age, on two clocks
-
-A file has two ages, and they disagree in useful ways:
-
-- **mtime** -- when the file content last changed on disk.
-- **git last-touch** -- when a commit last included it.
-
-Old on both clocks = genuinely abandoned. Old mtime but recent git activity
-(or vice versa) = something is still happening around it; downgrade to ASK.
-"Old" is relative to the project's tempo: in a repo committed to daily, 3
-months untouched is old; in a yearly-release project it is not. State the
-threshold you used in the report.
-
-### 3. Reference search
-
-Reachability traces execution; references catch everything softer. Grep the
-whole project (excluding the candidate itself) for the candidate's basename:
-
-- Mentioned in README/docs -> ASK, not quarantine (someone is told it exists).
-- Mentioned in CI, scripts, or config -> re-check Phase 1; you likely missed
-  an entry point.
-- Mentioned only in other candidates -> dead cluster; they go together.
-- Zero mentions anywhere -> strong quarantine evidence.
-
-### 4. Name patterns (weak signal -- corroborates, never decides)
-
-`.bak`, `.old`, `.orig`, `-copy`, `_v1`/`_v2`, `-old`, `scratch-`, `tmp-`,
-`debug-`, `WIP`, `deprecated`, `archive`, trailing `~`. These raise
-suspicion, but a suspicious name with reachability is KEEP, and an innocent
-name with zero references and old clocks is still QUARANTINE. Names are tie-
-breakers only.
-
-### 5. Regenerability (the only license to delete)
-
-CUT applies only to files a command can recreate. Recognizable classes:
-
-- Build output: `dist/`, `build/`, `out/`, `.next/`, `.nuxt/`, `lib/` (when
-  compiled), `*.tsbuildinfo`
-- Caches: `.cache/`, `.vite/`, `.turbo/`, `.parcel-cache/`, `.pytest_cache/`,
-  `__pycache__/`, `*.pyc`
-- Test/coverage output: `coverage/`, `.nyc_output/`, `htmlcov/`,
-  `test-results/`, `playwright-report/`, screenshots/videos/traces from runs
-- OS/editor droppings: `.DS_Store`, `Thumbs.db`, `Desktop.ini`, `*.swp`, `*~`
-- Logs: `*.log`, `npm-debug.log*`
-
-Before cutting, confirm the regenerating command actually exists in this
-project (a `dist/` with no build script may be the only copy -- ASK). After
-cutting, add the pattern to `.gitignore` so it does not come back.
-
-**Generated-but-required -- looks machine-made, is NOT regenerable, never
-CUT:**
-
-- Lockfiles: `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`,
-  `poetry.lock`, `Pipfile.lock`, `Cargo.lock`, `composer.lock`, `Gemfile.lock`
-  -- regenerating one changes resolved versions; the committed file IS the
-  pin.
-- Database migrations (`migrations/`, `alembic/versions/`) -- ordered history
-  the schema depends on.
-- Test snapshots (`__snapshots__/`, `*.snap`, golden files) -- regenerating
-  them re-blesses current behavior, which defeats their purpose.
-- Committed codegen (protobuf stubs, generated API clients) when the project
-  builds without running the generator -- the commit is intentional.
-
-All of these are KEEP (or ASK if genuinely orphaned, e.g. migrations for a
-database the project no longer uses).
-
-### 6. File type: data is not code
-
-Code lives in git; data frequently does not. Anything that looks like
-records, credentials, or output someone may want -- `.json`/`.csv`/`.sqlite`
-databases, exports, renders, uploads, `.env*` -- is ASK no matter how
-unreferenced and old. The single exception: data provably regenerated by a
-script in the keep-set.
-
-### 7. Platform-consumed files: zero references is normal
-
-Some files are read by machinery that never appears in the code: CI workflows
-(`.github/workflows/`, `.gitlab-ci.yml`), bot configs (`dependabot.yml`,
-`renovate.json`), hosting/deploy configs (`netlify.toml`, `vercel.json`,
-`fly.toml`, `Procfile`, `app.yaml`), and toolchain dotfiles (`.editorconfig`,
-`.prettierrc*`, ESLint configs, `.nvmrc`, `.python-version`, `.gitattributes`,
-`.gitignore`). A reference search finds nothing because the consumer is
-remote or is a tool, not the code. These are KEEP by convention; a workflow
-is a candidate only if the user confirms the pipeline itself is retired.
-
-## Precedence
-
-When signals conflict, resolve top-down:
-
-1. Reachable -> KEEP (ends the analysis)
-2. Platform-consumed (CI, deploy, toolchain dotfiles) or
-   generated-but-required (lockfiles, migrations, snapshots) -> KEEP
-3. Data/config/secrets -> ASK
-4. Regenerable artifact -> CUT (if the regenerating command exists, else ASK)
-5. Unreachable + zero references + old on both clocks -> QUARANTINE
-6. Anything else (recent, doc-referenced, large, weird) -> ASK
-
-An ASK verdict is a success, not a failure -- present the evidence in one
-line each and let the user rule. Do not pad the ASK list with things the
-matrix already decides, and do not silently promote ASK to QUARANTINE to
-make the report look more decisive.
-
-## Domain notes
-
-- **Stale docs**: a doc is dead when what it documents is gone (plans and
-  summaries for shipped/abandoned work, POC writeups, reports with dates in
-  their names). Same matrix applies; they quarantine like any other file.
-  Entry-point docs (README, CONTRIBUTING, LICENSE) are keep-set by
-  convention even when unreferenced.
-- **Dead tests**: reachable via the test runner but importing modules that
-  no longer exist, permanently `.skip`ped, or testing quarantined code.
-  Quarantine them alongside their subject. Also grep for `.only` while here
-  -- report it as a finding (it silently disables the rest of the suite).
-- **Unused dependencies**: compare declared deps (`package.json`,
-  `requirements.txt`, `pyproject.toml`) against imports found in the
-  keep-set only -- imports in quarantined files do not count. Removing a dep
-  is an edit, not a file move, so it is inherently revertable via the
-  checkpoint commit; still remove one at a time and re-run the baseline
-  check after each.
-- **Dead code inside live files** (unused exports/functions): out of scope
-  for the quarantine pass -- editing file contents is a refactor, not weight
-  cutting. If tools like `ts-prune`, `knip`, or `vulture` are already
-  available, run them and put findings in the report as follow-ups.
+Do not automatically cut generated-but-required inputs: lockfiles, snapshots,
+migrations, committed codegen, vendored assets, or deploy output without a proven
+rebuild path. Do not prune dependencies or edit dead code during ordinary residue
+cleanup. Record those as separately scoped maintenance work.

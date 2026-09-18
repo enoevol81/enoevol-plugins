@@ -6,3 +6,4 @@
 *.json         text eol=lf
 **/SKILL.md    text eol=lf
 **/commands/*  text eol=lf
+cut-weight/**/*.py text eol=lf
