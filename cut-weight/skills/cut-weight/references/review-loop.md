@@ -19,6 +19,11 @@ cover multiple IDs if they are listed explicitly; split mixed tooling folders
 by member path. Add items discovered through links or unrecognized tools. Include
 all major guidance and backlog documents, regardless of name, age, or Git state.
 KEEP requires specific current usefulness; unknown usefulness becomes ASK.
+For optional tooling, every KEEP must identify an application runtime/build/test/
+deploy dependency or an explicit user retention decision. "Active tool config"
+alone fails this check. List undecided optional tools as ASK and include them in
+the grouped retention question; do not mark all checklist items resolved merely
+because each folder contains configuration or code.
 UNREVIEWED means inspection did not happen and must never be presented as KEEP.
 
 Make the plan available before mutations. If the user requested only an audit or

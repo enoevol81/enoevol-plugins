@@ -130,6 +130,8 @@ class InventoryTests(unittest.TestCase):
         items = {i["id"]: i for i in report["review_items"]}
         self.assertIn(".gstack/qa-reports/report.md", items["tool:.gstack/"]["age_flagged_members"])
         self.assertIn("tool:.compound-engineering/", items)
+        self.assertEqual(items["tool:.compound-engineering/"]["retention"], "UNDECIDED")
+        self.assertEqual(items["tool:.gstack/"]["retention"], "UNDECIDED")
         self.assertIn("doc:STRATEGY.md", items)
         self.assertTrue(any("completion-history" in r for r in items["doc:TODOS.md"]["reasons"]))
         self.assertTrue(all(i["status"] == "UNREVIEWED" for i in items.values()))

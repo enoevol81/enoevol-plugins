@@ -11,7 +11,7 @@ audit reports and captures, plugin output, scratch files, and disposable generat
 artifacts. It preserves unique decisions and unresolved findings before archiving
 their originals. Old does not mean obsolete; recent does not mean useful.
 
-Working source, tests, dependencies, runtime data, deployment, and active tool
+Working source, tests, dependencies, runtime data, deployment, and application-required tool
 configuration are protected. Sidelined features do not need a promise of future
 use to survive. Feature retirement is separately scoped work.
 
@@ -30,6 +30,18 @@ use to survive. Feature retirement is separately scoped work.
 Modes: **audit** changes no project files; **cleanup** executes authorized groups;
 **aggressive** is decisive about residue but does not expand into operational code
 or permanent graveyard purge. The former `standard` mode maps to cleanup.
+
+## Optional development tools
+
+Plugin setup is not automatically protected application infrastructure. Local
+plugin code, skills, hooks, templates, caches, and settings require a retention
+decision: keep if the application needs them or the user wants them; otherwise
+ask whether to remove the local setup and reinstall when needed. Installed,
+tracked, executable, or self-used by a tool does not prove application need.
+Removal includes the retired tool's local registrations and preserves unique
+customizations that reinstallation would not reproduce. Global uninstall remains
+out of scope. The inventory exposes undecided retention on tooling review items;
+the agent establishes the dependency or user choice before resolving KEEP.
 
 ## Review completeness
 
@@ -86,5 +98,5 @@ python cut-weight/skills/cut-weight/scripts/test_inventory.py
 ```
 
 For an existing local marketplace installation, refresh the marketplace and update
-`cut-weight@enoevol-plugins`, then restart the session. Version 0.4.1 contains this
+`cut-weight@enoevol-plugins`, then restart the session. Version 0.4.2 contains this
 workflow; editing the marketplace source alone does not reload a cached session.

@@ -138,6 +138,8 @@ def review_items(files, documents, threshold):
                      entry["path"])
         item = groups.setdefault(group, {"id": "tool:" + group, "kind": "tooling",
                                         "members": [], "age_flagged_members": [],
+                                        "retention": "UNDECIDED",
+                                        "retention_rule": "Establish application dependency or user choice; optional tool self-use, tracking, and executable files do not justify KEEP.",
                                         "status": "UNREVIEWED"})
         item["members"].append(entry["path"])
         if age_reasons:

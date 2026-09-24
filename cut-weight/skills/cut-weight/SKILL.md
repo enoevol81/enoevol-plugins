@@ -27,11 +27,19 @@ and development artifacts, not permission to remove sidelined features.
   Treat previous "standard" invocations as cleanup.
 
 Protect source, tests, dependencies, lockfiles, migrations, runtime assets,
-secrets/data, CI, deployment, and active tool configuration by default. Core
+secrets/data, CI, deployment, and application-required tool configuration by default. Core
 operating files move only as an explicitly scoped exception with dependency
 analysis, recovery, and baseline checks. Otherwise record separate follow-up
 work. "Deferred", "secondary", and "not promoted" do not mean obsolete code;
 never require a promise of future use to protect working implementation.
+
+This protection covers the product, not every development plugin used to build
+or review it. Optional tool code, skills, hooks, caches, and configuration require
+a retention decision under [agent-artifacts.md](references/agent-artifacts.md).
+If there is no application dependency or existing user decision, ASK whether to
+keep or remove the local setup. Being installed, tracked, or executable does not
+settle that question. Removal can include local registrations and recoverable
+customizations; global plugin uninstall remains outside ordinary folder cleanup.
 
 ## 1. Discover before questioning
 

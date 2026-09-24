@@ -2,20 +2,26 @@
 
 Apply this order, explaining exceptions in the review:
 
-1. **Operational consumer or protected role -> KEEP.** Source, tests, lockfiles,
-   migrations, runtime assets, CI/deploy, credentials/data, active skills/hooks,
-   and configuration are protected. Zero text references does not make a
+1. **Optional development tooling -> retention decision first.** Apply
+   [agent-artifacts.md](agent-artifacts.md) before protecting configuration.
+   If application-required or explicitly user-retained, KEEP. If retention is
+   undecided, ASK; if user-retired, remove its local setup and registrations
+   with appropriate recovery. Executable plugin files are not automatically
+   application source. Self-use by the tool is not a product dependency.
+2. **Application operational consumer or protected role -> KEEP.** Source, tests, lockfiles,
+   migrations, runtime assets, CI/deploy, credentials/data, application-required
+   skills/hooks and configuration are protected. Zero text references does not make a
    platform-consumed file dead. Dynamic loading preserves the relevant directory.
-2. **Current guidance or unique knowledge -> KEEP or CONSOLIDATE.** Read content.
+3. **Current guidance or unique knowledge -> KEEP or CONSOLIDATE.** Read content.
    Unresolved findings, rationale, and working procedures need a surviving home.
-3. **Superseded/completed residue -> ARCHIVE.** Establish what replaced it or
+4. **Superseded/completed residue -> ARCHIVE.** Establish what replaced it or
    why the pass is finished. Resolve any useful remaining knowledge first.
-4. **Proven disposable output -> DELETE.** Confirm an applicable regeneration
+5. **Proven disposable output -> DELETE.** Confirm an applicable regeneration
    command or explicit discard authorization. `build`, `dist`, `out`, screenshots,
    logs, JSON, and databases are not inherently disposable.
-5. **Useful personal/tool state -> LOCAL_ONLY.** Verify the tool still needs its
+6. **Useful user-retained personal/tool state -> LOCAL_ONLY.** Verify the tool still needs its
    location and that shared consumers do not depend on tracked copies.
-6. **Consequential uncertainty -> ASK.** Only the affected group waits.
+7. **Consequential uncertainty -> ASK.** Only the affected group waits.
 
 ## Mandatory review triggers
 

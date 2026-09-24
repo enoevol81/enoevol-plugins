@@ -4,6 +4,13 @@ Use this trace to protect files near cleanup candidates. It does not authorize
 feature retirement, dependency pruning, or source removal. Ordinary Cut Weight
 work targets development residue even when operational code is unreachable.
 
+For optional development tooling, apply the retention decision in
+[agent-artifacts.md](agent-artifacts.md) first. Its own hook loading its own code
+proves tool functionality, not a requirement to retain that tool. The user can
+retire that local setup; include its registrations in the removal plan. When the
+repository distributes the plugin as its product, that plugin code remains
+protected product source.
+
 An entry point is a file the outside world invokes directly -- an OS, a
 runtime, a platform, a CI system, or a human following the README. The
 keep-set is everything transitively reachable from these. Getting this list
