@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "sessionId": "2e60964c-410e-49de-8dda-8e4bc1cd751a",
+  "sequences": {
+    "note": 1,
+    "draw": 1,
+    "edit": 1
+  },
+  "previewOnly": true,
+  "recovery": "restored; edits are records only",
+  "tool": "critic-layer",
+  "url": "http://127.0.0.1:55962/",
+  "path": "/",
+  "title": "Design Steward fixture",
+  "viewport": "1280x800",
+  "viewportSize": {
+    "width": 1280,
+    "height": 800
+  },
+  "capturedAt": "2026-09-25T15:15:23.124Z",
+  "counts": {
+    "notes": 1,
+    "drawings": 1,
+    "edits": 1
+  },
+  "notes": [
+    {
+      "id": "note_001",
+      "url": "/",
+      "viewport": "1280x800",
+      "x": 0.491,
+      "y": 0.482,
+      "pageX": 352,
+      "pageY": 301,
+      "anchor": {
+        "tag": "button",
+        "id": "start",
+        "classes": [],
+        "text": "Get started",
+        "selector": "#start"
+      },
+      "element_label": "button#start",
+      "category": "hierarchy",
+      "severity": "medium",
+      "note": "Use the approved 8px radius",
+      "desired_change": "",
+      "authoredBy": "user",
+      "status": "open",
+      "createdAt": 1790349322714,
+      "issueId": "2e60964c-410e-49de-8dda-8e4bc1cd751a:note_001",
+      "anchorLive": true,
+      "anchorStatus": "matched"
+    }
+  ],
+  "drawings": [
+    {
+      "id": "draw_001",
+      "issueId": "2e60964c-410e-49de-8dda-8e4bc1cd751a:draw_001",
+      "tool": "pen",
+      "color": "#ff5b45",
+      "width": 3,
+      "label": "",
+      "viewport": "1280x800",
+      "url": "/",
+      "points": [
+        [
+          700,
+          500
+        ],
+        [
+          716,
+          510
+        ],
+        [
+          732,
+          520
+        ],
+        [
+          748,
+          530
+        ],
+        [
+          764,
+          540
+        ],
+        [
+          780,
+          550
+        ]
+      ],
+      "bbox": {
+        "x": 700,
+        "y": 500,
+        "w": 80,
+        "h": 50
+      }
+    }
+  ],
+  "edits": [
+    {
+      "id": "edit_001",
+      "issueId": "2e60964c-410e-49de-8dda-8e4bc1cd751a:edit_001",
+      "previewOnly": true,
+      "anchorStatus": "matched",
+      "element_label": "button#start",
+      "selector": "#start",
+      "anchor": {
+        "tag": "button",
+        "id": "start",
+        "classes": [],
+        "text": "Get started",
+        "selector": "#start"
+      },
+      "anchorLive": true,
+      "viewport": "1280x800",
+      "url": "/",
+      "authoredBy": "user",
+      "changes": [
+        {
+          "kind": "style",
+          "prop": "border-radius",
+          "from": "6px",
+          "to": "8px"
+        },
+        {
+          "kind": "attr",
+          "prop": "class",
+          "from": null,
+          "to": ""
+        }
+      ],
+      "before": {
+        "html": "<button id=\"start\" onclick=\"document.querySelector('#result').textContent='Started'\">Get started</button>",
+        "text": "Get started",
+        "style": {
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgb(59, 130, 246)",
+          "fontSize": "13.3333px",
+          "fontWeight": "400",
+          "textAlign": "center",
+          "padding": "12px 20px",
+          "margin": "0px",
+          "borderRadius": "6px",
+          "border": "0px none rgb(255, 255, 255)"
+        },
+        "inline": {
+          "color": "",
+          "backgroundColor": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "textAlign": "",
+          "padding": "",
+          "margin": "",
+          "borderRadius": "",
+          "border": ""
+        },
+        "attrs": {
+          "id": "start",
+          "onclick": "document.querySelector('#result').textContent='Started'"
+        }
+      },
+      "after": {
+        "html": "<button>Never replay this</button>",
+        "text": "Get started",
+        "style": {
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgb(59, 130, 246)",
+          "fontSize": "13.3333px",
+          "fontWeight": "400",
+          "textAlign": "center",
+          "padding": "12px 20px",
+          "margin": "0px",
+          "borderRadius": "8px",
+          "border": "0px none rgb(255, 255, 255)"
+        },
+        "inline": {
+          "color": "",
+          "backgroundColor": "",
+          "fontSize": "",
+          "fontWeight": "",
+          "textAlign": "",
+          "padding": "",
+          "margin": "",
+          "borderRadius": "8px",
+          "border": ""
+        },
+        "attrs": {
+          "id": "start",
+          "onclick": "document.querySelector('#result').textContent='Started'",
+          "class": "",
+          "style": "border-radius: 8px;"
+        }
+      }
+    }
+  ]
+}

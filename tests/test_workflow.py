@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -139,6 +140,12 @@ class WorkflowTests(unittest.TestCase):
                 self.assertIsInstance(metadata['description'], str)
                 for ref in re.findall(r'(?<!\w)(\.\./(?:[\w.-]+/)*[\w.-]+\.md)', text):
                     self.assertTrue((skill.parent / ref).is_file(), f'{skill}: {ref}')
+                for ref in re.findall(r'`\$\{CLAUDE_PLUGIN_ROOT\}/([^`]+)`', text):
+                    # Compare exact names: Windows ignores trailing dots and case.
+                    path = ROOT / plugin
+                    for part in ref.rstrip('/').split('/'):
+                        self.assertIn(part, os.listdir(path), f'{skill}: {ref}')
+                        path = path / part
 
 
 if __name__ == '__main__':

@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: execute-ledger
+tags: [functional, needs-bash]
+context:
+  scaffold_script: setup.sh

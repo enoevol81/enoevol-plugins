@@ -1,6 +1,6 @@
 {
   "name": "design-steward",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Review interfaces, align design decisions, execute and verify changes, and clean development residue with seven independent skills including Cut Weight.",
   "author": {
     "name": "Matthew Cohen",

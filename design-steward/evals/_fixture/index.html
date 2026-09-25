@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Design Steward fixture</title>
+<style>
+:root { --radius: 8px; --accent: #3b82f6; }
+body { font: 18px system-ui; margin: 0; padding: 40px 24px; background: #fafafa; color: #18202a; }
+main { max-width: 680px; margin: auto; }
+button { padding: 12px 20px; background: var(--accent); color: white; border: 0; cursor: pointer; }
+#start { border-radius: 6px; }
+.card { border: 1px solid #ccd; border-radius: var(--radius); padding: 24px; margin: 24px 0; }
+@media(max-width: 500px) { body { padding: 24px 16px; } button { width: 100%; } }
+</style></head><body><main><h1>Plan your next release</h1><p>A disposable example for design review and verification.</p><section class="card">The card follows the documented radius.</section><button id="start" onclick="document.querySelector('#result').textContent='Started'">Get started</button><p id="result" aria-live="polite"></p></main></body></html>

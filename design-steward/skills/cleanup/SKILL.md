@@ -1,14 +1,21 @@
 ---
 name: cleanup
-description: Audit or clean development residue using bundled Cut Weight, with intent review, operational-file protection and verified local recovery.
+description: >-
+  Find and safely remove leftover development clutter (old plans, scratch notes, stale
+  agent files, superseded docs, unused experiments) with a review of each item and a
+  recoverable archive outside the project. Use when the user says the repo is cluttered,
+  asks what can be safely deleted, wants to clean up agent or dev leftovers, or wants to
+  retire outdated documents. Audit mode changes nothing; cleanup mode acts only on
+  groups the user approves.
 ---
 
 # Cleanup with Cut Weight
 
-Read `../../references/workflow.md` and
-`../../components/cut-weight/skills/cut-weight/SKILL.md`.
+Read `${CLAUDE_PLUGIN_ROOT}/references/workflow.md` and
+`${CLAUDE_PLUGIN_ROOT}/components/cut-weight/skills/cut-weight/SKILL.md`.
 Resolve all Cut Weight references and its inventory script inside that bundled
-component. It is included here; no separate plugin installation is required.
+component: its `references/...` and `scripts/...` links are relative to
+`${CLAUDE_PLUGIN_ROOT}/components/cut-weight/skills/cut-weight/`. It is included here; no separate plugin installation is required.
 
 Preserve the requested mode: audit makes no project changes; cleanup executes
 authorized groups; aggressive remains within the same operational protections.

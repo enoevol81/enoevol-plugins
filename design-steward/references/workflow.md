@@ -4,6 +4,10 @@ Use a unique `.design-steward/<run-id>/` directory. Read only the component
 instructions relevant to the requested stage; do not force the complete pipeline.
 Top-level scripts are portable entry points. When reading a bundled component,
 resolve its plugin-root paths against `<plugin>/components/<component>`.
+Relative links inside a bundled component skill (`references/...`, `scripts/...`)
+resolve against that component skill's own folder, e.g.
+`<plugin>/components/cut-weight/skills/cut-weight/references/...`, never the
+plugin root.
 
 Artifacts:
 - capture.json: original notes/drawings/preview edits, stable session and issue IDs.
