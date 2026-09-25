@@ -1,8 +1,8 @@
 {
   "name": "design-steward",
   "displayName": "Design Steward",
-  "version": "0.2.1",
-  "description": "Review interfaces, align design decisions, execute and verify changes, and clean development residue with seven independent skills including Cut Weight.",
+  "version": "0.2.2",
+  "description": "Design Steward takes a website or app from design feedback to a verified fix. Mark up a live page with notes, drawings and preview edits, then turn that feedback into a clear list of issues with testable acceptance criteria. Check which design rules your project has actually settled on and where its docs and code disagree, update the docs once you decide, and make the changes with a progress log you can pause and resume. Finally, confirm each fix at the screen sizes you care about. A cleanup skill also finds leftover plans, scratch notes and stale files, and archives anything you approve for removal so nothing is lost. Each of the seven skills works on its own.",
   "author": {
     "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"

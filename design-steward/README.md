@@ -1,7 +1,8 @@
 # Design Steward
 
-Turn visual feedback into verified product changes while keeping design decisions
-and project guidance aligned, with Cut Weight for authorized repository cleanup. A curated Claude Code plugin by Matthew Cohen.
+Design Steward takes a website or app from design feedback to a verified fix. Mark up a live page with notes, drawings and preview edits, then turn that feedback into a clear list of issues with testable acceptance criteria. Check which design rules your project has actually settled on and where its docs and code disagree, update the docs once you decide, and make the changes with a progress log you can pause and resume. Finally, confirm each fix at the screen sizes you care about. A cleanup skill also finds leftover plans, scratch notes and stale files, and archives anything you approve for removal so nothing is lost. Each of the seven skills works on its own.
+
+A Claude Code plugin by Matthew Cohen.
 
 ## Install
 
@@ -30,13 +31,13 @@ Cut Weight plugins, not both, so their skills don't compete for the same request
 
 | Command | Result |
 | --- | --- |
-| `/design-steward:audit` | Scoped, cited design decisions and conflicts, with a freshness baseline |
-| `/design-steward:review` | Live notes, drawings and preview edits, with recoverable captures |
-| `/design-steward:brief` | Stable issue IDs, source candidates and acceptance criteria |
-| `/design-steward:align` | Authorized decisions reflected in relevant documents |
-| `/design-steward:execute` | Plan/run/resume modes with dependency-aware progress and evidence |
-| `/design-steward:verify` | Before/after checks against each issue and target viewport |
-| `/design-steward:cleanup` | Cut Weight intent review, residue cleanup and verified external recovery |
+| `/design-steward:audit` | Which design rules are settled, where each came from, and where docs and code disagree |
+| `/design-steward:review` | Notes, drawings and preview edits on a live page, saved so nothing is lost |
+| `/design-steward:brief` | A numbered issue list with likely source files and testable acceptance criteria |
+| `/design-steward:align` | Your design docs updated to match the decisions you make |
+| `/design-steward:execute` | The approved changes made step by step, with a progress log you can pause and resume |
+| `/design-steward:verify` | Before/after checks of each issue at the screen sizes you choose |
+| `/design-steward:cleanup` | Leftover plans, notes and stale files found and reviewed with you; approved removals archived with restore steps |
 
 Example: "Review this local page, resolve its button-radius conflict, implement
 the direction I choose, and verify at 390px and 1280px." Each stage is usable on
