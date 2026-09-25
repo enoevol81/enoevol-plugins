@@ -1,0 +1,162 @@
+{
+  "components/canon-check/skills/canon-check/references/report-format.md": {
+    "source": "canon-check/skills/canon-check/references/report-format.md",
+    "sha256": "fe08ef811bc0aaeb415a8c6c27e3e1666cf67059cbf7d9873a22dd0ff91c22b6"
+  },
+  "components/canon-check/skills/canon-check/references/sources.md": {
+    "source": "canon-check/skills/canon-check/references/sources.md",
+    "sha256": "b18575c282dfa27ba59d38ac04ab0a31adeb17d5ed28b851efb1abe5cf0ea1c3"
+  },
+  "components/canon-check/skills/canon-check/scripts/scan_tokens.py": {
+    "source": "canon-check/skills/canon-check/scripts/scan_tokens.py",
+    "sha256": "8fe6a17135c7a94b683cbbd5bfec10284e7ba21e8f191128ff9061cf6a7c6147"
+  },
+  "components/canon-check/skills/canon-check/SKILL.md": {
+    "source": "canon-check/skills/canon-check/SKILL.md",
+    "sha256": "a889722454df892e428f2950fca43e9a765ab24b01667aec02c0cde5841b0c23"
+  },
+  "components/canon-check/skills/canon-update/references/doc-playbook.md": {
+    "source": "canon-check/skills/canon-update/references/doc-playbook.md",
+    "sha256": "f2800fb40ef2a8568f20768d970757775fd988c90feacbeb9d3be98f0a65effa"
+  },
+  "components/canon-check/skills/canon-update/SKILL.md": {
+    "source": "canon-check/skills/canon-update/SKILL.md",
+    "sha256": "a7cf1196b69163f62487a2ad30d808ffee61abd53efb1051eca8b891cee2b75f"
+  },
+  "components/canon-check/references/decision-contract.md": {
+    "source": "canon-check/references/decision-contract.md",
+    "sha256": "363ffcc5596926d79b508cb44837a252a1db826e4e8b78fdf6d197061dfd97d5"
+  },
+  "components/canon-check/scripts/source_snapshot.py": {
+    "source": "canon-check/scripts/source_snapshot.py",
+    "sha256": "a5e0e6cd9b633137e3f834287d6f6a4d4e4f0855a970479d4155801c04a387d4"
+  },
+  "components/critic-layer/skills/brief/SKILL.md": {
+    "source": "critic-layer/skills/brief/SKILL.md",
+    "sha256": "b4a08deae617942b71f2c667f25476f5f9013f81a39a3a6b332c54564e122ad9"
+  },
+  "components/critic-layer/skills/critic-layer/references/capture.md": {
+    "source": "critic-layer/skills/critic-layer/references/capture.md",
+    "sha256": "6a0150965a778761a1c488ac45873537d6f33c91c8a4b59ba43a5881916f2b80"
+  },
+  "components/critic-layer/skills/critic-layer/references/output.md": {
+    "source": "critic-layer/skills/critic-layer/references/output.md",
+    "sha256": "6cf0deb04fb21934dfedb44d21cf3088b719ab3b106e73f54df0c342812b701f"
+  },
+  "components/critic-layer/skills/critic-layer/references/synthesis.md": {
+    "source": "critic-layer/skills/critic-layer/references/synthesis.md",
+    "sha256": "a7569475424159e6c67ce2f3bf187720ddc10e6dda6689e06ef849bf4eee9389"
+  },
+  "components/critic-layer/skills/critic-layer/scripts/critic-overlay.js": {
+    "source": "critic-layer/skills/critic-layer/scripts/critic-overlay.js",
+    "sha256": "0b27dfb92205d2ff7ec7b75fa6bb26d6656a44982650f06c859d1afcd3c97c29"
+  },
+  "components/critic-layer/skills/critic-layer/SKILL.md": {
+    "source": "critic-layer/skills/critic-layer/SKILL.md",
+    "sha256": "238f2ce2205916bc1074512701fa15dbdc2ebc90558dfe440191c665560387a0"
+  },
+  "components/critic-layer/skills/verify/SKILL.md": {
+    "source": "critic-layer/skills/verify/SKILL.md",
+    "sha256": "13e9c984997e8fb7a851215012b3e8dfff4622056f9fb0a3f0d99cf8f75faa29"
+  },
+  "components/critic-layer/references/handoff.md": {
+    "source": "critic-layer/references/handoff.md",
+    "sha256": "34af6d1416c281a607b4981cf8567294f1e3c76a33c594baee2c6d0d5583ae9c"
+  },
+  "components/critic-layer/scripts/source_candidates.py": {
+    "source": "critic-layer/scripts/source_candidates.py",
+    "sha256": "642d5e5d91ad211d9081503a9e7fb98512b5f086e6e8cca57b75d5b0a0fbaaf4"
+  },
+  "components/hands-free/skills/execute/SKILL.md": {
+    "source": "hands-free/skills/execute/SKILL.md",
+    "sha256": "e423d15b9e2b8952e75f03020e92535b9fa558df54d39a9802e07748189ca5da"
+  },
+  "components/hands-free/skills/hands-free/examples/example-run.md": {
+    "source": "hands-free/skills/hands-free/examples/example-run.md",
+    "sha256": "184e9cb603d806431b28bb69da9caf898169d24de0259ec6036b73f080668d7d"
+  },
+  "components/hands-free/skills/hands-free/references/agent-roster.md": {
+    "source": "hands-free/skills/hands-free/references/agent-roster.md",
+    "sha256": "f58c2f8c99f650568b9cf36bfd2a69a02e30b3ec04035cb517de8a903966d3a3"
+  },
+  "components/hands-free/skills/hands-free/references/exploration.md": {
+    "source": "hands-free/skills/hands-free/references/exploration.md",
+    "sha256": "6eec1760007b2bdc7f89749f7dd4fc6f0fdcb8c56a1bdd57b7abc074674e76a7"
+  },
+  "components/hands-free/skills/hands-free/references/goal-spec.md": {
+    "source": "hands-free/skills/hands-free/references/goal-spec.md",
+    "sha256": "4bf4da7461c0ef88213fc158b27fd08008ca1e9430785c8533b098bd0ab933dd"
+  },
+  "components/hands-free/skills/hands-free/scripts/check-goal-budget.sh": {
+    "source": "hands-free/skills/hands-free/scripts/check-goal-budget.sh",
+    "sha256": "bf0fc7501d1ba6b9a33b3f8c32f3dc98a6f39c7821669fae6d063b20918817ce"
+  },
+  "components/hands-free/skills/hands-free/SKILL.md": {
+    "source": "hands-free/skills/hands-free/SKILL.md",
+    "sha256": "80ecda62d698dde8d253c703f921ba9c16a1948b7dd19670f1ce13e2fab2b559"
+  },
+  "components/hands-free/skills/resume/SKILL.md": {
+    "source": "hands-free/skills/resume/SKILL.md",
+    "sha256": "1c0f164d4e090b3f9ff107ee57692181de41a08fd9fd0c6a272c6506482e9f74"
+  },
+  "components/hands-free/references/execution.md": {
+    "source": "hands-free/references/execution.md",
+    "sha256": "811b4d5c40d8d0f03fddd22ee97e7863e3bd6cd89aad97a12a989e028fabf8ca"
+  },
+  "components/hands-free/scripts/run_state.py": {
+    "source": "hands-free/scripts/run_state.py",
+    "sha256": "7d8c128f8b722ad18de7c96170495a50e406ef7d2131994ec02c2dc38114a6a6"
+  },
+  "components/cut-weight/skills/cut-weight/references/agent-artifacts.md": {
+    "source": "cut-weight/skills/cut-weight/references/agent-artifacts.md",
+    "sha256": "761ad0ae6810ea5a95074f95f93107ada43958636a7a51041bd9d1ea0e6b7369"
+  },
+  "components/cut-weight/skills/cut-weight/references/entry-points.md": {
+    "source": "cut-weight/skills/cut-weight/references/entry-points.md",
+    "sha256": "6383c9f6aa85dbe05aa88f56ad420e7a0ee2838ec4a4e3ff0e64fcdd67b0000d"
+  },
+  "components/cut-weight/skills/cut-weight/references/evidence-signals.md": {
+    "source": "cut-weight/skills/cut-weight/references/evidence-signals.md",
+    "sha256": "8b92c1a71674549026dac2355eaba427c946f9985cb5b3a957319579a9305304"
+  },
+  "components/cut-weight/skills/cut-weight/references/intent-review.md": {
+    "source": "cut-weight/skills/cut-weight/references/intent-review.md",
+    "sha256": "a03fb8be1fea03bd13b7d93b0123e5cf2e79a80035b622980a3dfa191e830745"
+  },
+  "components/cut-weight/skills/cut-weight/references/quarantine-protocol.md": {
+    "source": "cut-weight/skills/cut-weight/references/quarantine-protocol.md",
+    "sha256": "90fb0d6b896dfe6ae5f95cde020d9206fb6ce96d2d67861a2cb83c364d3f61bc"
+  },
+  "components/cut-weight/skills/cut-weight/references/review-loop.md": {
+    "source": "cut-weight/skills/cut-weight/references/review-loop.md",
+    "sha256": "6ed2db0ede0cd7044826752779e900be4f9297b098880c436727a84f478320d5"
+  },
+  "components/cut-weight/skills/cut-weight/references/workflow-handoff.md": {
+    "source": "cut-weight/skills/cut-weight/references/workflow-handoff.md",
+    "sha256": "79248a869d62814a91c687130cd18d093ebb031ec692a46f42a3af79b93e6422"
+  },
+  "components/cut-weight/skills/cut-weight/scripts/inventory.py": {
+    "source": "cut-weight/skills/cut-weight/scripts/inventory.py",
+    "sha256": "2fda5e7cad9e533a09f5841b464368bf8c95be452530f1a2f11c0b08a6aae3d2"
+  },
+  "components/cut-weight/skills/cut-weight/scripts/test_inventory.py": {
+    "source": "cut-weight/skills/cut-weight/scripts/test_inventory.py",
+    "sha256": "816a161f203388c9ed588cba5f81f6a7e3c7c3846a0ff213ee67f1690c25c563"
+  },
+  "components/cut-weight/skills/cut-weight/SKILL.md": {
+    "source": "cut-weight/skills/cut-weight/SKILL.md",
+    "sha256": "d24a1090189bef7f87374adc1e7558b33a01d4b0aeeb474bd02bbb20c702c8e1"
+  },
+  "scripts/run_state.py": {
+    "source": "hands-free/scripts/run_state.py",
+    "sha256": "7d8c128f8b722ad18de7c96170495a50e406ef7d2131994ec02c2dc38114a6a6"
+  },
+  "scripts/source_snapshot.py": {
+    "source": "canon-check/scripts/source_snapshot.py",
+    "sha256": "a5e0e6cd9b633137e3f834287d6f6a4d4e4f0855a970479d4155801c04a387d4"
+  },
+  "scripts/source_candidates.py": {
+    "source": "critic-layer/scripts/source_candidates.py",
+    "sha256": "642d5e5d91ad211d9081503a9e7fb98512b5f086e6e8cca57b75d5b0a0fbaaf4"
+  }
+}

@@ -1,0 +1,139 @@
+# Synthesis: reading notes, assertiveness, prioritization
+
+Read this for the synthesis phase (turning notes into the brief). Together with
+`output.md` it's all you need for a synthesis-only run.
+
+## Position is a pointer, not decoration
+
+A note's `x`/`y` are element-local, normalized 0-1 inside the anchored element.
+Use them to find the *sub-part* the designer meant:
+
+- `y ≈ 0.05` on a card → the card's top edge / header, not the whole card.
+- `x ≈ 0.9` on a nav → the right cluster (CTA / account), not the logo.
+- centered (`≈0.5`) → the element as a whole.
+
+"Too tight" pinned at the top of a section means the spacing *above* it, not its
+internal padding, unless the point sits between children.
+
+## Attribution discipline (a trust requirement, not a style choice)
+
+Every issue is tagged by author, and the reader must always be able to tell what
+the designer said from what you inferred. If the two blur, the brief is useless.
+
+- **`user`** — the designer's judgment. Preserve their intent and wording; convert
+  to a concrete directive but never replace it with a different opinion. Disagree?
+  Add a separate `uncertain` item — don't overwrite theirs.
+- **`ai`** — your inference. Clearly labeled, dismissible, secondary. Sorts below
+  equal-severity user issues.
+- **`uncertain`** — you can't tell what they meant, or you're not confident.
+  Surface as an open question; don't guess a directive.
+
+## From note to directive
+
+For each user note produce: **Problem** (what's wrong, grounded in note +
+element) → **Direction** (their intent as an instruction) → **Suggested
+implementation** (concrete deltas: px, spacing, contrast direction, breakpoint
+behavior) → **Acceptance check** (an observable end state anyone can verify:
+"the CTA is the highest-contrast element in the hero at 390px"). Ranges are fine
+when flagged: "increase button height ~8-12px (to ~48px) — verify against the
+type scale." Never "make it better" / "polish this" — if you can't make it
+concrete, it's an open question.
+
+Alongside the designer's `severity`, tag each issue with an **effort** estimate
+(`S`/`M`/`L` — token tweak / component change / structural work). Severity is
+theirs; effort is yours and labeled as such.
+
+## Reading drawings and edits
+
+Notes are one of three inputs. The other two sharpen or replace the guesswork:
+
+- **Drawings** (`export().drawings`) are visual markup — freehand, arrows, boxes,
+  ellipses — in page coordinates with a `bbox`. Use `bbox` + the annotated
+  screenshot to find *what* the designer circled/pointed at, then treat a
+  **labeled** drawing like a note whose text is the label, and an **unlabeled**
+  one as emphasis for the nearest note/edit (or, alone, an "attention here" item —
+  ask what they meant if there's no companion note). An arrow implies direction
+  ("move this → there"); a box/ellipse implies "this region/element".
+- **Edits** (`export().edits`) are the strongest signal: the designer changed the
+  live element and Critic Layer captured the exact `changes` diff. **Do not
+  re-derive the value** — carry it through verbatim (`font-size 34px→40px`,
+  `color→rgb(0,0,255)`, copy "Old"→"New"). Problem = what the original state got
+  wrong (infer from the change + any companion note); Direction = "apply this
+  change"; Implementation = the diff itself, mapped to a design token only when one
+  clearly matches (name it; don't silently swap). An edit is `authoredBy: user`
+  and outranks AI inferences about the same element.
+
+When a note, a drawing, and an edit all point at one element, **merge them into a
+single issue**: the note gives the *why*, the drawing the *where*, the edit the
+*exact what*. Cite all their ids.
+
+## Cross-note reasoning
+
+- **Group** related notes (three CTA notes → one "CTA consistency" issue).
+- **Dedupe** the same complaint pinned twice.
+- **Detect cross-page drift**: separate notes about the same component on
+  different pages → name the inconsistency as its own, higher-priority issue.
+- **Separate** subjective preference ("I'd prefer serif") from objective
+  usability/accessibility problems (contrast below AA, 32px tap target). Mark
+  which is which; prioritize the objective ones.
+
+## Assertiveness modes (chosen per run)
+
+The designer's notes are always the spine. What varies is how much of *your own*
+judgment you add.
+
+- **quiet** (default): synthesize the user's notes — that's the job. Add an AI
+  issue only when high-confidence AND grounded in the design intent (e.g. a
+  contrast ratio below AA, a literal overflow). Don't pad: a five-note review
+  yields a five-issue brief plus any genuine grouping/cross-page findings.
+- **proactive**: also run the grounded audit below and surface extras as
+  labeled, dismissible suggestions. Still secondary — never reorder or override
+  user notes; AI issues sort below equal-severity user issues.
+
+Read the mode from the user ("just my notes"/"quiet" → quiet; "your take
+too"/"what else" → proactive) or a `user_goal`/intent file. When unsure, default
+quiet and offer to go proactive.
+
+## Grounding gate (any AI issue, both modes)
+
+You may assert an AI issue only after ingesting design intent — a
+`design.md`/`DESIGN.md`/brand notes/`PRODUCT.md`, or a one-line verbal statement
+of what the experience is for. Without it, an AI critique is ungrounded noise; ask
+for one sentence of intent first. Deviations from a *stated* design system
+outrank your own aesthetic preferences.
+
+The boundary, explicitly. Beyond the user's notes you **may** add: grouping,
+deduping, translation into concrete directives, acceptance checks, effort
+estimates, and — when grounded — your own issues tagged `ai`. You **may not**:
+drop or soften a user note, change its severity, merge away a disagreement,
+invent design intent the given files don't state, or assert a directive the
+note doesn't support (that becomes an open question). The user's judgment
+leads; you augment, clearly labeled.
+
+For notes tagged `layout` or `typography`, the `swiss-design` plugin's
+grid-and-type vocabulary is a good shared language — borrow its terms; don't
+re-teach its content.
+
+## Grounded audit checklist (proactive)
+
+Report a hit only with concrete evidence in the rendered page:
+
+- **Hierarchy** — is the primary action the most prominent thing? Competing CTAs?
+- **Spacing** — inconsistent section rhythm; cramped mobile padding.
+- **Type scale** — >3-4 sizes in play; weak contrast between levels.
+- **Contrast** — text/CTA below WCAG AA against its actual backdrop.
+- **CTA consistency** — same action styled differently across pages.
+- **Responsive** — overflow, clipped content, sub-44px tap targets, bad mobile
+  headline breaks.
+- **Alignment** — elements that should share an edge but don't.
+
+Anything you can't tie to visible evidence is at most an open question.
+
+## Prioritization
+
+1. Blockers / bugs (broken, unusable, inaccessible).
+2. Hierarchy & clarity. 3. Conversion (primary action weak/buried).
+4. Usability & responsiveness. 5. Accessibility (elevate to top if blocker-level).
+6. Consistency (cross-page drift). 7. Polish (subjective refinement).
+
+Within a tier, user-authored issues rank above AI-inferred ones.

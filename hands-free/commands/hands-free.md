@@ -1,7 +1,7 @@
 ---
-description: Turn a plain-language desired end result into a crafted /goal multi-agent workflow.
-argument-hint: <your desired end result>
+description: Plan or execute a bounded outcome with resumable progress.
+argument-hint: <outcome, plan only, execute, or resume>
 ---
 
-Use the `hands-free` skill to turn the following desired end result into a single
-self-contained `/goal [...]` block for a Lead orchestration agent: $ARGUMENTS
+Use the hands-free skill for planning, execute for an authorized run, or resume
+for interrupted work. Preserve the user's requested mode: $ARGUMENTS

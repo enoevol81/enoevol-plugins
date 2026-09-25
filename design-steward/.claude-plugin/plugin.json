@@ -1,0 +1,22 @@
+{
+  "name": "design-steward",
+  "version": "0.2.0",
+  "description": "Review interfaces, align design decisions, execute and verify changes, and clean development residue with seven independent skills including Cut Weight.",
+  "author": {
+    "name": "Matthew Cohen",
+    "email": "mcohen@enoevol.com"
+  },
+  "homepage": "https://github.com/enoevol81/enoevol-plugins",
+  "repository": "https://github.com/enoevol81/enoevol-plugins",
+  "license": "MIT",
+  "keywords": [
+    "design-review",
+    "design-system",
+    "annotations",
+    "execution",
+    "verification",
+    "cleanup",
+    "cut-weight",
+    "repo-hygiene"
+  ]
+}

@@ -1,148 +1,26 @@
-# Hands Free (Claude Code plugin)
+# Hands Free
 
-Turn a plain-language **desired end result** into a single, meticulously crafted
-`/goal [...]` command that launches a **Lead-orchestrated, parallelized
-multi-agent workflow**.
-
-The plugin packages the `hands-free` skill. When invoked, it captures the
-outcome you want, runs a short bounded round of context-refining questions, then
-emits one self-contained `/goal` block for a Lead orchestration agent to execute
-step-by-step while fanning out independent subtasks to skilled sub-agents.
-
-Core design rule: **linear spine, parallel ribs** — milestones run in dependency
-order, only genuinely-independent subtasks run in parallel, and every
-outward-facing or destructive/irreversible action sits behind an explicit
-approval gate. Goals too small to orchestrate get "just do it directly"
-instead of a `/goal`.
-
-Each emitted goal also ships with:
-
-- **Cost-aware model routing** — every subtask is tagged with a model tier
-  (`basic`/`standard`/`deep`), defaulting to the cheapest model that can do the
-  job so simple work doesn't pay frontier-model prices.
-- **Hands-free execution mode** — interactive CLI/desktop runs use elevated
-  (auto-accept) permissions and run to completion, halting only on a high-level
-  issue or a HUMAN APPROVAL gate (gates always bind).
-- **Headless run instructions** — a ready-to-paste `claude -p …` snippet for
-  running the same goal unattended (cron/CI/background), emitted alongside the
-  block.
-
-## Requirements
-
-- **[`jq`](https://jqlang.org/)** — used by the bundled Stop hook
-  (`hooks/enforce-goal-budget.sh`) to parse the hook payload/transcript and to
-  build its JSON response. Install it via `brew install jq` (macOS),
-  `apt install jq` (Debian/Ubuntu), or `choco install jq` (Windows). If `jq`
-  isn't found on `PATH`, the hook prints a one-line warning to stderr and
-  no-ops (fails open) — the rest of the plugin works normally; you just lose
-  the automatic budget-enforcement retries described below.
+Plan, execute, and resume multi-step work using the tools available in the host.
+Three skills: `hands-free` (plan), `execute` (run), and `resume` (recover progress).
+Single-agent operation works without Mission Control or a /goal consumer.
 
 ## Install
 
-Distributed via the [enoevol-plugins](https://github.com/enoevol81/enoevol-plugins)
-marketplace.
-
-```bash
-# 1. Add the marketplace
+```text
 /plugin marketplace add enoevol81/enoevol-plugins
-
-# 2. Install the plugin
 /plugin install hands-free@enoevol-plugins
 ```
 
-Or, for local development without installing:
+Requires Python 3 for the portable run ledger. Ask "Plan this outcome", "Execute
+this plan", or "Resume the interrupted run". Work is recorded in
+`.hands-free/<run-id>/`; completion requires evidence files and an observed result.
+Changed evidence invalidates dependent completion on resume. The agent evaluates
+acceptance criteria; file hashes alone cannot prove correctness.
 
-```bash
-claude --plugin-dir ./hands-free
-```
+Existing permissions and authorization remain binding. No automatic permission
+elevation or headless launch. Runtime, spend and token budgets are advisory unless
+the host supplies an actual enforcement mechanism.
 
-## Use
-
-Describe an outcome and ask for it hands-free, e.g.:
-
-> "Hands free — get the Q3 launch landing page researched, built, and reviewed."
-
-The skill activates on outcome-shaped requests ("I want to end up with…",
-"just make X happen", "set it and forget it") and replies with a ready-to-run
-`/goal` block plus a short summary of any assumptions it made.
-
-You can also invoke it explicitly as a slash command:
-
-```
-/hands-free <your desired end result>
-```
-
-The fully-namespaced skill form `/hands-free:hands-free <...>` also works.
-
-## Contents
-
-```
-hands-free/
-├── .claude-plugin/
-│   └── plugin.json
-├── commands/
-│   └── hands-free.md             # /hands-free slash command → delegates to skill
-├── hooks/
-│   ├── hooks.json                # registers the Stop hook below
-│   └── enforce-goal-budget.sh    # Stop hook: blocks if an emitted /goal is over budget
-└── skills/
-    └── hands-free/
-        ├── SKILL.md                  # operating instructions + workflow
-        ├── references/
-        │   ├── goal-spec.md          # canonical /goal [...] structure
-        │   ├── agent-roster.md       # skilled sub-agents + parallelization rules
-        │   └── exploration.md        # context-refinement question checklist
-        ├── scripts/
-        │   └── check-goal-budget.sh  # size gate — isolates + counts the /goal block
-        └── examples/
-            └── example-run.md        # full worked request → /goal
-```
-
-## Notes
-
-- `/goal` is the convention this skill **emits**. In the Mission Control
-  ecosystem it is consumed downstream as the "Hands-free Goal Builder" workflow;
-  if a fixed `/goal` schema exists there, keep `references/goal-spec.md` in sync.
-- The agent roster mirrors Mission Control's roles (`researcher`, `coder`,
-  `tester`, `reviewer`, `devops`, `content`, `assistant`).
-- **Goals are built to a character budget** — Claude caps a goal at 4000
-  characters, so the skill targets ≤3500 and builds lean by construction: it drops
-  in the fixed boilerplate (canonical `EXECUTION MODE` + `LEAD`) verbatim, then
-  fits the variable sections (milestones are the main lever) into the remainder —
-  rather than writing long and trimming back. It counts the block to confirm, and
-  compresses (never truncates) only in the rare case it still runs over. See
-  `references/goal-spec.md` → "Budget: write lean by construction".
-- **The budget is enforced, not just requested.** Two mechanical guardrails back
-  the prose rules so a block can't silently land at 6–12k characters:
-  `skills/hands-free/scripts/check-goal-budget.sh` isolates the `/goal [ … ]`
-  block and fails above the 4000 ceiling, and a bundled **Stop hook**
-  (`hooks/enforce-goal-budget.sh`) runs it automatically — if the final turn
-  emits an over-ceiling `/goal` block, the hook blocks the stop and tells the
-  model to compress and re-emit. The hook forces **up to four retries** (via a
-  per-transcript counter, not a single-shot flag), and escalates the guidance
-  after the first pass: if line-level trimming isn't closing the gap, it directs
-  the model to make the structural fix below — externalize detail to a plan file —
-  before finally failing open so a stubborn block can never wedge the session. The
-  hook is a strict no-op on any turn that doesn't emit a `/goal` block, and fails
-  open (allows the stop) if its dependencies are missing.
-- **Large goals externalize detail to a plan file.** When a goal is too big to fit
-  inline (roughly > 4 milestones, or a milestone with > 3 non-trivial subtasks),
-  the skill switches to **lean-spine mode**: it spawns a sub-agent to write the
-  full milestone/subtask breakdown to a `goal-plan.md` file on disk and emits a
-  lean `/goal` block that carries only the milestone spine plus a `PLAN FILE:`
-  pointer. The Lead reads only the relevant section per milestone — so the block
-  clears the 4000-char ceiling *and* no single context ever carries the whole
-  plan. See `references/goal-spec.md` → "Large goals: externalize detail to a plan
-  file".
-- **Lean context downstream.** The emitted goal instructs the Lead to dispatch
-  each sub-agent with only the slice it needs — its subtask, the named upstream
-  artifact(s), and binding constraints — not the main-window conversation. This
-  keeps token consumption (and cost) down across the whole run.
-- **Model tiers, defaulted down.** Subtasks carry a `(basic|standard|deep)` tier;
-  the Lead dispatches the matching model class. See
-  `skills/hands-free/references/agent-roster.md` → "Model tier routing".
-- **Elevated, autonomous runs.** The `EXECUTION MODE` block tells interactive
-  CLI/desktop runs to auto-accept permissions and only stop for high-level issues
-  or approval gates. For unattended runs, the emitted "Run it headless" section
-  maps this onto `claude -p` flags (`--permission-mode acceptEdits` or, in a
-  trusted dir, `--dangerously-skip-permissions`).
+Legacy /goal prompt export remains opt-in. Its Bash/jq length checker validates a
+4000-character compatibility ceiling, not cost or runtime. The old Stop hook is
+not registered by default. See `references/execution.md` for commands and schema.

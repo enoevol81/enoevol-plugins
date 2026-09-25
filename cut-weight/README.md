@@ -98,5 +98,15 @@ python cut-weight/skills/cut-weight/scripts/test_inventory.py
 ```
 
 For an existing local marketplace installation, refresh the marketplace and update
-`cut-weight@enoevol-plugins`, then restart the session. Version 0.4.2 contains this
+`cut-weight@enoevol-plugins`, then restart the session. Version 0.4.3 contains this
 workflow; editing the marketplace source alone does not reload a cached session.
+
+
+## Curated workflow integration
+
+Cut Weight remains independently installable from Enoevol Plugins. Design Steward
+also includes this same source as its `cleanup` skill; no second installation is
+needed for the curated package. Both use the external graveyard, verified copies,
+manifest and intent-review protections above. Current ledgers, unresolved issues
+and their required evidence stay live until deliberately retired.
+See `skills/cut-weight/references/workflow-handoff.md`.

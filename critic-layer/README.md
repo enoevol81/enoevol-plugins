@@ -100,3 +100,18 @@ critic-layer/
 
 Part of the [enoevol-plugins](https://github.com/enoevol81/enoevol-plugins)
 marketplace. MIT.
+
+## Recovery and implementation handoff (0.3)
+
+The overlay saves captures in sessionStorage every second and on pagehide. Reinject
+on the same URL to restore notes, drawings and edit records; saved edits are never
+reapplied automatically. The HUD labels previews and recovery status. Tab storage
+is readable by the reviewed origin and is not a disk backup. Use Export and save
+capture.json locally, or import that file through `window.__CRITIC__.import(data)`.
+Disable tab recovery with `forgetRecovery()` for sensitive pages.
+
+Every exported item has a stable session-qualified issueId. Element matching now
+reports matched, missing or ambiguous instead of guessing the first match. The
+`brief` skill maps source candidates and preserves viewport scope; the `verify`
+skill checks actual source/browser results against those same issue IDs. See
+`references/handoff.md`. Python 3 is needed only for source-candidate discovery.

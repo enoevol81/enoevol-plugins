@@ -7,3 +7,11 @@
 **/SKILL.md    text eol=lf
 **/commands/*  text eol=lf
 cut-weight/**/*.py text eol=lf
+hands-free/**/*.py text eol=lf
+canon-check/**/*.py text eol=lf
+critic-layer/**/*.py text eol=lf
+critic-layer/**/*.js text eol=lf
+design-steward/** text eol=lf
+scripts/*.py text eol=lf
+tests/*.py text eol=lf
+tests/*.cjs text eol=lf

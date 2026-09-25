@@ -1,7 +1,7 @@
 {
   "name": "critic-layer",
-  "version": "0.2.0",
-  "description": "Real-time, in-browser UX/UI design review in three modes — pin sticky notes, draw freehand/arrow/shape markup, and make live element edits captured as exact before→after diffs. Place sticky notes directly on a live web page and synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt; a review-to-instruction layer, not a design editor.",
+  "version": "0.3.0",
+  "description": "Real-time, in-browser UX/UI design review in three modes \u2014 pin sticky notes, draw freehand/arrow/shape markup, and make live element edits captured as exact before\u2192after diffs. Place sticky notes directly on a live web page and synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt; a review-to-instruction layer, not a design editor.",
   "author": {
     "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"
@@ -9,5 +9,18 @@
   "homepage": "https://github.com/enoevol81/enoevol-plugins",
   "repository": "https://github.com/enoevol81/enoevol-plugins",
   "license": "MIT",
-  "keywords": ["ux-review", "ui-review", "design-critique", "annotation", "sticky-notes", "draw-markup", "live-edit", "wysiwyg", "claude-in-chrome", "design-to-implementation", "change-brief", "design-qa"]
+  "keywords": [
+    "ux-review",
+    "ui-review",
+    "design-critique",
+    "annotation",
+    "sticky-notes",
+    "draw-markup",
+    "live-edit",
+    "wysiwyg",
+    "claude-in-chrome",
+    "design-to-implementation",
+    "change-brief",
+    "design-qa"
+  ]
 }

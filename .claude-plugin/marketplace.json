@@ -12,12 +12,12 @@
     {
       "name": "loadout",
       "source": "./loadout",
-      "description": "Audit and optimize your active Claude Code loadout — inventory of installed vs enabled plugins, MCP servers, skills, agents, commands, and hooks, with context-cost estimates and tuning recommendations for any goal."
+      "description": "Audit and optimize your active Claude Code loadout \u2014 inventory of installed vs enabled plugins, MCP servers, skills, agents, commands, and hooks, with context-cost estimates and tuning recommendations for any goal."
     },
     {
       "name": "hands-free",
       "source": "./hands-free",
-      "description": "Turn a plain-language desired end result into a meticulously crafted /goal command that launches a Lead-orchestrated, parallelized multi-agent workflow."
+      "description": "Plan, execute and resume authorized multi-step work with portable progress tracking and completion evidence."
     },
     {
       "name": "icon-forge",
@@ -27,12 +27,12 @@
     {
       "name": "swiss-design",
       "source": "./swiss-design",
-      "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction with real numbers, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction. Two modes (make layout specs/CSS, or review a layout against a nine-point approval gate) plus an annotated canon of Swiss reference works."
+      "description": "Apply Swiss / International Typographic Style design discipline to any visual work \u2014 grid construction with real numbers, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction. Two modes (make layout specs/CSS, or review a layout against a nine-point approval gate) plus an annotated canon of Swiss reference works."
     },
     {
       "name": "design-signal-scout",
       "source": "./design-signal-scout",
-      "description": "A design, technology, and cultural intelligence system for Hermes — monitors footwear, industrial/product design, 3D/Blender, architecture, and AI-creative-tool signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities."
+      "description": "A design, technology, and cultural intelligence system for Hermes \u2014 monitors footwear, industrial/product design, 3D/Blender, architecture, and AI-creative-tool signals, scores and clusters them, mines community pain points, and converts findings into content and product opportunities."
     },
     {
       "name": "cut-weight",
@@ -42,12 +42,17 @@
     {
       "name": "critic-layer",
       "source": "./critic-layer",
-      "description": "Real-time, in-browser UX/UI design review — place sticky notes directly on a live web page, then synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt. A review-to-instruction layer, not a design editor."
+      "description": "Real-time, in-browser UX/UI design review in three modes \u2014 pin sticky notes, draw freehand/arrow/shape markup, and make live element edits captured as exact before\u2192after diffs. Place sticky notes directly on a live web page and synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt; a review-to-instruction layer, not a design editor."
     },
     {
       "name": "canon-check",
       "source": "./canon-check",
-      "description": "Two-part design-canon workflow — an audit that surfaces design decisions that quietly became permanent (tokens, docs, code defaults, history, prior review artifacts), flags single-mention canon and cross-source conflicts; then an interactive update that realigns CLAUDE.md, design.md, AGENTS.md, and other cornerstone docs to where the product is actually headed."
+      "description": "Two-part design-canon workflow. Audit: scans a repo's durable artifacts \u2014 design tokens, CLAUDE.md and style docs, hardcoded component defaults, session/git history, and prior design-review outputs \u2014 to surface design decisions that quietly became permanent canon, flag ones only ever said once, and catch where sources contradict each other. Update: an interactive follow-up that realigns the cornerstone documents (CLAUDE.md, design.md, AGENTS.md, style guides) to where the product is actually headed."
+    },
+    {
+      "name": "design-steward",
+      "source": "./design-steward",
+      "description": "Review interfaces, align design decisions, execute and verify changes, and clean development residue with seven independent skills including Cut Weight."
     }
   ]
 }

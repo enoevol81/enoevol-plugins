@@ -31,9 +31,8 @@ so a designer is choosing to follow or break a pattern on purpose.
   (formalize implicit canon), **Retire** (remove rules the direction moved
   past), and **Rule** (decide open conflicts); every stale or obsolete
   document gets its disposition settled (keep / update / supersede /
-  delete); each affected document (CLAUDE.md, design.md, AGENTS.md, style
-  guides) gets a per-document change plan approved before anything is
-  edited, and a `_canon-check/<date>/update-log.md` records every ruling.
+  delete); existing user authorization carries forward; unresolved choices get a grouped
+  diff for review before edits, and a `_canon-check/<date>/update-log.md` records every ruling.
   Token/config file changes (executable canon) are opt-in only.
 
 ## Works with cut-weight
@@ -78,3 +77,11 @@ python "<plugin-root>/skills/canon-check/scripts/scan_tokens.py" <repo-root>
 /plugin marketplace add enoevol81/enoevol-plugins
 /plugin install canon-check@enoevol-plugins
 ```
+
+## Scoped decisions and freshness
+
+Findings now distinguish observed, proposed, approved, superseded and unresolved
+decisions, with app/component/theme/breakpoint scope. Repetition is not approval.
+The bundled `scripts/source_snapshot.py` detects changed, added and deleted source
+files before report reuse. Incremental review refreshes affected findings and
+consumers. See `references/decision-contract.md`.
