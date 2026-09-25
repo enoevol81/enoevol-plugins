@@ -1,6 +1,6 @@
 {
   "name": "swiss-design",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Apply Swiss / International Typographic Style design discipline to any visual work — grid construction with real numbers, typographic hierarchy, asymmetrical balance, layout critique, and ruthless reduction. Two modes (make layout specs/CSS, or review a layout against a nine-point approval gate) plus an annotated canon of Swiss reference works.",
   "author": {
     "name": "Matthew Cohen",

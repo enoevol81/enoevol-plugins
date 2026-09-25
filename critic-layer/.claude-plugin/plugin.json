@@ -1,6 +1,6 @@
 {
   "name": "critic-layer",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Real-time, in-browser UX/UI design review in three modes \u2014 pin sticky notes, draw freehand/arrow/shape markup, and make live element edits captured as exact before\u2192after diffs. Place sticky notes directly on a live web page and synthesize them into an agent-ready change brief plus a paste-ready Claude Code prompt; a review-to-instruction layer, not a design editor.",
   "author": {
     "name": "Matthew Cohen",

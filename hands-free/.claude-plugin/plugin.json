@@ -1,7 +1,7 @@
 {
   "name": "hands-free",
   "description": "Plan, execute and resume authorized multi-step work with portable progress tracking and completion evidence.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "author": {
     "name": "Matthew Cohen",
     "email": "mcohen@enoevol.com"
