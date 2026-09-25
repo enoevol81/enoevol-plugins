@@ -1,5 +1,6 @@
 {
   "name": "design-steward",
+  "displayName": "Design Steward",
   "version": "0.2.1",
   "description": "Review interfaces, align design decisions, execute and verify changes, and clean development residue with seven independent skills including Cut Weight.",
   "author": {

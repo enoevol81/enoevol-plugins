@@ -9,7 +9,7 @@ import unittest
 import re
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def module(name, path):
@@ -122,7 +122,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(merged['issues'][0]['issueId'], 'fixture:note_001')
 
     def test_package_sources_match_and_seven_skills(self):
-        result = subprocess.run([sys.executable, str(ROOT / 'scripts/build_design_steward.py'), '--check'], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(ROOT / '_dev/scripts/build_design_steward.py'), '--check'], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(len(list((ROOT / 'design-steward/skills').glob('*/SKILL.md'))), 7)
         component = ROOT / 'design-steward/components/cut-weight/skills/cut-weight'

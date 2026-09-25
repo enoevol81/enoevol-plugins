@@ -8,7 +8,7 @@ import subprocess
 import sys
 import zipfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
     args = parser.parse_args()
     plugin = ROOT / args.plugin
     if args.plugin == 'design-steward':
-        subprocess.run([sys.executable, str(ROOT / 'scripts/build_design_steward.py'), '--check'], check=True)
+        subprocess.run([sys.executable, str(ROOT / '_dev/scripts/build_design_steward.py'), '--check'], check=True)
     version = json.loads((plugin / '.claude-plugin/plugin.json').read_text(encoding='utf-8'))['version']
     output = ROOT / 'dist' / f'{args.plugin}-{version}.zip'
     output.parent.mkdir(exist_ok=True)

@@ -34,6 +34,7 @@ Swap in any plugin name from the table above.
 enoevol-plugins/
 ├── .claude-plugin/
 │   └── marketplace.json        # lists all plugins
+├── _dev/                         # repo tooling (build, package, tests); not a plugin
 ├── loadout/
 │   ├── .claude-plugin/plugin.json
 │   ├── scripts/collect-inventory.py

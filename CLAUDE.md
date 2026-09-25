@@ -11,6 +11,7 @@ enoevol-plugins/
 ├── .claude-plugin/marketplace.json   # lists every plugin — the source of truth
 ├── README.md                         # human-facing index (table + structure tree)
 ├── .gitattributes                    # pins *.md, *.json, SKILL.md, commands to LF
+├── _dev/                             # repo tooling only: design-steward build/package scripts, tests
 └── <plugin-name>/                    # one self-contained directory per plugin
     ├── .claude-plugin/plugin.json
     ├── README.md                     # optional but preferred for non-trivial plugins
@@ -56,6 +57,9 @@ enoevol-plugins/
 - Keep `marketplace.json` plugin descriptions and the README table row in sync — same plugin,
   consistent one-line description.
 - Plugins are self-contained: no cross-plugin imports.
+- Nothing else at the root: every file belongs to a plugin folder, `_dev/`, or the
+  marketplace files above. Personal or machine-specific notes go in the git-ignored
+  `CLAUDE.local.md`.
 
 ## Publishing note
 

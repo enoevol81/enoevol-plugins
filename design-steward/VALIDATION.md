@@ -21,7 +21,7 @@ Critic Layer 0.3.0; Cut Weight 0.4.3. The curated plugin includes seven independ
 
 Browser runs save capture, decisions, brief, plan, ledger, verification and
 before/after screenshots under the repository's ignored `test-results/` directory.
-Run `node tests/overlay-browser.cjs` with Playwright available; optional environment
+Run `node _dev/tests/overlay-browser.cjs` with Playwright available; optional environment
 variables: PLAYWRIGHT_MODULE (module path), PLAYWRIGHT_CHANNEL (e.g. msedge), PYTHON.
 
 ## Not certified by these checks
@@ -65,7 +65,7 @@ alone via `--plugin-dir`):
   resolve against the component skill folder.
 - Audit/align name `.design-steward/<run-id>/` as the output directory (audit had
   written to `_canon-check/`) and the exact decision-contract path.
-- tests/test_workflow.py checks every backticked `${CLAUDE_PLUGIN_ROOT}` path by
+- _dev/tests/test_workflow.py checks every backticked `${CLAUDE_PLUGIN_ROOT}` path by
   exact name (Windows ignores a trailing dot, which hid a broken `SKILL.md.` path).
 
 Model-driven end-to-end runs on the fixture: audit returned the documented
