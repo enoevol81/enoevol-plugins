@@ -110,7 +110,7 @@ Score 0–5:
 - urgency
 - willingness to pay
 - poor existing solutions
-- fit with Matt's skills
+- fit with the user's skills
 - speed to prototype
 - distribution potential
 

@@ -1,6 +1,7 @@
 # design-signal-scout
 
-A design, technology, and cultural intelligence system for Hermes. Monitors
+A design, technology, and cultural intelligence system for creative studios and
+independent designers. Monitors
 footwear, industrial/product design, 3D and visualization (Blender, CAD,
 rendering), architecture, game development, and AI-assisted creative tooling —
 then scores, clusters, and converts what it finds into content and product
@@ -19,7 +20,7 @@ opportunities.
 | `inspiration-curator` | Turns scattered references into a focused, usable inspiration set. |
 | `content-opportunity-generator` | Converts a signal into a scored, concrete content idea. |
 | `weekly-creative-brief` | Synthesizes the week's signals into one ranked, actionable report. |
-| `signal-feedback-loop` | Learns from Matt's reactions to tune future scouting without overfitting. |
+| `signal-feedback-loop` | Learns from your reactions to tune future scouting without overfitting. |
 
 All ten skills share [`references/operating-model.md`](references/operating-model.md) —
 the persistent workspace convention, signal categories, priority scale, required
@@ -51,9 +52,9 @@ Decline persistence and every skill still works — session-only, and it says so
 /plugin install design-signal-scout@enoevol-plugins
 ```
 
-## Notes for Hermes
+## Notes
 
 - Nothing here auto-publishes, auto-contacts, or takes purchase/account
   actions. Every skill requires explicit approval before those.
-- Content ideas end at the idea — final drafting should go through the
-  `personal-voice` plugin so posts land in Matt's voice.
+- Content ideas end at the idea — do the final drafting with your own writing
+  voice or a brand-voice skill, if you have one.

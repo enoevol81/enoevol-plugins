@@ -1,7 +1,7 @@
 ---
 name: signal-feedback-loop
 description: >-
-  Interpret Matt's reactions to surfaced signals (save, ignore, more/less like
+  Interpret the user's reactions to surfaced signals (save, ignore, more/less like
   this, research deeper, turn into content, test tool, not relevant) and turn
   them into durable preference adjustments — which sources, topics, and signal
   types the scouting system should weight up or down — while preserving
@@ -18,7 +18,7 @@ description: >-
 Read [../../references/operating-model.md](../../references/operating-model.md) first — preference changes made here should ultimately reshape how `source-manager` prioritizes sources and how `signal-scout` scores new candidates.
 
 ## Objective
-Learn from Matt's reactions so the scout becomes more relevant over time.
+Learn from the user's reactions so the scout becomes more relevant over time.
 
 ## Reads / Writes (workspace)
 - **Reads:** `preferences.md` (current weights and feedback history), the signals

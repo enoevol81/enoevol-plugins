@@ -87,7 +87,7 @@ Material changes only, each with a date and link.
 
 ## 9. Recommended Actions
 Ranked, maximum five, numbered:
-1. **[Action]** — owner: Matt/Hermes · effort: S/M/L · expected value: one phrase · when: this week / this month / when X happens
+1. **[Action]** — owner: who does it · effort: S/M/L · expected value: one phrase · when: this week / this month / when X happens
 
 ## 10. Noise Filter
 What looked important but was excluded, and why (one line each).
@@ -99,5 +99,5 @@ What looked important but was excluded, and why (one line each).
 - Every signal, trend, and market item carries a link and a date.
 - Do not repeat the same signal in multiple sections without adding new meaning.
 - End with actions, not observations.
-- After delivering the brief, suggest running `signal-feedback-loop` on Matt's
-  reactions to it.
+- After delivering the brief, suggest running `signal-feedback-loop` on the
+  user's reactions to it.

@@ -90,11 +90,11 @@ calibrate the eye, then build original work. Attributions in `INDEX.md` are best
 the source material; treat the *principle* each image teaches as the reliable part, not the
 provenance.
 
-## Works with the Enoevol / Vanish system
+## Works with your existing design system
 
-The skill is style-agnostic, but the tenets map cleanly onto the Enoevol/Vanish tokens (Inter
-+ Geist Mono, flat with `border-radius: 0`, coral `#ff5b45` as the single accent) without
-overriding them. See the closing section of `SKILL.md`.
+The skill is style-agnostic. Inside a project that already has design tokens (typefaces,
+radius, accent color), it maps the tenets onto those tokens rather than overriding them.
+See the closing section of `SKILL.md`.
 
 ## License
 

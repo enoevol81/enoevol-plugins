@@ -131,11 +131,11 @@ Dense tables, legal text, forms, dashboards — reduction has a floor. Don't del
 - **`references/principles-full.md`** — the depth layer: full rationale behind each of the nine tenets (grid, alignment, hierarchy, typography, asymmetry, contrast, whitespace, consistency, restraint), the failure patterns each one catches, and worked grid-construction examples. Open it when you need the *why*, are teaching the system, or a review is being disputed.
 - **`assets/references/INDEX.md`** — the annotated canon: canonical Swiss works with, for each, exactly what to imitate (grid structure, scale contrast, spatial division). The actual image files sit alongside it — **open them with the Read tool to look at them** when calibrating a composition.
 
-## Applying within the Enoevol / Vanish system (optional)
+## Applying within an existing design system (optional)
 
-This skill is style-agnostic, but when working inside the Enoevol/Vanish design language the tenets map cleanly onto the existing tokens — they don't override them:
+This skill is style-agnostic. When a project already has a design language, map the tenets onto its existing tokens — don't override them:
 
-- **Typography First / Restraint** → Inter for text, Geist Mono for labels/metadata; let weight and scale do the work.
-- **Restraint / Consistency** → flat, `border-radius: 0`, no decorative shadows or gradients.
-- **Contrast / Hierarchy** → coral `#ff5b45` is the single accent — use it to mark the one most important thing, never as decoration. Spend it sparingly or it stops meaning anything.
-- **Grid / Alignment** → establish the column + baseline grid before placing components; align coral blocks and type to it.
+- **Typography First / Restraint** → use the project's text and label typefaces; let weight and scale do the work before adding anything else.
+- **Restraint / Consistency** → follow the project's corner radius, shadow and surface rules exactly; add no decoration the system doesn't already define.
+- **Contrast / Hierarchy** → if the system has one accent color, use it to mark the single most important thing, never as decoration. Spend it sparingly or it stops meaning anything.
+- **Grid / Alignment** → establish the column + baseline grid before placing components; align accent blocks and type to it.

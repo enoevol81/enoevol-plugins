@@ -21,8 +21,8 @@ Read [../../references/operating-model.md](../../references/operating-model.md) 
 - **Writes:** a signal record (category `content_opportunity`, linking the source
   signal's `id`) appended to `signals/YYYY-MM-DD.md` for each idea scoring well.
 - This skill produces the idea, not the copy. When the user moves to actually
-  drafting the post, use the `personal-voice` plugin (if installed) so the final
-  writing lands in Matt's voice.
+  drafting the post, use the user's own writing voice or a brand-voice skill (if
+  installed) for the final copy.
 
 ## Objective
 Translate design and technology signals into useful, timely content ideas.

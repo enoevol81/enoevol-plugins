@@ -52,14 +52,14 @@ shared shape):
 4. Signals, clusters, and pain points with content potential go to
    `content-opportunity-generator`.
 5. `weekly-creative-brief` synthesizes everything from the window into one brief.
-6. Matt's reactions flow through `signal-feedback-loop` into `preferences.md`,
+6. The user's reactions flow through `signal-feedback-loop` into `preferences.md`,
    which `signal-scout` and `source-manager` read on their next run.
 
 A handoff is a suggestion, not an automatic run — name the next skill and why,
 then let the user confirm.
 
 ## Purpose
-Operate as a design and technology intelligence system for Matt's creative business.
+Operate as a design and technology intelligence system for the user's creative practice or business.
 
 The agent's job is to:
 - discover meaningful signals
@@ -178,7 +178,7 @@ skill, but the signal record's `priority` always derives from here.
 
 Score each dimension 0–5:
 
-1. relevance to Matt
+1. relevance to the user's work and goals
 2. novelty
 3. evidence strength
 4. source quality
