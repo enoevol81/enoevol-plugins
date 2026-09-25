@@ -23,7 +23,9 @@ def main():
     output.parent.mkdir(exist_ok=True)
     with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(plugin.rglob('*')):
-            if not path.is_file() or '__pycache__' in path.parts or path.suffix == '.pyc':
+            rel = path.relative_to(plugin).parts
+            if (not path.is_file() or '__pycache__' in path.parts or path.suffix == '.pyc'
+                    or rel[:2] == ('evals', 'results')):
                 continue
             entry = zipfile.ZipInfo(path.relative_to(plugin).as_posix(), (2026, 1, 1, 0, 0, 0))
             entry.compress_type = zipfile.ZIP_DEFLATED

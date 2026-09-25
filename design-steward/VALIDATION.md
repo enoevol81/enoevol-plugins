@@ -69,6 +69,23 @@ alone via `--plugin-dir`):
   exact name (Windows ignores a trailing dot, which hid a broken `SKILL.md.` path).
 
 Model-driven end-to-end runs on the fixture: audit returned the documented
-"unresolved" answer; audit-only cleanup changed nothing. Not re-tested: live
-Claude-in-Chrome review, Cowork. The test harness denied the graveyard mkdir, so
-a full inventory-to-graveyard run under normal permissions is still unconfirmed.
+"unresolved" answer; audit-only cleanup changed nothing.
+
+Eval suite (`evals/`, run with `claude plugin eval`, Sonnet default, Windows):
+- Routing, 9 cases x3, baseline off: 27/27. Includes two negatives (unrelated
+  code, code review) where no design-steward skill may load.
+- Core functional, 4 cases x3 with and without the plugin:
+  audit-unresolved 1.00 (baseline 0.50), brief-from-capture 1.00 (baseline
+  0.50), cleanup-audit-only 1.00 (1.00), align-docs-only 1.00 (1.00). Align
+  first scored 0.44 because its grader flagged any write mentioning index.html;
+  the plugin never edited code, and the grader now checks the file path only.
+- `execute-ledger` is tagged needs-bash: Bash in eval runs requires an OS sandbox,
+  which native Windows lacks. Run it under WSL2, macOS, Linux or CI.
+
+Cut Weight archive, one-off run outside the eval sandbox (scratch git repo,
+user-approved removal of two residue files): archived to the default sibling
+`<project>-graveyard/<timestamp>-<id>/` with manifest.json and review.md,
+removals staged with `git rm` and not committed, nothing else touched. Archived
+copies match the committed originals by SHA-256.
+
+Not tested: live Claude-in-Chrome review, visual verification, Cowork.

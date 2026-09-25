@@ -63,6 +63,7 @@ python scripts/package_design_steward.py --plugin cut-weight
 `components/` and the three root Python helpers are generated, checked-in release
 files; edit canonical sources and rebuild. Runtime never imports a sibling plugin.
 Only the seven top-level skills are exposed. No always-on execution hook is bundled.
+Behavior tests for `claude plugin eval` live in `evals/` (see `evals/README.md`).
 See `references/workflow.md`, `examples/README.md` and `RELEASE-CHECKLIST.md`.
 
 
